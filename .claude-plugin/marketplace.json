@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "job-hunt",
+  "description": "The job-hunt plugin: an end-to-end job search routine for Claude Code.",
+  "owner": {
+    "name": "Faizi Fifita",
+    "url": "https://github.com/FayZ676"
+  },
+  "plugins": [
+    {
+      "name": "job-hunt",
+      "description": "Scan company job boards, score openings against your own profile, build a tailored resume for each one, fill the application form in the browser, and submit only what you approve.",
+      "author": {
+        "name": "Faizi Fifita",
+        "url": "https://github.com/FayZ676"
+      },
+      "category": "productivity",
+      "source": "./",
+      "homepage": "https://github.com/FayZ676/job-hunt-plugin",
+      "license": "MIT"
+    }
+  ]
+}
