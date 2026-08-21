@@ -11,8 +11,8 @@ spec written along the way is a build input.
 | Only content source | `career/index.md` |
 | Output directory | `career/resumes/` |
 | Moved here once submitted | `career/resumes/submitted/` |
-| Section order | `references/resume-template.md` |
-| Spec format | `references/resume-spec-schema.md` |
+| Section order | **Section order and content**, below |
+| Spec format | **Spec format**, below |
 | Recurring defects to avoid | `career/resume-patterns.md` |
 
 `career/index.md` is the only source. Its `## Profile` section supplies the header block and
@@ -157,3 +157,139 @@ report. `career/resumes/` therefore holds only resumes that have not gone out ye
 resume into `career/resumes/submitted/` when its application is submitted, so the top level stays a
 worklist. Offer, without doing: a matching cover letter, and appending anything newly surfaced
 to `career/index.md`.
+
+---
+
+## Section order and content
+
+Section order for the spec's `sections` array. Omit any section the JD makes irrelevant, except
+Experience and Education. The JSON shape of each section is in `spec-schema.md`.
+
+### Summary — `paragraph`
+
+Two or three lines of fact, never a self-description. **Open with the total years** — the largest
+honest number goes first. Then the two or three specifics this JD cares about, then what he did
+before, stated as work he performed rather than a product that happened to exist.
+
+> Four years building production AI systems, most of it on the infrastructure under LLM products:
+> evaluation that runs in CI, guardrails enforced inside the AWS SDK, and Postgres-backed retrieval
+> and job services other teams now build on. Earlier, built the GCP backend behind an AI app with
+> 10,000 users.
+
+A rounded total opens better than a hedged per-employer figure even
+though the latter names the employer — a reader filtering on experience may discard him before
+reaching the end of the sentence, so the smaller number must not come first. The employer is already
+visible in Experience directly below.
+
+Banned here as everywhere: "end to end" and other filler that survives deletion; "gates it in CI"
+when "catches regressions before release" says it plainly.
+
+Skip the section when it would only restate the bullets; a weak summary costs two bullets' worth of
+space.
+
+### Experience — `experience`
+
+Roles in reverse-chronological order:
+
+| title | company | dates |
+|---|---|---|
+| Machine Learning Engineer | Northwind Analytics | November 2023 – Present |
+| Co-Founder & Lead Developer | Kestrel Labs | July 2022 – September 2023 |
+| Research Assistant | State University | May 2022 – January 2023 |
+
+Bullets: one idea each, one sentence, under ~30 words, a number only if a real one exists in
+`career/index.md`. 3–8 per role, ordered by relevance to the JD. A role with no relevant projects gets a single summary
+bullet, not a full list.
+
+### Projects — `bullets`
+
+Only when an independent project maps to the JD better than a work
+project it would displace. Mark status honestly: discontinued / in progress.
+
+### Publications — `paragraph`
+
+Only when the JD is research-adjacent:
+
+> First author, biomedical information extraction for COVID-19 fake news detection. Big Data and
+> Cognitive Computing 2023, 7(1), 46 — Editor's Choice. https://www.mdpi.com/2504-2289/7/1/46
+
+### Education — `entries`
+
+| primary | secondary |
+|---|---|
+| BS Computer Science | State University, May 2022 |
+| Associate of Science | Community College, May 2020 |
+
+### Skills — `labeled`
+
+Labels: Languages, Frameworks, AI/ML, Cloud & Data, Delivery. Drop a label entirely rather than pad
+it. Drawn from the selected bullets plus the JD's named technologies the candidate actually has — no
+aspirational entries, no soft skills.
+
+### Notes
+
+- The publication title in `career/index.md` is recorded only by URL; fetch or confirm the exact
+  title and author list before printing a citation.
+- Keep the contact line identical to the `## Profile` section of `career/index.md` — it is the
+  canonical header. Same for Education.
+
+---
+
+## Spec format (input to `build.js`)
+
+The spec is the resume's content. `build.js` owns every formatting decision, so the spec carries no
+styling: no font sizes, no spacing, no bold-for-emphasis except the inline `**…**` noted below.
+
+Write it to `career/resumes/<company>-<role-slug>.json`, then build. Keeping the spec next to the `.docx`
+is what makes a later tweak a one-line edit and a rebuild rather than a fresh generation.
+
+### Shape
+
+```json
+{
+  "name": "Ada Lovelace",
+  "contact": [
+    "Denver, CO 80202",
+    "ada@example.com",
+    { "text": "linkedin.com/in/ada-lovelace", "link": "https://www.linkedin.com/in/ada-lovelace/" }
+  ],
+  "sections": [ ... ]
+}
+```
+
+Optional top-level keys: `font` (default `Calibri`), `margins` (`{top,bottom,left,right}` in inches,
+defaults 0.5 / 0.5 / 0.7 / 0.7).
+
+Contact entries are joined with `|`. A plain string renders as text; `{text, link}` renders as a
+hyperlink.
+
+### Section types
+
+Every section is `{ "heading": "...", "type": "...", ... }`. The heading renders uppercase, bold,
+with a full-width rule under it. Order the sections as they should appear.
+
+| `type` | Payload | Renders as |
+|---|---|---|
+| `paragraph` | `"text": "..."` | One flowing paragraph. Use for Summary and Publications. |
+| `experience` | `"roles": [{title, company, dates, bullets[]}]` | `**Title, Company** — Dates` then a bulleted list. |
+| `bullets` | `"items": ["...", "..."]` | A bare bulleted list, no role header. |
+| `labeled` | `"items": [{label, text}]` | `**Label:** text`, one line each. Use for Skills. |
+| `entries` | `"items": [{primary, secondary}]` | `**Primary** — Secondary`, one line each. Use for Education. |
+
+### Inline formatting
+
+Inside any `text` or bullet string: `**bold**`, `[label](url)`, and bare `https://…` URLs become a
+hyperlink. Nothing else is parsed — no italics markers, no literal `•`, no `\n` (split into separate
+items instead).
+
+### Building
+
+```bash
+export NODE_PATH=$(npm root -g)
+node "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/build.js" <spec.json> <out.docx> [--density tight|normal|roomy]
+bash "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/topdf.sh" <out.docx>
+```
+
+`--density` is the one-page lever: `normal` is the default, `tight` shaves font size and spacing,
+`roomy` opens it up when the content is short and the page looks sparse. Change density before you
+start cutting content, and cut content before you change margins.

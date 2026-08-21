@@ -4,15 +4,8 @@
   "comp_floor": 100000,
   "delay_ms": 3000,
   "locations": [
-    {
-      "label": "Remote",
-      "l": "Remote"
-    },
-    {
-      "label": "Your metro",
-      "l": "City, ST",
-      "radius": 35
-    }
+    {"label": "Remote", "l": "Remote"},
+    {"label": "Your metro", "l": "City, ST", "radius": 35}
   ],
   "queries_remote": [
     "\"ai engineer\"",

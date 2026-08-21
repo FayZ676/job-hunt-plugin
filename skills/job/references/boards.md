@@ -1,9 +1,66 @@
-# ATS endpoints
+# The automated board scan
 
-All three are public, unauthenticated, free, and return the full job description plus an apply URL in
-one call. No scraping, no API key, no rate limit worth worrying about at 60 boards a day.
+Everything about the API scan: running it, tuning what it returns, and adding companies to it.
+The other two sources have their own files — `indeed.md` and `manual-boards.md`.
 
-Verified working 2026-08-06.
+## Running it
+
+```bash
+cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"
+```
+
+Stdlib only, no install step. It hits every active board in parallel, applies the mechanical filters
+(title regex, location, posting age), drops any `key` already in the ledger, and writes
+`career/jobs/<date>-candidates.json`.
+
+| Flag | Use |
+| ---- | --- |
+| `--company Anthropic` | scan one board, repeatable, for testing a newly added slug |
+| `--include-seen` | ignore the ledger, for rebuilding a run entry |
+| `--no-location-filter` | see what the location rule is costing |
+| `--max-age-days 7` | tighten to the last week |
+| `--force` | overwrite an existing candidates file |
+
+`<date>-candidates.json` holds the full JD text that phases 3–4 read, so the script **refuses to
+overwrite** a same-day file with a smaller result. A second plain run after the ledger is written
+would otherwise wipe the day's descriptions. Rebuild a day with `--include-seen --force`.
+
+Multi-location postings for one role merge into a single candidate, with the extra ids in
+`duplicate_keys`. **Log every one of those ids to the ledger**, or the siblings return as new
+tomorrow. This also means the ledger holds more lines than jobs — count unique roles, not lines.
+
+**Read the failure list.** A failing board usually means the company moved ATS or the slug is wrong.
+Fix `career/scan-config.json` or set `"active": false`. Do not leave it failing every morning.
+
+## Tuning the filters
+
+The scan prints how many postings each filter dropped. Use those counts rather than guessing.
+
+| Symptom | Fix |
+| ------- | --- |
+| Obvious junk in candidates | `title_exclude` in `career/scan-config.json` |
+| A real role got filtered out | `title_include`, or loosen `location_include` |
+| Candidates fine, scores wrong | `career/search-profile.md` |
+| Same company never has anything | `"active": false` |
+| Too few candidates | check the location counter; it is usually location |
+
+## Adding companies
+
+Find the ATS slug from the careers page URL — `boards.greenhouse.io/<slug>`, `jobs.lever.co/<slug>`,
+`jobs.ashbyhq.com/<slug>` — add an entry to `companies`, then verify:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company "<Name>" --include-seen
+```
+
+A slug that 404s is wrong, or the company is on an ATS this script does not support (Workday, Taleo,
+iCIMS, SmartRecruiters) — see **The board APIs** below, and `references/manual-boards.md`.
+
+## The board APIs
+
+All three board APIs are public, unauthenticated, and return the full description plus an apply
+URL in one call. No key, no scraping, no rate limit worth worrying about.
 
 ## Greenhouse
 

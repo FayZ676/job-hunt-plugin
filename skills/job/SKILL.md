@@ -65,14 +65,12 @@ Reference material, inside this plugin:
 | Path | Read it for |
 | ---- | ----------- |
 | `references/setup.md` | First-run setup |
-| `references/scanning.md` | Scan flags, scoring, the ledger schema, the run entry |
+| `references/boards.md` | The API scan: flags, filter tuning, adding companies, endpoints |
 | `references/indeed.md` | The Indeed pass |
-| `references/manual-boards.md` | Checking boards no API reaches |
-| `references/ats-apis.md` | ATS endpoints |
-| `references/ats-forms.md` | Form mechanics and traps per ATS |
-| `references/resume-writing.md` | Selection method and writing rules |
-| `references/resume-template.md` | Section order |
-| `references/resume-spec-schema.md` | Resume spec JSON format |
+| `references/manual-boards.md` | Boards no API reaches |
+| `references/scoring.md` | Scoring, the ledger schema, the run entry |
+| `references/applying.md` | Form mechanics and traps per ATS |
+| `references/resume.md` | Writing rules, section order, spec format |
 
 ## Phase 1 — Scan
 
@@ -100,8 +98,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" merge --desc
 **Read `references/indeed.md` first.** The rule that matters: **navigate to each search URL, never
 `fetch()` it** — navigation is not rate-limited, XHR is throttled to 403.
 
-Read `references/scanning.md` for flags, manual-board cadence, filter tuning, and ledger
-reconciliation.
+Read `references/boards.md` for flags, filter tuning, and adding companies;
+`references/manual-boards.md` for the by-hand cadence.
 
 ## Phase 2 — Score
 
@@ -118,11 +116,11 @@ Then write `career/jobs/<date>.md` with the scan counts and shortlist, and **upd
 phases 3–5 complete. Every shortlisted role carries an `Outcome` line by the end of the run:
 `submitted <timestamp>, confirmation verified` · `staged, waiting on <what>` · `blocked on <missing
 answer>` · `not pursued — <reason>`. A run that ends without the entry reflecting what happened has
-not finished. `references/scanning.md` holds the ledger schema and the run-entry format.
+not finished. `references/scoring.md` holds the ledger schema and the run-entry format.
 
 ## Phase 3 — Resume
 
-For each shortlisted role, build a tailored resume. `references/resume-writing.md` carries the
+For each shortlisted role, build a tailored resume. `references/resume.md` carries the
 selection method, the writing rules, the one-pass test, and the facts that must never be misreported.
 
 ```bash
@@ -137,7 +135,7 @@ attach. Record the resume path on the role's ledger line.
 
 ## Phase 4 — Stage
 
-Fill the form completely and stop with a finger over the button. Read `references/ats-forms.md`
+Fill the form completely and stop with a finger over the button. Read `references/applying.md`
 first — locating the apply form per ATS, field patterns, typeaheads, file upload, and the traps.
 
 Every field is one of three tiers, and the tier decides who answers it:

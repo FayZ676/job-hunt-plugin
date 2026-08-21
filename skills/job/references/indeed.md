@@ -3,7 +3,7 @@
 Indeed is a **discovery layer**, not a new place to apply. `scan.py` watches 137 companies you already
 chose; Indeed answers the question those boards cannot — *who is hiring that isn't on the list at all.*
 
-Everything it finds still gets applied to through the normal path in `references/ats-forms.md`, because
+Everything it finds still gets applied to through the normal path in `references/applying.md`, because
 an Indeed posting resolves to the employer's real ATS (see **Applying**, below).
 
 ## Drive it by navigation, never by fetch
@@ -50,7 +50,7 @@ Fields worth keeping per card: `jobkey`, `company`, `title`, `formattedLocation`
 `sponsored`, `expired`, `indeedApplyEnabled`, `remoteWorkModel.type`, `extractedSalary`.
 
 **`jobkey` is a stable per-posting id.** That is what makes Indeed dedupable at all, and the reason the
-old "no stable id" objection in `references/ats-apis.md` no longer holds. Ledger keys are
+old "no stable id" objection no longer holds. Ledger keys are
 `indeed:<jobkey>`.
 
 Navigation wipes page variables, so **accumulate across queries in `localStorage`** — same origin, so it
@@ -169,7 +169,7 @@ page.** Verified 2026-08-21: the Instacart posting resolved to `instacart.career
 a Greenhouse form.
 
 So the apply path is unchanged. Resolve the URL, land on the real ATS, and follow
-`references/ats-forms.md` as for any other role. Record the resolved URL as `resolved_ats_url` and use
+`references/applying.md` as for any other role. Record the resolved URL as `resolved_ats_url` and use
 it — not the `indeed.com/viewjob` link — as the application's `url`.
 
 **When it resolves to Greenhouse, Lever, or Ashby, add the company to `career/scan-config.json`.** This

@@ -4,3 +4,5 @@ node_modules/
 # A user's own career data, if they run the plugin from this directory.
 # Root-anchored so it never matches templates/career/.
 /career/
+__pycache__/
+*.pyc
