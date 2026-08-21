@@ -11,55 +11,31 @@ import argparse
 import datetime as dt
 import json
 import os
-import re
 import sys
 
-MAX_DESCRIPTION_CHARS = 20000
+from jobkit import (
+    MAX_DESCRIPTION_CHARS,
+    age_days,
+    compile_patterns,
+    iter_ledger,
+    matches_any,
+    norm,
+    norm_company,
+    to_iso,
+)
+
 VIEWJOB = "https://www.indeed.com/viewjob?jk={}"
 APPLYSTART = "https://www.indeed.com/applystart?jk={}&from=vj"
 
 
-def compile_patterns(patterns):
-    return [re.compile(p) for p in patterns or []]
-
-
-def matches_any(patterns, text):
-    return any(p.search(text or "") for p in patterns)
-
-
-def norm(text):
-    return re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
-
-
-def norm_company(name):
-    stripped = re.sub(
-        r"(?i)[,.]?\s*\b(inc|llc|ltd|corp|corporation|co|company|technologies|technology|labs|holdings|group|usa)\b\.?",
-        "",
-        name or "",
-    )
-    return norm(stripped)
-
-
 def load_ledger_keys(path):
-    keys = set()
-    pairs = set()
-    if not os.path.exists(path):
-        return keys, pairs
-    with open(path, "r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if entry.get("key"):
-                keys.add(entry["key"])
-            for extra in entry.get("duplicate_keys") or []:
-                keys.add(extra)
-            if entry.get("company") and entry.get("title"):
-                pairs.add((norm_company(entry["company"]), norm(entry["title"])))
+    keys, pairs = set(), set()
+    for entry in iter_ledger(path):
+        if entry.get("key"):
+            keys.add(entry["key"])
+        keys.update(entry.get("duplicate_keys") or [])
+        if entry.get("company") and entry.get("title"):
+            pairs.add((norm_company(entry["company"]), norm(entry["title"])))
     return keys, pairs
 
 
@@ -73,27 +49,6 @@ def load_tracked_companies(path):
         for c in config.get("companies", [])
         if c.get("active", True)
     }
-
-
-def iso_from_epoch_ms(value):
-    if not value:
-        return None
-    try:
-        return dt.datetime.fromtimestamp(int(value) / 1000, dt.timezone.utc).isoformat()
-    except (TypeError, ValueError, OSError):
-        return None
-
-
-def age_days(posted_at):
-    if not posted_at:
-        return None
-    try:
-        stamp = dt.datetime.fromisoformat(posted_at)
-    except ValueError:
-        return None
-    if stamp.tzinfo is None:
-        stamp = stamp.replace(tzinfo=dt.timezone.utc)
-    return (dt.datetime.now(dt.timezone.utc) - stamp).days
 
 
 def compensation(card):
@@ -123,7 +78,7 @@ def to_record(card):
     location = (card.get("formattedLocation") or "").strip()
     remote_model = card.get("remoteWorkModel") or {}
     remote = bool(remote_model.get("type")) or "remote" in location.lower()
-    posted_at = iso_from_epoch_ms(card.get("pubDate") or card.get("createDate"))
+    posted_at = to_iso(card.get("pubDate") or card.get("createDate"))
     return {
         "key": f"indeed:{jobkey}",
         "source": "indeed",

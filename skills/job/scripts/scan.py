@@ -10,13 +10,21 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+
+from jobkit import (
+    MAX_DESCRIPTION_CHARS,
+    age_days,
+    compile_patterns,
+    iter_ledger,
+    matches_any,
+    to_iso,
+)
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) job-scan/1.0"
 TAG_RE = re.compile(r"<[^>]+>")
 WS_RE = re.compile(r"[ \t\r\f\v]+")
 BLANKS_RE = re.compile(r"\n{3,}")
-MAX_DESCRIPTION_CHARS = 20000
 
 
 def http_get_json(url, timeout=25, attempts=3):
@@ -48,32 +56,6 @@ def html_to_text(raw):
     return BLANKS_RE.sub("\n\n", text).strip()
 
 
-def iso(value):
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        seconds = value / 1000 if value > 1e11 else value
-        return datetime.fromtimestamp(seconds, timezone.utc).isoformat()
-    text = str(value).strip()
-    if not text:
-        return None
-    try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).isoformat()
-    except ValueError:
-        return text
-
-
-def age_days(posted_at):
-    if not posted_at:
-        return None
-    try:
-        moment = datetime.fromisoformat(str(posted_at).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=timezone.utc)
-    return (datetime.now(timezone.utc) - moment).days
-
 
 def fetch_greenhouse(company):
     slug = company["slug"]
@@ -91,7 +73,7 @@ def fetch_greenhouse(company):
             "remote": "remote" in location.lower(),
             "url": job.get("absolute_url"),
             "apply_url": job.get("absolute_url"),
-            "posted_at": iso(job.get("first_published") or job.get("updated_at")),
+            "posted_at": to_iso(job.get("first_published") or job.get("updated_at")),
             "compensation": None,
             "description": html_to_text(job.get("content"))[:MAX_DESCRIPTION_CHARS],
         })
@@ -133,7 +115,7 @@ def fetch_lever(company):
             "remote": workplace == "remote" or "remote" in str(location).lower(),
             "url": job.get("hostedUrl"),
             "apply_url": job.get("applyUrl") or job.get("hostedUrl"),
-            "posted_at": iso(job.get("createdAt")),
+            "posted_at": to_iso(job.get("createdAt")),
             "compensation": (
                 f"{salary.get('min')}-{salary.get('max')} {salary.get('currency') or ''}".strip()
                 if salary.get("min") else None
@@ -165,7 +147,7 @@ def fetch_ashby(company):
             "remote": bool(job.get("isRemote")) or "remote" in location.lower(),
             "url": job.get("jobUrl"),
             "apply_url": job.get("applyUrl") or job.get("jobUrl"),
-            "posted_at": iso(job.get("publishedAt")),
+            "posted_at": to_iso(job.get("publishedAt")),
             "compensation": summary,
             "description": (
                 job.get("descriptionPlain")
@@ -179,29 +161,7 @@ FETCHERS = {"greenhouse": fetch_greenhouse, "lever": fetch_lever, "ashby": fetch
 
 
 def load_seen_keys(ledger_path):
-    seen = {}
-    if not os.path.exists(ledger_path):
-        return seen
-    with open(ledger_path, "r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if entry.get("key"):
-                seen[entry["key"]] = entry
-    return seen
-
-
-def compile_patterns(patterns):
-    return [re.compile(p) for p in patterns or []]
-
-
-def matches_any(patterns, text):
-    return any(p.search(text) for p in patterns)
+    return {e["key"]: e for e in iter_ledger(ledger_path) if e.get("key")}
 
 
 def collapse_duplicates(records):

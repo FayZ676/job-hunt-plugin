@@ -148,3 +148,52 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company "<Name>" --
 
 A slug that 404s is wrong, or the company is on an ATS this script does not support (Workday, Taleo,
 iCIMS, SmartRecruiters). See `references/ats-apis.md`.
+
+## The run entry
+
+`career/jobs/<date>.md` is this skill's log — one note per day, covering the whole run through to
+submission, sitting alongside its `<date>-candidates.json`. **Keep the folder flat** so the series
+reads as a run of daily notes; do not introduce per-date subfolders.
+
+```markdown
+# Job run — 2026-08-18
+
+**Scanned:** 137 boards · 14,455 postings · 20 new after filters · 4 manual-board roles reviewed
+**Indeed:** 16 queries · 148 cards · 123 dropped as noise or dupes · 24 new · 23 companies not on the watchlist
+**Shortlisted:** 3 · **Logged and skipped:** 21
+**Resumes built:** 3 · **Staged:** 3 · **Submitted:** 2 · **Waiting on you:** 1
+
+One line on the shape of the day.
+
+## Applications
+
+### 1. Zillow — Machine Learning Engineer, Agentic AI  ·  **9/10**  (manual board)
+- **Location:** Remote — USA · **Posted:** 10 days ago · **Comp:** $138.3K–$232.5K by state band
+- **Why:** the specific JD language that drove the score, quoted.
+- **Gaps:** what the JD asks for that the file does not answer.
+- **Link:** https://…
+- **Resume:** `career/resumes/zillow-machine-learning-engineer-agentic-ai.pdf`
+- **Outcome:** submitted 2026-08-18 14:22, confirmation verified
+
+### 2. Deepgram — Senior Software Engineer, Model Evaluation  ·  **8/10**
+- …
+- **Outcome:** staged, waiting on review of the "most impressive thing built with AI" essay
+
+## Also new, not shortlisted
+
+| Company | Title | Score | Why not |
+|---|---|---|---|
+
+## Manual boards
+
+Checked: … · Not due: … · Deferred: …
+
+## Boards that failed
+```
+
+`Outcome` is the line that makes this a run entry: `submitted <timestamp>, confirmation verified` ·
+`staged, waiting on <what>` · `blocked on <missing answer>` · `not pursued — <reason>`. Every
+shortlisted role carries one by the end of the run.
+
+This file is rendered markdown. Keep links bare or as markdown links, and keep the applications section
+at the top where it reads without scrolling.
