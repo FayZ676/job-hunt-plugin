@@ -124,9 +124,7 @@ For each shortlisted role, build a tailored resume. `references/resume.md` carri
 selection method, the writing rules, the one-pass test, and the facts that must never be misreported.
 
 ```bash
-export NODE_PATH=$(npm root -g)
-node "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/build.js" career/resumes/<slug>.json career/resumes/<slug>.docx --density tight
-bash "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/topdf.sh" career/resumes/<slug>.docx
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/render.py" career/resumes/<slug>.json career/resumes/<slug>.pdf --density tight
 pdftoppm -jpeg -r 95 career/resumes/<slug>.pdf /tmp/page
 ```
 
@@ -190,7 +188,7 @@ For each approved application: click submit, wait for the confirmation page, and
 validation error means it was not submitted — repair the named field and re-present it.
 
 Then, together: append a ledger line with `"status":"applied"`, the timestamp, and the resume path;
-**move the resume's `.pdf`, `.docx` and `.json` into `career/resumes/submitted/`** and record the new
+**move the resume's `.pdf` and `.json` into `career/resumes/submitted/`** and record the new
 path on that line; mark the staged file `submitted`; set the role's `Outcome` in the run entry. All
 four move together, so a run interrupted between them is visibly incomplete rather than silently
 wrong.
@@ -207,7 +205,7 @@ When the user reports one, three things happen together:
 1. **Append a ledger line** with `"status":"rejected"` and `"rejected_at"`. Note the shape when
    visible — days from submission, and whether any interview stage happened. A rejection three days
    out with no interview is a resume screen, and that is worth knowing across roles.
-2. **Delete the resume's `.pdf`, `.docx` and `.json` from `career/resumes/submitted/`.** Record the
+2. **Delete the resume's `.pdf` and `.json` from `career/resumes/submitted/`.** Record the
    removed path as `resume_deleted` and set `resume` to `null`, so the ledger still says which
    document went out. **A synced folder can re-materialize a deleted file** — re-list the directory
    after deleting and delete again if it reappeared.

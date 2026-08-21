@@ -1,9 +1,9 @@
 # Resume writing
 
-Phase 3 of `/job` in detail: turning `career/index.md` into a one-page `.docx` targeted at one job
+Phase 3 of `/job` in detail: turning `career/index.md` into a one-page PDF targeted at one job
 description, with a PDF alongside it.
 
-**The deliverable is the `.docx` and the `.pdf`.** Never hand back a markdown resume. The `.json`
+**The deliverable is the `.pdf`.** Never hand back a markdown resume. The `.json`
 spec written along the way is a build input.
 
 | Purpose | Path |
@@ -120,15 +120,13 @@ Three rules that hold regardless of what any file says:
 ## Build
 
 ```bash
-export NODE_PATH=$(npm root -g)
 cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-node "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/build.js" career/resumes/<slug>.json career/resumes/<slug>.docx --density tight
-bash "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/topdf.sh" career/resumes/<slug>.docx
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/render.py" career/resumes/<slug>.json career/resumes/<slug>.pdf --density tight
 pdfinfo career/resumes/<slug>.pdf | grep Pages
 pdftoppm -jpeg -r 95 career/resumes/<slug>.pdf /tmp/page   # then Read /tmp/page-1.jpg
 ```
 
-`build.js` owns all formatting. If the layout needs to change, change `build.js` so every future
+`render.py` owns all formatting. If the layout needs to change, change `render.py` so every future
 resume inherits it. It parses `**bold**` and `[label](url)` only — backticks render literally.
 
 **Always read the rendered image.** Page count alone misses an orphaned two-line section or a Skills
@@ -148,11 +146,11 @@ To fit, in order: `--density tight` (`normal` and `roomy` exist for shorter cont
 relevant bullets; tighten wording so bullets stop before wrapping one word onto a new line; margins
 in the spec, never below 0.4in.
 
-Requires `docx` (npm global), LibreOffice, Poppler.
+Requires Typst and Poppler.
 
 ## After
 
-Record the `.docx` and `.pdf` paths on the role's ledger line and in the run entry, then give the gap
+Record the `.pdf` path on the role's ledger line and in the run entry, then give the gap
 report. `career/resumes/` therefore holds only resumes that have not gone out yet; phase 5 moves a
 resume into `career/resumes/submitted/` when its application is submitted, so the top level stays a
 worklist. Offer, without doing: a matching cover letter, and appending anything newly surfaced
@@ -235,12 +233,12 @@ aspirational entries, no soft skills.
 
 ---
 
-## Spec format (input to `build.js`)
+## Spec format (input to `render.py`)
 
-The spec is the resume's content. `build.js` owns every formatting decision, so the spec carries no
+The spec is the resume's content. `render.py` owns every formatting decision, so the spec carries no
 styling: no font sizes, no spacing, no bold-for-emphasis except the inline `**…**` noted below.
 
-Write it to `career/resumes/<company>-<role-slug>.json`, then build. Keeping the spec next to the `.docx`
+Write it to `career/resumes/<company>-<role-slug>.json`, then build. Keeping the spec next to the `.pdf`
 is what makes a later tweak a one-line edit and a rebuild rather than a fresh generation.
 
 ### Shape
@@ -285,9 +283,7 @@ items instead).
 ### Building
 
 ```bash
-export NODE_PATH=$(npm root -g)
-node "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/build.js" <spec.json> <out.docx> [--density tight|normal|roomy]
-bash "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/topdf.sh" <out.docx>
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/render.py" <spec.json> [out.pdf] [--density tight|normal|roomy] [--keep-typ]
 ```
 
 `--density` is the one-page lever: `normal` is the default, `tight` shaves font size and spacing,

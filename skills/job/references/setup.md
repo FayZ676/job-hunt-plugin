@@ -36,8 +36,8 @@ is a starting point, not a recommendation.
 **4. Check the tooling.** Only the resume build needs anything installed:
 
 ```bash
-node --version && npm ls -g docx >/dev/null 2>&1 || npm install -g docx
-command -v soffice || echo "brew install --cask libreoffice"
+command -v typst || echo "brew install typst"
+command -v pdftoppm || echo "brew install poppler"
 ```
 
 Scanning and scoring work without either; the user can start there and install before the first

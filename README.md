@@ -47,8 +47,7 @@ That's the whole install. `/job scan` works as soon as setup finishes.
 ## Requirements
 
 - **Scanning and scoring:** Python 3. Nothing else.
-- **Resume building:** Node with the `docx` package (`npm install -g docx`), and LibreOffice for
-  PDF conversion (`brew install --cask libreoffice`).
+- **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).
 
