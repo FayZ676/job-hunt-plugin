@@ -91,15 +91,15 @@ One line on the shape of the day.
 
 ## Applications
 
-### 1. Zillow — Machine Learning Engineer, Agentic AI  ·  **9/10**  (manual board)
+### 1. Northwind Analytics — Machine Learning Engineer  ·  **9/10**  (manual board)
 - **Location:** Remote — USA · **Posted:** 10 days ago · **Comp:** $138.3K–$232.5K by state band
 - **Why:** the specific JD language that drove the score, quoted.
 - **Gaps:** what the JD asks for that the file does not answer.
 - **Link:** https://…
-- **Resume:** `career/resumes/zillow-machine-learning-engineer-agentic-ai.pdf`
+- **Resume:** `career/resumes/northwind-machine-learning-engineer.pdf`
 - **Outcome:** submitted 2026-08-18 14:22, confirmation verified
 
-### 2. Deepgram — Senior Software Engineer, Model Evaluation  ·  **8/10**
+### 2. Kestrel Labs — Software Engineer, Model Evaluation  ·  **8/10**
 - …
 - **Outcome:** staged, waiting on review of the "most impressive thing built with AI" essay
 

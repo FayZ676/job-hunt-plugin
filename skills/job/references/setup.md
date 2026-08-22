@@ -9,9 +9,10 @@ user is running real scans the same day they install the plugin.
 cp -R "${CLAUDE_PLUGIN_ROOT}/templates/career" ./career
 ```
 
-That gives them `watchlist.toml` (a starter watchlist of companies on Greenhouse, Lever, and
-Ashby), `indeed.toml`, `search-profile.md`, `index.md`, `manual-boards.md`, an empty
-`applications.jsonl`, and the `jobs/`, `resumes/`, and `staged/` directories.
+That gives them the six files they edit — `watchlist.toml` (a starter list of companies on
+Greenhouse, Lever, and Ashby), `indeed.toml`, `search-profile.md`, `index.md`,
+`manual-boards.md`, `resume-patterns.md` — plus empty `runs/` and `resumes/` to read, and a
+`.state/` directory the system owns. Tell them about the first six; `.state/` is not theirs to edit.
 
 **2. Interview the user, then fill the templates for them.** Do not hand back a wall of `TODO`s and
 ask them to edit files — ask the questions in chat, and write the answers in. Ask about:

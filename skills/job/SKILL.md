@@ -57,6 +57,7 @@ These hold in every phase. Nothing below overrides them.
 | `career/index.md` | Accomplishments, and the answer bank |
 | `career/manual-boards.md` | Companies checked by hand, on a cadence |
 | `career/resume-patterns.md` | Recurring resume defects |
+| `career/accounts.md` | Which employer logins exist, and where each password lives |
 
 **The user reads these.** Written by this skill, for them.
 

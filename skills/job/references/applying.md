@@ -124,10 +124,13 @@ them before considering the form complete.
 **Verified on Zillow, 2026-08-18.** An earlier version of this file claimed Workday was "not
 stageable unattended". That was written from assumption and it was wrong. The flow works end to end.
 
-**An account is required, one per employer.** Workday tenants are separate, so a Zillow login does
-nothing at another company. Account creation needs an email, a password (8+ chars with upper, lower,
-numeric and special), and a privacy checkbox, then an emailed activation link. Credentials go in
-`career/accounts.md`. **Never invent a password** — ask the user for one, or have them set it.
+**An account is required, one per employer.** Workday tenants are separate, so a login at one
+company does nothing at another. Account creation needs an email, a password (8+ chars with upper,
+lower, numeric and special), and a privacy checkbox, then an emailed activation link.
+
+**Never invent, generate, or store a password.** Ask the user to create one in their password
+manager and record only the pointer in `career/accounts.md` — that file names which accounts exist
+and where each password lives, never the password itself.
 
 The activation link is single-use: opening it after the user has already clicked it returns "Invalid
 Token". That is harmless. Just sign in normally.
