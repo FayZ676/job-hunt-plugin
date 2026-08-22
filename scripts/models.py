@@ -20,7 +20,7 @@ try:
     from pydantic import BaseModel, ConfigDict, field_validator
 except ModuleNotFoundError:
     sys.exit(
-        "This plugin needs pydantic:  python3 -m pip install pydantic\n"
+        "This skill needs pydantic:  python3 -m pip install pydantic\n"
         "(Scanning needs it; nothing else does.)")
 
 import jobkit

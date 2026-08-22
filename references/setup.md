@@ -1,12 +1,15 @@
 # First-run setup
 
 Run when `$CAREER` is missing, or when the user asks for setup. It exists so a new user is running
-real scans the same day they install the plugin.
+real scans the same day they install the skill.
 
-**1. Create the database.** From the project root:
+**1. Create the database.** `$CAREER` is a fixed absolute directory, so this runs the same from
+anywhere — ask the skill where it is rather than writing a path relative to the working directory:
 
 ```bash
-cp -R "$HOME/.claude/skills/job/templates/career" ./career
+CAREER=$(python3 "$HOME/.claude/skills/job/scripts/jobkit.py" career)
+mkdir -p "$CAREER"
+cp -R "$HOME/.claude/skills/job/templates/career/." "$CAREER/"
 python3 "$HOME/.claude/skills/job/scripts/q.py" \
   -f "$HOME/.claude/skills/job/sql/seed.sql"
 ```
@@ -48,7 +51,8 @@ command -v typst    || echo "brew install typst"                                
 command -v pdftoppm || echo "brew install poppler"                                   # resume build
 ```
 
-`pydantic` is what every source parses its payload into, so fetching needs it. Typst and Poppler are
+`pydantic` is what every source parses its payload into, so fetching needs it; it is the only
+entry in `requirements.txt`. Typst and Poppler are
 only for the resume build; scoring and applying need neither.
 
 **5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. A first run that returns sensible

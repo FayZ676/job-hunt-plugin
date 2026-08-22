@@ -27,7 +27,7 @@ DB = f"{CAREER}/job.db"
 RESUMES = f"{CAREER}/resumes"
 SUBMITTED = f"{RESUMES}/submitted"
 
-# Shipped with the plugin, not the user.
+# Shipped with the skill, not the user.
 _HERE = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_SQL = os.path.join(_HERE, "..", "sql", "schema.sql")
 
