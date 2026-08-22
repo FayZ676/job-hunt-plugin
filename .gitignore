@@ -1,2 +1,8 @@
+.DS_Store
+node_modules/
+
+# A user's own career data, if they run the skill from this directory.
+# Root-anchored so it never matches templates/career/.
+/career/
 __pycache__/
 *.pyc
