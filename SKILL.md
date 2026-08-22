@@ -38,6 +38,7 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
+| `/job ui` | Serve the read-only dashboard — `scripts/ui.py` |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op.
 
@@ -88,6 +89,13 @@ must not fight:
 
 The filesystem holds only what a database should not: built PDFs in `$CAREER/resumes/`, moved to
 `submitted/` when an application goes out. That is output; deleting it loses nothing.
+
+**The dashboard is how the user sees any of this.** `/job ui` serves `127.0.0.1` on the first free
+port from 8765 — pipeline, staged applications and their drafted essays, the whole profile with its
+`NULL`s called out, the watchlist, and the funnel from 14k postings down to a shortlist. It is
+**read-only, enforced by SQLite** (`mode=ro`), because the invariants that make a write safe live
+here, not in a web page. Point the user at it rather than reading rows aloud; keep answering
+questions with queries.
 
 **Never write run notes or daily summaries to disk.** The database is the record. Reporting is a
 query answered in the conversation — see `references/scoring.md`.
