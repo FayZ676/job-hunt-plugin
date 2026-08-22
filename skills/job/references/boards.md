@@ -1,18 +1,18 @@
 # The automated board scan
 
-Everything about boards: running the API scan, tuning what it returns, adding companies, and
-working the ones no API reaches. The Indeed pass has its own file, `indeed.md`.
+Running the API scan, tuning what it returns, adding companies, and working the boards no API
+reaches. Indeed has its own file, `indeed.md`.
 
 ## Running it
 
 ```bash
-cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"
 ```
 
-Stdlib only, no install step. It reads the company list and filters out of the database, hits every
-active board in parallel, applies the mechanical filters, skips anything already known, and inserts
-the rest into `prospects`.
+Stdlib only, no install step. Reads the company list and filters out of the database, hits every
+active Greenhouse, Lever and Ashby board in parallel, applies the mechanical filters, skips anything
+already known, and inserts the rest into `prospects`. Multi-location postings for one role merge into
+a single prospect, with the sibling ids stored as aliases so they never resurface as new.
 
 | Flag | Use |
 | ---- | --- |
@@ -20,23 +20,18 @@ the rest into `prospects`.
 | `--include-seen` | re-insert prospects already in the database |
 | `--no-location-filter` | see what the location rule is costing |
 | `--max-age-days 7` | tighten to the last week |
-
-
-
-
-Multi-location postings for one role merge into a single prospect, with the sibling ids stored as
-aliases so they never resurface as new.
+| `--workers N` | parallelism, default 8 |
 
 **Read the failure list.** A failing board usually means the company moved ATS or the slug is wrong.
-Fix the slug, or `UPDATE companies SET active=0 WHERE slug='…'`. Do not leave it failing every morning.
+Fix the slug, or `UPDATE companies SET active=0 WHERE slug='…'`. Do not leave it failing every
+morning.
 
 ## Tuning the filters
 
 The scan prints how many postings each filter dropped. Use those counts rather than guessing.
 
 ```bash
-Q='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py"'
-$Q "SELECT pattern, note FROM filters WHERE kind='title_exclude'"
+$Q "SELECT kind, pattern, note FROM filters"
 $Q "INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)contract','no contract roles')"
 $Q "DELETE FROM filters WHERE kind='title_exclude' AND pattern='(?i)contract'"
 ```
@@ -45,26 +40,28 @@ $Q "DELETE FROM filters WHERE kind='title_exclude' AND pattern='(?i)contract'"
 | ------- | --- |
 | Obvious junk in candidates | add to `title_exclude` |
 | A real role got filtered out | add to `title_include`, or loosen `location_include` |
-| Candidates fine, scores wrong | `search_criteria` and `search_notes` |
+| Candidates fine, scores wrong | `search_criteria` and `search_notes`, not filters |
 | Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |
 | Too few candidates | check the location counter; it is usually location |
 
 ## Adding companies
 
-Find the ATS slug in the careers-page URL — `boards.greenhouse.io/<slug>`, `jobs.lever.co/<slug>`,
-`jobs.ashbyhq.com/<slug>` — then:
+The slug is the company's careers-page path — `boards.greenhouse.io/anthropic`,
+`jobs.lever.co/shieldai`, `jobs.ashbyhq.com/ramp`. Many companies host the board on their own domain
+with the ATS behind an iframe; view source, or check where the "Apply" button points.
 
 ```bash
 $Q "INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual')"
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company Anthropic --include-seen
 ```
 
-A slug that 404s is wrong, or the company is on an ATS this script cannot read (Workday, Taleo,
-iCIMS, SmartRecruiters). Those go in as manual boards instead.
+A slug that 404s is wrong, or the company is on an ATS this script cannot read. Those go in as
+manual boards instead.
 
 ## Manual boards
 
-Companies no API reaches are rows with `ats='manual'` and a cadence, in the same table:
+**Workday, Taleo, iCIMS, SmartRecruiters and BambooHR have no public JSON board**, so they cannot be
+scanned. They are rows in the same table with `ats='manual'` and a cadence:
 
 ```bash
 $Q "INSERT INTO companies(slug,ats,name,careers_url,cadence,why)
@@ -73,87 +70,28 @@ $Q "SELECT * FROM manual_boards"                                  -- what is due
 $Q "UPDATE companies SET last_checked=date('now') WHERE slug='galois'"
 ```
 
-The automated watchlist skews toward venture-backed product companies, because that is who uses the
-three supported ATSes. Large regional employers, banks, insurers, health systems and manufacturers
-are on Workday or iCIMS instead, so leaving them out biases the whole search.
-
-Check what is due, score finds the same way as any other prospect, and record them with
-an `INSERT` into `prospects` with key `manual:<slug>:<role>-<year>-<month>`. **A company that migrates onto a supported
+Check what is due, score finds like any other prospect, and record them with an `INSERT` into
+`prospects` keyed `manual:<slug>:<role>-<year>-<month>`. **A company that migrates onto a supported
 ATS should change `ats`** and start being scanned automatically.
 
+This list matters because the automated watchlist skews toward venture-backed product companies —
+that is who uses the three supported ATSes. Large regional employers, banks, insurers, health systems
+and manufacturers are on Workday or iCIMS, so leaving them out biases the whole search. Indeed
+**widens** coverage but does not guarantee it for any particular employer; where an Indeed pass shows
+real coverage of a manual board, cut that board's cadence.
+
+**LinkedIn stays out of scope**: heavy with reposted and ghost listings, and no stable per-posting id
+to dedupe against.
 
 ## The board APIs
 
-All three board APIs are public, unauthenticated, and return the full description plus an apply
-URL in one call. No key, no scraping, no rate limit worth worrying about.
+`scan.py` owns these; the notes are here for debugging a board that goes quiet.
 
-## Greenhouse
+| ATS | Endpoint | Notes |
+| --- | -------- | ----- |
+| Greenhouse | `boards-api.greenhouse.io/v1/boards/<slug>/jobs?content=true` | `content` is HTML-escaped HTML — needs unescaping twice. Without `?content=true` there are no descriptions to score on |
+| Lever | `api.lever.co/v0/postings/<slug>?mode=json` | Returns a **bare array**. `createdAt` is epoch **ms**. A live board with no postings returns `[]` at 200; a wrong slug 404s. Adoption is thinning — re-verify slugs that go quiet |
+| Ashby | `api.ashbyhq.com/posting-api/job-board/<slug>?includeCompensation=true` | Best payload: `descriptionPlain` needs no HTML handling, `isRemote` is a real boolean, and compensation bands come back. Skip `isListed: false` — unlisted or closed |
 
-```
-https://boards-api.greenhouse.io/v1/boards/<slug>/jobs?content=true
-```
-
-`{"jobs": [...]}`. Fields used: `id`, `title`, `absolute_url`, `location.name`, `first_published`,
-`updated_at`, `content`.
-
-**`content` is HTML-escaped HTML** — it arrives as `&lt;div&gt;`, so it needs `html.unescape` before
-tag stripping and again afterwards for inner entities. `scan.py` does both.
-
-Without `?content=true` the descriptions are omitted and the payload is much smaller — but scoring
-needs the description, so always request it.
-
-## Lever
-
-```
-https://api.lever.co/v0/postings/<slug>?mode=json
-```
-
-Returns a **bare JSON array**, not an object. Fields used: `id`, `text` (the title), `hostedUrl`,
-`applyUrl`, `createdAt` (epoch **milliseconds**), `categories.location`, `categories.allLocations`,
-`workplaceType`, `salaryRange`, `descriptionPlain`.
-
-A live board with zero postings returns `[]` with HTTP 200; a wrong slug returns 404. Lever adoption
-has thinned out — several companies that used it have migrated to Greenhouse or Ashby, so re-verify
-slugs that suddenly go quiet.
-
-## Ashby
-
-```
-https://api.ashbyhq.com/posting-api/job-board/<slug>?includeCompensation=true
-```
-
-`{"jobs": [...]}`. Fields used: `id`, `title`, `location`, `secondaryLocations`, `isRemote`,
-`isListed`, `jobUrl`, `applyUrl`, `publishedAt` (ISO 8601), `compensation`, `descriptionPlain`.
-
-Best payload of the three — `descriptionPlain` needs no HTML handling, `isRemote` is an explicit
-boolean rather than something to infer from a location string, and `includeCompensation=true` returns
-real salary bands for the many companies now legally required to post them.
-
-Skip anything with `isListed: false` — those are unlisted or closed.
-
-## Not supported
-
-**Workday, Taleo, iCIMS, SmartRecruiters, and BambooHR** have no equivalent public JSON board. Workday
-in particular is a tenant-scoped POST API that changes shape per employer, and it's also the worst
-application experience to automate. Companies on these are best tracked manually or via a weekly
-web-search sweep rather than added here.
-
-**LinkedIn** stays out of scope: heavy with reposted and ghost listings, and no stable per-posting id
-to dedupe against.
-
-**Indeed is in scope as of 2026-08-21**, but not here — it has no board API, so it cannot join the
-table above. It is a browser pass with its own reference, `references/indeed.md`. The old objection
-that it gives no stable id turned out to be wrong: every posting carries a `jobkey` that dedupes
-cleanly. The reposted-and-ghost-listings objection was right, and `indeed_filter.py` exists to answer
-it — about 60% of what a query returns gets dropped before anything is read.
-
-## Finding a slug
-
-It's the company's careers-page path:
-
-- `boards.greenhouse.io/anthropic` or `job-boards.greenhouse.io/anthropic` → `anthropic`
-- `jobs.lever.co/shieldai` → `shieldai`
-- `jobs.ashbyhq.com/ramp` → `ramp`
-
-Many companies host the board on their own domain with the ATS behind an iframe — view source, or
-check where the "Apply" button points.
+All three are public and unauthenticated, and return the full description plus an apply URL in one
+call. No key, no scraping, no rate limit worth worrying about.

@@ -242,7 +242,7 @@ def cmd_filter(args):
         "location {location} | stale {stale} | expired {expired} | already-seen {seen} | "
         "already-tracked {tracked} | dupes {duplicate}".format(**counts)
     )
-    print(f"NEEDS DESCRIPTION: {len(records)}  (db.py list --new --json to fetch them)")
+    print(f"NEEDS DESCRIPTION: {len(records)}  (navigate /viewjob?jk= for each, then merge)")
     if discovered:
         print("\ncompanies not on the automated watchlist:")
         for name, n in sorted(discovered.items(), key=lambda kv: -kv[1]):

@@ -46,16 +46,14 @@ That's the whole install. `/job scan` works as soon as setup finishes.
 
 ## Your files
 
-Setup creates exactly two things.
+Setup creates one thing: **`career/.state/job.db`**, a single SQLite database.
 
-**`the profile tables` — the only file you own.** Identity, the answers application forms ask for,
-your employers and projects, and what you're looking for. It's structured, but you never edit it by
-hand: tell Claude about a job you had, paste a resume, upload a CV, and it writes the fields. You
-talk; the data stays consistent.
-
-**`career/.state/job.db` — everything else.** One SQLite database holding every prospect ever seen,
-the companies you watch, your filters, staged applications, and the history of each role. There are
-no per-day scan files: a scan updates the database, and a question about your search is a query.
+It holds your profile — identity, the answers application forms ask for, your employers and
+projects, and what you're looking for — alongside every prospect ever seen, the companies you watch,
+your filters, staged applications, and the history of each role. You never edit it by hand: tell
+Claude about a job you had, paste a resume, upload a CV, and it writes the rows. You talk; the data
+stays consistent. There are no per-day scan files — a scan updates the database, and a question
+about your search is a query.
 
 ```
 you: which companies rejected me fastest?

@@ -1,6 +1,6 @@
--- Seed data for `db.py init`. Executed directly against the schema.
+-- Seed data, applied with `q.py -f sql/seed.sql` against a fresh database.
 -- Companies on Greenhouse, Lever and Ashby, plus the mechanical filters and settings.
--- Edit freely, or ignore it entirely and add rows with `db.py companies --add`.
+-- Edit freely, or ignore it entirely and INSERT into `companies` by hand.
 
 -- Settings -----------------------------------------------------------------
 INSERT OR REPLACE INTO settings(key,value) VALUES('max_age_days','30');
