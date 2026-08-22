@@ -173,7 +173,7 @@ So the apply path is unchanged. Resolve the URL, land on the real ATS, and follo
 `references/applying.md` as for any other role. Record the resolved URL as `resolved_ats_url` and use
 it — not the `indeed.com/viewjob` link — as the application's `url`.
 
-**When it resolves to Greenhouse, Lever, or Ashby, add it: `db.py companies --add "Name:ats:slug"`.** This
+**When it resolves to Greenhouse, Lever, or Ashby, `INSERT` it into `companies`.** This
 is the compounding win: Indeed finds the company once, and the cheap API scan covers it every morning
 after. Every graduation makes the next Indeed run less necessary.
 

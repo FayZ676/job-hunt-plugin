@@ -12,7 +12,6 @@ import datetime as dt
 import json
 import sys
 
-import db as jobdb
 import jobkit
 from jobkit import (
     MAX_DESCRIPTION_CHARS,
@@ -96,7 +95,7 @@ def cmd_filter(args):
     with open(args.raw, "r", encoding="utf-8") as handle:
         cards = flatten(json.load(handle))
 
-    con = jobdb.connect(args.db)
+    con = jobkit.connect(args.db)
     settings = {r["key"]: r["value"] for r in con.execute("SELECT key,value FROM settings").fetchall()}
     def patterns(kind):
         return [r["pattern"] for r in con.execute(
@@ -226,7 +225,7 @@ def cmd_filter(args):
         key=lambda r: (r["age_days"] if r["age_days"] is not None else 9999, r["company"]),
     )
 
-    con = jobdb.connect(args.db)
+    con = jobkit.connect(args.db)
     for record in records:
         con.execute(
             "INSERT OR IGNORE INTO prospects(key,company,title,url,apply_url,location,remote,"
@@ -235,8 +234,6 @@ def cmd_filter(args):
             (record["key"], record["company"], record["title"], record.get("url"),
              record.get("apply_url"), record.get("location"), int(bool(record.get("remote"))),
              record.get("compensation"), record.get("posted_at"), jobkit.today(), jobkit.today()))
-        con.execute("INSERT INTO events(key,at,status,note) VALUES(?,?,'new','indeed')",
-                    (record["key"], jobdb.now()))
     con.commit()
 
     print(f"indeed cards: {counts['fetched']}")
@@ -255,7 +252,7 @@ def cmd_filter(args):
 
 def cmd_merge(args):
     """Attach fetched descriptions to prospects the filter pass already stored."""
-    con = jobdb.connect(args.db)
+    con = jobkit.connect(args.db)
     with open(args.descriptions, "r", encoding="utf-8") as handle:
         payload = json.load(handle)
     items = payload if isinstance(payload, list) else payload.get("descriptions", [])

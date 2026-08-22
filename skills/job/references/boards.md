@@ -28,17 +28,17 @@ Multi-location postings for one role merge into a single prospect, with the sibl
 aliases so they never resurface as new.
 
 **Read the failure list.** A failing board usually means the company moved ATS or the slug is wrong.
-Fix the slug, or `$DB companies --deactivate <slug>`. Do not leave it failing every morning.
+Fix the slug, or `UPDATE companies SET active=0 WHERE slug='…'`. Do not leave it failing every morning.
 
 ## Tuning the filters
 
 The scan prints how many postings each filter dropped. Use those counts rather than guessing.
 
 ```bash
-DB='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py"'
-$DB filters --kind title_exclude
-$DB filters --kind title_exclude --add '(?i)contract' --note "no contract roles"
-$DB filters --kind title_exclude --remove '(?i)contract'
+Q='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py"'
+$Q "SELECT pattern, note FROM filters WHERE kind='title_exclude'"
+$Q "INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)contract','no contract roles')"
+$Q "DELETE FROM filters WHERE kind='title_exclude' AND pattern='(?i)contract'"
 ```
 
 | Symptom | Fix |
@@ -46,7 +46,7 @@ $DB filters --kind title_exclude --remove '(?i)contract'
 | Obvious junk in candidates | add to `title_exclude` |
 | A real role got filtered out | add to `title_include`, or loosen `location_include` |
 | Candidates fine, scores wrong | `career/profile.json`, the `search` block |
-| Same company never has anything | `$DB companies --deactivate <slug>` |
+| Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |
 | Too few candidates | check the location counter; it is usually location |
 
 ## Adding companies
@@ -55,7 +55,7 @@ Find the ATS slug in the careers-page URL — `boards.greenhouse.io/<slug>`, `jo
 `jobs.ashbyhq.com/<slug>` — then:
 
 ```bash
-$DB companies --add "Anthropic:greenhouse:anthropic"
+$Q "INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual')"
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company Anthropic --include-seen
 ```
 
@@ -67,10 +67,10 @@ iCIMS, SmartRecruiters). Those go in as manual boards instead.
 Companies no API reaches are rows with `ats='manual'` and a cadence, in the same table:
 
 ```bash
-$DB companies --add "Galois:manual:galois" --careers-url https://galois.com/careers/ \
-   --cadence Weekly --why "formal methods; local"
-$DB companies --manual          # the list, with when each was last checked
-$DB companies --checked galois  # after checking one
+$Q "INSERT INTO companies(slug,ats,name,careers_url,cadence,why)
+    VALUES('galois','manual','Galois','https://galois.com/careers/','Weekly','formal methods; local')"
+$Q "SELECT * FROM manual_boards"                                  -- what is due, by cadence
+$Q "UPDATE companies SET last_checked=date('now') WHERE slug='galois'"
 ```
 
 The automated watchlist skews toward venture-backed product companies, because that is who uses the
@@ -78,7 +78,7 @@ three supported ATSes. Large regional employers, banks, insurers, health systems
 are on Workday or iCIMS instead, so leaving them out biases the whole search.
 
 Check what is due, score finds the same way as any other prospect, and record them with
-`$DB upsert --key manual:<slug>:<role>-<year>-<month> …`. **A company that migrates onto a supported
+an `INSERT` into `prospects` with key `manual:<slug>:<role>-<year>-<month>`. **A company that migrates onto a supported
 ATS should change `ats`** and start being scanned automatically.
 
 

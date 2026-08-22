@@ -10,7 +10,6 @@ import time
 import urllib.error
 import urllib.request
 
-import db as jobdb
 import jobkit
 from jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, to_iso
 
@@ -187,7 +186,7 @@ def main():
     parser.add_argument("--db", default=None)
     args = parser.parse_args()
 
-    con = jobdb.connect(args.db)
+    con = jobkit.connect(args.db)
     config = {kind: [r["pattern"] for r in con.execute(
         "SELECT pattern FROM filters WHERE kind=?", (kind,)).fetchall()]
         for kind in ("title_include", "title_exclude", "location_include",
@@ -201,7 +200,7 @@ def main():
         wanted = {w.lower() for w in args.company}
         companies = [c for c in companies if c["name"].lower() in wanted or c["slug"].lower() in wanted]
     if not companies:
-        print("No active companies matched. Add some with: db.py companies --add", file=sys.stderr)
+        print("No active companies matched. Seed the database or add companies to it.", file=sys.stderr)
         return 1
 
     title_include = compile_patterns(config.get("title_include"))
@@ -276,8 +275,6 @@ def main():
              record.get("apply_url"), record.get("location"), int(bool(record.get("remote"))),
              record.get("compensation"), record.get("posted_at"), jobkit.today(), jobkit.today(),
              record.get("source"), record.get("ats"), record.get("description")))
-        con.execute("INSERT INTO events(key,at,status,note) VALUES(?,?,'new','first seen')",
-                    (record["key"], jobdb.now()))
         for alias in record.get("duplicate_keys") or []:
             con.execute("INSERT OR IGNORE INTO aliases(alias_key,key) VALUES(?,?)",
                         (alias, record["key"]))

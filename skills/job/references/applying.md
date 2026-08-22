@@ -180,7 +180,7 @@ Set `applied` only against a confirmation you have seen in a snapshot.
 - **Cover letter fields** are usually optional. Leave optional essay fields empty rather than filling
   them with something generic; a weak answer costs more than no answer.
 - **"How did you hear about us?"** — answer the company's job board, which is true.
-- **Duplicate applications.** Check `db.py show <key>` before staging. A second application to
+- **Duplicate applications.** Check `$Q "SELECT * FROM prospects WHERE key='…'"` before staging. A second application to
   the same role reads as carelessness and can burn a limit.
 - **Login walls.** Some forms require an account before showing fields. Flag for the user.
 - **Stale refs.** Any click that re-renders invalidates every ref in the snapshot. Re-snapshot.

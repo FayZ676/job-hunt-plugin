@@ -3,53 +3,63 @@
 There is one record: the `prospects` table. Scoring writes to it, status changes write to it, and
 "what happened" is read back out of it.
 
+```bash
+Q='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py"'
+```
+
 ## Score
 
 Read `career/profile.json` in full — the `search` block is the rubric and `search.notes` carries the
 judgement it cannot encode. Then take the triage list:
 
 ```bash
-DB='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py"'
-$DB list --new
+$Q "SELECT * FROM triage WHERE status='new'"
 ```
 
-That view has title, company, location, compensation and age. **It has no descriptions**, which is
-deliberate: a day's descriptions run to tens of thousands of tokens and most belong to roles the
-list already rules out.
+`triage` has title, company, location, compensation and age. **It has no description column at all**,
+which is the point: a day's descriptions run to tens of thousands of tokens and most belong to roles
+the list already rules out.
 
 Triage on it, then pull only what survives:
 
 ```bash
-$DB describe <key> <key> <key>
+$Q "SELECT key, description FROM prospects WHERE key IN ('…','…','…')"
 ```
 
 - **Read the description before scoring.** Scoring off the title is the failure this step exists to
   prevent. A "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer" req that is
   really data plumbing.
-- **Every score cites the specific JD language that drove it**, quoted or named, in `--reason`.
+- **Every score cites the specific JD language that drove it**, quoted or named, in `reason`.
 - Apply dealbreakers first. A dealbreaker is a hard zero regardless of how well the rest reads.
 - Where a score turns on something still `null` in the profile, score on a stated assumption and say
   so in the reason.
 
-```bash
-$DB score <key> --score 9 --reason "JD leads with production LLM evaluation harnesses"
+```sql
+UPDATE prospects SET score=9, reason='JD leads with production LLM evaluation harnesses'
+WHERE key='greenhouse:anthropic:401';
 ```
 
-At or above the profile's `shortlist_threshold` this sets `shortlisted`; below it, `skipped`.
-**Score every prospect, including the ones you skip** — an unscored row stays `new` and comes back
-tomorrow.
+**Setting `score` sets the status.** A trigger compares it against `shortlist_threshold` in
+`settings` and writes `shortlisted` or `skipped`, so the two can never disagree. **Score every
+prospect, including the ones you skip** — an unscored row stays `new` and comes back tomorrow.
 
 ## Status
 
-```bash
-$DB status <key> --status applied --resume career/resumes/submitted/<slug>.pdf --note "confirmation verified"
+```sql
+UPDATE prospects SET status='applied', resume='career/resumes/submitted/x.pdf' WHERE key='…';
 ```
 
-Vocabulary, roughly in lifecycle order: `new` · `scored` · `shortlisted` · `skipped` · `staged` ·
-`applied` · `interviewing` · `rejected` · `not_pursued` · `closed`.
+Vocabulary, in lifecycle order: `new` · `scored` · `shortlisted` · `skipped` · `staged` · `applied` ·
+`interviewing` · `rejected` · `not_pursued` · `closed`. A `CHECK` constraint rejects anything else,
+so a typo fails loudly instead of creating a status nobody queries for.
 
-Every change appends to `events`, so the history is intact without duplicating the row. `db.py show
-<key>` prints a prospect with its full timeline.
+A trigger appends to `events` on every status change, so history is intact without duplicating the
+row and without any caller remembering to write it. Add a note when the transition alone does not
+say enough:
+
+```sql
+INSERT INTO events(key,status,note) VALUES('…','rejected','3 days, no interview — resume screen');
+```
 
 ## Answering questions
 
@@ -57,23 +67,29 @@ The reason this is a database: the user can ask things, and you answer with a qu
 reading files.
 
 ```bash
-$DB stats
-$DB query "SELECT company, title, score FROM prospects WHERE status='applied' ORDER BY score DESC"
-$DB query "SELECT company, COUNT(*) n FROM prospects WHERE status='rejected' GROUP BY company"
-$DB query "SELECT p.company, p.title, julianday(e2.at) - julianday(e1.at) AS days
-           FROM events e1 JOIN events e2 ON e1.key = e2.key
-           JOIN prospects p ON p.key = e1.key
-           WHERE e1.status='applied' AND e2.status='rejected'"
+$Q "SELECT * FROM stats"
+$Q "SELECT company, title, score FROM prospects WHERE status='applied' ORDER BY score DESC"
+$Q "SELECT company, COUNT(*) n FROM prospects WHERE status='rejected' GROUP BY company ORDER BY n DESC"
+
+# how fast rejections come back, and whether an interview happened first
+$Q "SELECT p.company, p.title,
+            CAST(julianday(r.at) - julianday(a.at) AS INT) AS days,
+            EXISTS(SELECT 1 FROM events i WHERE i.key=p.key AND i.status='interviewing') AS interviewed
+     FROM prospects p
+     JOIN events a ON a.key=p.key AND a.status='applied'
+     JOIN events r ON r.key=p.key AND r.status='rejected'
+     ORDER BY days"
 ```
 
-That last one answers "how fast do rejections come back, and did an interview happen" — the sort of
-thing the old append-only file could not be asked at all.
+That last one is the sort of question the old append-only file could not be asked at all.
 
 ## The run report
 
+There is no report command — the note is a rendering, so query what you need and write the markdown:
+
 ```bash
-$DB report [--date YYYY-MM-DD]
+$Q --json "SELECT company,title,score,status,reason,url,resume FROM prospects WHERE first_seen=date('now')"
 ```
 
-Derived from the database, not stored. Write it to `career/runs/<date>.md` when the user wants a
-note to read; that file is a rendering, and deleting it loses nothing.
+Write it to `career/runs/<date>.md` when the user wants something to read. Deleting that file loses
+nothing; the database is the record.

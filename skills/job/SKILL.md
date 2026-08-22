@@ -50,7 +50,7 @@ Two things exist. That is the whole storage model.
 | Path | What |
 | ---- | ---- |
 | `career/profile.json` | **The only file the user owns.** Identity, application answers, experience, search criteria. Structured — see `references/profile.md`. |
-| `career/.state/job.db` | **Everything else.** Prospects, companies, filters, staged applications, history. SQLite; drive it with `db.py`, never by hand-editing. |
+| `career/.state/job.db` | **Everything else.** Prospects, companies, filters, staged applications, history. SQLite, driven with SQL — see **The database** below. |
 
 Plus `career/resumes/` (built, then `submitted/`) and `career/runs/` if the user wants a run note
 written; the note is a rendering of the database, not a record in its own right.
@@ -60,28 +60,70 @@ not a file.
 
 ## The database
 
+`career/.state/job.db` is SQLite, and **you drive it with SQL**. There is no command layer to learn:
+
 ```bash
-DB='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py"'
-$DB list --new                      # triage view — never includes descriptions
-$DB list --status shortlisted --json
-$DB describe <key> [<key> …]        # pull descriptions, only for what survived triage
-$DB show <key>                      # one prospect in full, with its history
-$DB score <key> --score 9 --reason "…"
-$DB status <key> --status applied --resume career/resumes/<slug>.pdf
-$DB companies [--manual] [--add "Name:ats:slug"] [--checked <slug>]
-$DB filters --kind title_exclude --add '(?i)contract'
-$DB stats
-$DB report [--date YYYY-MM-DD]      # the run note, derived
-$DB query "SELECT …"                # anything the subcommands do not cover
+Q='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py"'
+$Q "SELECT * FROM triage WHERE status='new'"
+$Q --json "SELECT * FROM triage WHERE status='shortlisted'"
+$Q --schema                       # the full schema, including what each view is for
 ```
 
-**`list` never returns descriptions and `describe` returns nothing else.** That split is the whole
-reason scoring is affordable: a day's descriptions run to tens of thousands of tokens, and most
-belong to roles the index already ruled out.
+**The schema carries the rules.** Read it once with `--schema` and you know the whole system:
+
+- `CHECK` constraints reject an invalid status, a score outside 0–10, or an unknown filter kind.
+  There is no way to write a bad value, including by hand.
+- **Triggers write history.** Inserting a prospect logs a `new` event; changing `status` logs the
+  transition. Never insert into `events` yourself.
+- **Setting `score` sets the status.** A trigger compares it against `shortlist_threshold` in
+  `settings` and writes `shortlisted` or `skipped`, so a score and a shortlist decision cannot
+  disagree.
+
+### The views are the read surface
+
+| View | What it is for |
+| ---- | -------------- |
+| `triage` | Every prospect **without its description**. The scoring list; the column is not in the view, so it cannot leak. |
+| `stats` | Counts by status. |
+| `manual_boards` | Active `ats='manual'` companies, ordered by cadence. |
+| `needs_review` | Staged applications and their flagged fields — the Phase 5 approval prompt. |
+
+**Descriptions come one at a time**, after triage has narrowed the list:
+
+```bash
+$Q "SELECT description FROM prospects WHERE key='greenhouse:anthropic:401'"
+```
+
+A day's descriptions run to tens of thousands of tokens, and most belong to roles `triage` already
+ruled out. `SELECT * FROM prospects` is almost always a mistake.
+
+### Common statements
+
+```sql
+-- score (status and history follow automatically)
+UPDATE prospects SET score=9, reason='JD leads with production LLM evaluation' WHERE key='…';
+
+-- move a role along
+UPDATE prospects SET status='applied', resume='career/resumes/submitted/x.pdf' WHERE key='…';
+
+-- a note against the timeline, when the transition alone does not say enough
+INSERT INTO events(key,status,note) VALUES('…','rejected','3 days, no interview — resume screen');
+
+-- watch a company / stop watching one
+INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual');
+UPDATE companies SET active=0 WHERE slug='…';
+
+-- a manual board, and marking one checked
+INSERT INTO companies(slug,ats,name,careers_url,cadence,why)
+  VALUES('galois','manual','Galois','https://galois.com/careers/','Weekly','formal methods; local');
+UPDATE companies SET last_checked=date('now') WHERE slug='galois';
+
+-- tune what the scan returns
+INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)\bcontract\b','no contract roles');
+```
 
 When the user asks a question about their search — what they applied to, what went quiet, which
-companies reject fastest — **answer it with `query`**, not by reading files.
-
+companies reject fastest — **answer it with a query.**
 
 ## Phase 1 — Scan
 
@@ -109,10 +151,10 @@ attaches them. **Read `references/indeed.md` first** — the rule that matters i
 search URL, never `fetch()` it**; navigation is not rate-limited, XHR is throttled to 403.
 
 **C. Manual boards.** Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a
-cadence. `db.py companies --manual` lists them with when each was last checked; check what is due,
-record finds with `db.py upsert`, and mark the board `db.py companies --checked <slug>`.
+cadence. the `manual_boards` view lists them with when each was last checked; check what is due,
+record finds with an `INSERT` into `prospects`, and mark the board `UPDATE companies SET last_checked=date('now')`.
 
-When a find resolves to a supported ATS, add it: `db.py companies --add "Name:greenhouse:slug"`.
+When a find resolves to a supported ATS, `INSERT` it into `companies`.
 That is the point of the Indeed pass — found by hand once, scanned automatically every morning after.
 
 Read `references/boards.md` for flags and filter tuning.
@@ -123,16 +165,16 @@ Read `career/profile.json` — the `search` block is the rubric, and its `notes`
 judgement the schema cannot hold. Then:
 
 ```bash
-$DB list --new
+$Q "SELECT * FROM triage WHERE status='new'"
 ```
 
 **Triage on that list, then pull descriptions only for the plausible ones** with
-`$DB describe <key> …`. Scoring off a title alone is the failure this phase exists to prevent, so
+`$Q "SELECT description FROM prospects WHERE key='…'"`. Scoring off a title alone is the failure this phase exists to prevent, so
 anything you score must have had its description read; but reading all of them is how a run
 burns its context for nothing.
 
 ```bash
-$DB score <key> --score 9 --reason "the JD language that drove it, quoted"
+$Q "UPDATE prospects SET score=9, reason='the JD language that drove it, quoted' WHERE key='…'"
 ```
 
 `score` sets the status automatically: at or above the profile's `shortlist_threshold` it becomes
@@ -152,7 +194,7 @@ pdftoppm -jpeg -r 95 career/resumes/<slug>.pdf /tmp/page
 ```
 
 **Read the rendered image before moving on.** A resume that never got looked at is not ready to
-attach. Then record it: `$DB status <key> --status shortlisted --resume career/resumes/<slug>.pdf`.
+attach. Then record it: `$Q "UPDATE prospects SET resume='career/resumes/<slug>.pdf' WHERE key='…'"`.
 
 ## Phase 4 — Stage
 
@@ -176,10 +218,12 @@ Attach the resume PDF, screenshot the completed form, then record the staging. A
 SQL out of the way:
 
 ```bash
-$DB stage <key> --url <apply-url> --ats ashby --screenshot <png> --status ready \
-  --field "Name|Ada Lovelace|identity" \
-  --field "Do you have the legal right to work without sponsorship?|Yes|policy" \
-  --field "Tell us about an AI product you built…|…|judgment|needs-review"
+$Q "INSERT INTO staged(key,url,ats,screenshot,status) VALUES('…','<apply-url>','ashby','<png>','ready');
+    INSERT INTO staged_fields(key,label,value,tier,flag) VALUES
+      ('…','Name','Ada Lovelace','identity',NULL),
+      ('…','Do you have the legal right to work without sponsorship?','Yes','policy',NULL),
+      ('…','Tell us about an AI product you built…','…','judgment','needs-review');
+    UPDATE prospects SET status='staged' WHERE key='…'"
 ```
 
 `--status ready` means every field is filled; `blocked` means a `null` in the profile or a question
@@ -201,7 +245,7 @@ validation error means it was not submitted — repair the named field and re-pr
 Then, for each submitted application:
 
 ```bash
-$DB status <key> --status applied --resume career/resumes/submitted/<slug>.pdf --note "confirmation verified"
+$Q "UPDATE prospects SET status='applied', resume='career/resumes/submitted/<slug>.pdf' WHERE key='…'"
 ```
 
 and move the resume's `.pdf` and `.json` into `career/resumes/submitted/`. The status change and the
@@ -215,7 +259,8 @@ which role, which field, which file — without restating what went cleanly alon
 ## Recording a rejection
 
 ```bash
-$DB status <key> --status rejected --note "3 days, no interview — resume screen"
+$Q "UPDATE prospects SET status='rejected' WHERE key='…';
+    INSERT INTO events(key,status,note) VALUES('…','rejected','3 days, no interview — resume screen')"
 ```
 
 Then **delete the resume's `.pdf` and `.json` from `career/resumes/submitted/`** and clear the
@@ -237,7 +282,7 @@ Only a reported rejection triggers this. Do nothing for a role that is merely qu
 | Form fields missing from the snapshot | Form renders after page load | Wait for the loading text to clear, re-snapshot |
 | Every staged application `blocked` | Profile still has `null`s | Fill them in `career/profile.json` once |
 | Same posting staged twice | Never scored, so it re-entered as new | Phase 2 scores every prospect, including skips |
-| Zero candidates from thousands of postings | Filters too tight | Read the per-filter drop counts; usually location. `db.py filters` to adjust |
+| Zero candidates from thousands of postings | Filters too tight | Read the per-filter drop counts; usually location. the `filters` table to adjust |
 | Login wall on the apply form | Company requires an account | Stage what is reachable, flag the rest |
 | Indeed returns 429 or 403 | The pass used `fetch()` | Navigate to each URL instead |
 | Indeed re-proposes a watchlist role | Company name differs from its `companies` row | Reconcile the spelling so dedupe matches |

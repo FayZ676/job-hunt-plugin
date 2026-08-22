@@ -4,6 +4,7 @@
 import json
 import os
 import re
+import sqlite3
 from datetime import datetime, timezone
 
 MAX_DESCRIPTION_CHARS = 20000
@@ -29,6 +30,23 @@ SUBMITTED = f"{RESUMES}/submitted"
 # The system owns this. One database: prospects, companies, filters, staged.
 STATE = f"{CAREER}/.state"
 DB = f"{STATE}/job.db"
+
+# Shipped with the plugin, not the user.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_SQL = os.path.join(_HERE, "..", "sql", "schema.sql")
+SEED_SQL = os.path.join(_HERE, "..", "sql", "seed.sql")
+
+
+def connect(path=None):
+    """Open the database, applying the schema. Every statement in it is
+    idempotent, so this doubles as `init`."""
+    path = path or DB
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    con = sqlite3.connect(path)
+    con.row_factory = sqlite3.Row
+    with open(SCHEMA_SQL, encoding="utf-8") as handle:
+        con.executescript(handle.read())
+    return con
 
 
 def today():

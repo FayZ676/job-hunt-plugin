@@ -7,8 +7,8 @@ real scans the same day they install the plugin.
 
 ```bash
 cp -R "${CLAUDE_PLUGIN_ROOT}/templates/career" ./career
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py" init \
-  --seed "${CLAUDE_PLUGIN_ROOT}/skills/job/seed/watchlist.sql"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py" \
+  -f "${CLAUDE_PLUGIN_ROOT}/skills/job/sql/seed.sql"
 ```
 
 That gives them `career/profile.json` — the only file they own — and a database seeded with 137
@@ -33,9 +33,9 @@ them which ones will block an application.
 are hiring into a different field, rewrite both:
 
 ```bash
-db.py filters --kind title_include --add '…'
-db.py companies --add "Name:greenhouse:slug"
-db.py companies --deactivate <slug>
+INSERT INTO filters(kind,pattern) VALUES('title_include','…');
+INSERT INTO companies(slug,ats,name,source) VALUES('slug','greenhouse','Name','manual');
+UPDATE companies SET active=0 WHERE slug='…';
 ```
 
 **4. Check the tooling.** Only the resume build needs anything installed:
@@ -47,6 +47,6 @@ command -v pdftoppm || echo "brew install poppler"
 
 Scanning and scoring work without either.
 
-**5. Do a dry run.** `/job scan --no-indeed`, then `db.py list --new`. A first scan that returns
+**5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. A first scan that returns
 sensible companies means the filters are tuned; nothing, or thousands, means another pass — the
 per-filter drop counts say which one.

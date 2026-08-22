@@ -150,7 +150,7 @@ Requires Typst and Poppler.
 
 ## After
 
-Record the `.pdf` path with `db.py status <key> --resume …`, then give the gap
+Record the `.pdf` path on the prospect (`UPDATE prospects SET resume=…`), then give the gap
 report. `career/resumes/` therefore holds only resumes that have not gone out yet; phase 5 moves a
 resume into `career/resumes/submitted/` when its application is submitted, so the top level stays a
 worklist. Offer, without doing: a matching cover letter, and appending anything newly surfaced
