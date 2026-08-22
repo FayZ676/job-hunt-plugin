@@ -5,7 +5,7 @@ Replaces the per-day scan files and the append-only JSONL ledger. There is no
 record of "a scan" any more -- a scan updates prospects, and questions about
 what happened are queries.
 
-  db.py init [--seed watchlist.toml]   create the schema
+  db.py init [--seed watchlist.sql]    create the schema
   db.py list [--status …] [--min-score N] [--new] [--limit N]
   db.py show <key> | describe <key>
   db.py score <key> --score N --reason …
@@ -160,22 +160,11 @@ def rows_out(rows, as_json):
 def cmd_init(args):
     con = connect(args.db)
     if args.seed:
-        cfg = jobkit.load_config(args.seed)
-        n_c = n_f = 0
-        for c in cfg.get("companies", []):
-            con.execute(
-                "INSERT OR IGNORE INTO companies(slug,ats,name,active,added_on,source) VALUES(?,?,?,?,?,?)",
-                (c["slug"], c["ats"], c["name"], int(c.get("active", True)), jobkit.today(), "seed"))
-            n_c += 1
-        for kind in ("title_include", "title_exclude", "location_include", "location_exclude",
-                     "us_tokens", "title_noise", "agency_name_patterns", "agency_blocklist"):
-            for pattern in cfg.get(kind, []):
-                con.execute("INSERT OR IGNORE INTO filters(kind,pattern) VALUES(?,?)", (kind, pattern))
-                n_f += 1
-        for key in ("max_age_days", "comp_floor", "fromage_days", "delay_ms", "shortlist_threshold"):
-            if key in cfg:
-                con.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)", (key, str(cfg[key])))
+        with open(args.seed, "r", encoding="utf-8") as handle:
+            con.executescript(handle.read())
         con.commit()
+        n_c = con.execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+        n_f = con.execute("SELECT COUNT(*) FROM filters").fetchone()[0]
         print(f"seeded {n_c} companies and {n_f} filters from {args.seed}")
     print(f"database ready: {args.db or jobkit.DB}")
     return 0

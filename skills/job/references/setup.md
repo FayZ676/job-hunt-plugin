@@ -8,7 +8,7 @@ real scans the same day they install the plugin.
 ```bash
 cp -R "${CLAUDE_PLUGIN_ROOT}/templates/career" ./career
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py" init \
-  --seed "${CLAUDE_PLUGIN_ROOT}/skills/job/seed/watchlist.toml"
+  --seed "${CLAUDE_PLUGIN_ROOT}/skills/job/seed/watchlist.sql"
 ```
 
 That gives them `career/profile.json` — the only file they own — and a database seeded with 137

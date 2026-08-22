@@ -71,7 +71,7 @@ record — deleting it loses nothing.
 
 ## Requirements
 
-- **Scanning and scoring:** Python 3.11+. Nothing else — SQLite ships with it.
+- **Scanning and scoring:** Python 3.9+. Nothing else — SQLite ships with it.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).

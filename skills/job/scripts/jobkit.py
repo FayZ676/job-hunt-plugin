@@ -4,7 +4,6 @@
 import json
 import os
 import re
-import sys
 from datetime import datetime, timezone
 
 MAX_DESCRIPTION_CHARS = 20000
@@ -39,21 +38,6 @@ def today():
 def run_entry(date=None):
     return f"{RUNS}/{date or today()}.md"
 
-
-def load_config(path):
-    """Read a TOML config, with a legible error on older Pythons."""
-    try:
-        import tomllib
-    except ModuleNotFoundError:
-        sys.exit("Python 3.11+ is required to read TOML config (found "
-                 f"{sys.version.split()[0]}). Upgrade Python, or pip install tomli.")
-    try:
-        with open(path, "rb") as handle:
-            return tomllib.load(handle)
-    except FileNotFoundError:
-        sys.exit(f"missing config: {path}\nRun /job setup to create it.")
-    except tomllib.TOMLDecodeError as error:
-        sys.exit(f"{path} is not valid TOML: {error}")
 
 
 def write_json(path, payload, indent=None):
