@@ -12,8 +12,15 @@ submits.
 | **Lever** | `jobs.lever.co/<slug>/<id>/apply` | Server-rendered and predictable, but **submission is gated by hCaptcha** |
 | **Workday** | `<company>.wd<N>.myworkdayjobs.com/…` | **Fully drivable.** Needs a per-employer account, then a five-step flow |
 | **iCIMS, Taleo, SmartRecruiters** | varies | Untested. Do not assume they are blocked — try one before writing them off |
+| **Harvested** (`indeed:`) | `indeed.com/applystart?jk=<jobkey>&from=vj` | Redirects to the employer's real application page. Resolve it, then follow the row above for whatever ATS you land on |
 
-The prospect `key` prefix names the ATS: `ashby:`, `greenhouse:`, `lever:`, `manual:`.
+The prospect `key` prefix names the ATS: `ashby:`, `greenhouse:`, `lever:`, `manual:`, `indeed:`.
+
+**A harvested posting is applied to through the employer's ATS, never through the aggregator.**
+Record the resolved URL as the application's `url`, not the listing link. When it resolves to
+Greenhouse, Lever or Ashby, `INSERT` the company into `companies` — found once by hand, fetched from
+its own board every morning after, at which point ingest upgrades the prospect to the board's copy on
+its own.
 
 **Wait for the form before snapshotting.** Ashby renders "Fetching application form" first, and a
 snapshot taken too early shows a page with no fields on it.
@@ -156,4 +163,6 @@ silently. Set `applied` only against a confirmation you have seen in a snapshot.
 - **Cover letter fields** are usually optional. Leave optional essay fields empty rather than filling
   them with something generic; a weak answer costs more than no answer.
 - **"How did you hear about us?"** — answer the company's job board, which is true.
-- **Login walls.** Some forms require an account before showing fields. Flag for the user.
+- **Login walls.** Some forms require an account before showing fields. Flag for the user. Indeed
+  Apply (`indeedApplyEnabled` with no company site) is one of these — an in-platform form needing a
+  signed-in account; stage what is reachable and flag the rest.

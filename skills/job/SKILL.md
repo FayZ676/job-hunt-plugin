@@ -100,8 +100,8 @@ ingest rules on all of them with one chain of filters — no filter knows which 
 from. Adding a mechanism is a line in `sources.REGISTRY`; nothing downstream changes.
 
 The Indeed harvest is the one source a browser has to collect, because Indeed throttles `fetch()`
-but not navigation. **Read `references/indeed.md` before running it.** Its descriptions arrive after
-ingest, for kept rows only: `fetch.py descriptions --file <descs.json>`.
+but not navigation. **Read `references/fetching.md` before running it.** Its descriptions arrive
+after ingest, for kept rows only: `fetch.py descriptions --file <descs.json>`.
 
 Re-running either step is free. Ingest re-rules without re-fetching:
 
@@ -114,7 +114,8 @@ lists what is due. Check those, `INSERT` finds into `prospects` directly, and se
 When a find resolves to a supported ATS, `INSERT` it into `companies` — found by hand once, fetched
 every morning after.
 
-Flags, filter tuning, adding companies: `references/boards.md`.
+Sources, slugs and the harvest: `references/fetching.md`. Filters, precedence and tuning:
+`references/ingesting.md`.
 
 ## Phase 2 — Score
 

@@ -54,4 +54,4 @@ only for the resume build; scoring and applying need neither.
 **5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. A first run that returns sensible
 companies means the filters are tuned; nothing, or thousands, means another pass — the drop counts
 say which one, and `ingest.py --redo` re-rules the same postings after each adjustment without
-fetching again.
+fetching again — `references/ingesting.md`.
