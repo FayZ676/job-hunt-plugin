@@ -1,6 +1,6 @@
 {
   "name": "job-hunt",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "description": "Scan job boards, score openings against a structured profile, build tailored resumes, fill application forms, and submit only what you approve. One database, one profile.",
   "author": {
     "name": "Faizi Fifita",

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Shared helpers for scan.py and indeed_filter.py."""
+"""Shared helpers: the database connection, paths, and the normalization
+every step agrees on."""
 
 import json
 import os
@@ -19,11 +20,6 @@ MAX_DESCRIPTION_CHARS = 20000
 
 CAREER = os.environ.get("JOB_CAREER_DIR", "career")
 
-# You read these.
-RUNS = f"{CAREER}/runs"
-RESUMES = f"{CAREER}/resumes"
-SUBMITTED = f"{RESUMES}/submitted"
-
 # The system owns this. One database: prospects, companies, filters, staged.
 STATE = f"{CAREER}/.state"
 DB = f"{STATE}/job.db"
@@ -31,7 +27,6 @@ DB = f"{STATE}/job.db"
 # Shipped with the plugin, not the user.
 _HERE = os.path.dirname(os.path.abspath(__file__))
 SCHEMA_SQL = os.path.join(_HERE, "..", "sql", "schema.sql")
-SEED_SQL = os.path.join(_HERE, "..", "sql", "seed.sql")
 
 
 def connect(path=None):
@@ -46,27 +41,6 @@ def connect(path=None):
     return con
 
 
-def today():
-    return datetime.now().strftime("%Y-%m-%d")
-
-
-def run_entry(date=None):
-    return f"{RUNS}/{date or today()}.md"
-
-
-
-def write_json(path, payload, indent=None):
-    """System-owned JSON: compact by default, since nothing reads it by eye."""
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=indent, ensure_ascii=False)
-
-_COMPANY_SUFFIXES = re.compile(
-    r"(?i)[,.]?\s*\b(inc|llc|ltd|corp|corporation|co|company|technologies|technology"
-    r"|labs|holdings|group|usa)\b\.?"
-)
-
-
 def compile_patterns(patterns):
     return [re.compile(p) for p in patterns or []]
 
@@ -79,7 +53,15 @@ def norm(text):
     return re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
 
 
+_COMPANY_SUFFIXES = re.compile(
+    r"(?i)[,.]?\s*\b(inc|llc|ltd|corp|corporation|co|company|technologies|technology"
+    r"|labs|holdings|group|usa)\b\.?"
+)
+
+
 def norm_company(name):
+    """Two sources rarely spell a company the same way, and dedupe compares
+    these, so the legal suffix comes off before anything is matched."""
     return norm(_COMPANY_SUFFIXES.sub("", name or ""))
 
 
@@ -114,18 +96,3 @@ def age_days(posted_at):
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
     return (datetime.now(timezone.utc) - moment).days
-
-
-def iter_ledger(path):
-    """Yield each well-formed JSON object in a .jsonl ledger, skipping junk."""
-    if not os.path.exists(path):
-        return
-    with open(path, "r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                yield json.loads(line)
-            except json.JSONDecodeError:
-                continue

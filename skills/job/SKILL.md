@@ -43,8 +43,14 @@ Nothing below overrides these.
 
 ## Storage
 
-One convention: `career/.state/job.db`. Prospects, companies, filters, staged applications, history,
-and the user's whole profile — identity, experience, search criteria — are rows in it.
+One convention: `career/.state/job.db`. Postings, prospects, companies, filters, staged
+applications, history, and the user's whole profile — identity, experience, search criteria — are
+rows in it.
+
+**Two layers, one direction.** `postings` is everything a fetch returned, unjudged. `prospects` is
+what ingest kept, and the only table the later phases touch. Every posting carries a `disposition`
+naming the filter that ruled on it, so "what did that filter cost me" is a query, and a changed
+filter re-runs over what is already stored instead of going back to the network.
 
 ```bash
 Q='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py"'
@@ -67,7 +73,7 @@ must not fight:
   decision cannot disagree.
 - **`triage` omits `description` on purpose.** A day's descriptions run to tens of thousands of
   tokens and most belong to roles triage already ruled out. Pull them one at a time, for survivors
-  only. `SELECT * FROM prospects` is almost always a mistake.
+  only. `SELECT * FROM prospects` is almost always a mistake, and `SELECT * FROM postings` more so.
 
 The filesystem holds only what a database should not: built PDFs in `career/resumes/` (moved to
 `submitted/` when an application goes out), and a run note in `career/runs/<date>.md` if the user
@@ -78,25 +84,35 @@ fact, changing what they want — conversation on their side, rows on yours (`re
 When they ask about their search — what they applied to, what went quiet, which companies reject
 fastest — **answer with a query.**
 
-## Phase 1 — Scan
+## Phase 1 — Fetch, then ingest
 
-Two sources, one destination: the `prospects` table. Re-running either is free; both skip what is
-already known.
+Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothing.
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"          # watched Greenhouse/Lever/Ashby
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" filter --raw <raw.json>
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" merge --descriptions <descs.json>
+S="${CLAUDE_PLUGIN_ROOT}/skills/job/scripts"
+python3 "$S/fetch.py" boards                                  # every watched board, in parallel
+python3 "$S/fetch.py" harvest --source indeed --file <harvest.json>
+python3 "$S/ingest.py"                                        # postings -> prospects
 ```
 
-The Indeed pass finds who is hiring that no watchlist has. **Read `references/indeed.md` before
-running it** — the rule that decides whether it works at all is *navigate to each search URL, never
-`fetch()` it*.
+**Every source is the same after fetching.** A source normalizes its payload into `postings` and
+ingest rules on all of them with one chain of filters — no filter knows which source a row came
+from. Adding a mechanism is a line in `sources.REGISTRY`; nothing downstream changes.
+
+The Indeed harvest is the one source a browser has to collect, because Indeed throttles `fetch()`
+but not navigation. **Read `references/indeed.md` before running it.** Its descriptions arrive after
+ingest, for kept rows only: `fetch.py descriptions --file <descs.json>`.
+
+Re-running either step is free. Ingest re-rules without re-fetching:
+
+```bash
+python3 "$S/ingest.py" --redo --no-location-filter   # what is the location rule costing?
+```
 
 Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a cadence; `manual_boards`
-lists what is due. Check those, `INSERT` finds into `prospects`, and set `last_checked`. When a find
-resolves to a supported ATS, `INSERT` it into `companies` — found by hand once, scanned every
-morning after.
+lists what is due. Check those, `INSERT` finds into `prospects` directly, and set `last_checked`.
+When a find resolves to a supported ATS, `INSERT` it into `companies` — found by hand once, fetched
+every morning after.
 
 Flags, filter tuning, adding companies: `references/boards.md`.
 

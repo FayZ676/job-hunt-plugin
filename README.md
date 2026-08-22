@@ -17,7 +17,7 @@ Five phases, in order.
 
 | Phase | What happens |
 |---|---|
-| **Scan** | Hits the Greenhouse, Lever, and Ashby APIs for every company you watch, plus an Indeed pass for employers nobody put on a list. Ships with a 137-company starter watchlist. Everything lands in one `prospects` table. |
+| **Scan** | Hits the Greenhouse, Lever, and Ashby APIs for every company you watch, plus an Indeed pass for employers nobody put on a list. Ships with a 137-company starter watchlist. Fetching and filtering are separate steps: everything a source returned lands in `postings` untouched, and one pass derives `prospects` from it. |
 | **Score** | Triages on a cheap list with no descriptions, pulls full text only for the plausible ones, then scores 0–10 against your profile — citing the JD language that drove it. Everything is recorded, shortlisted or not, so nothing is reviewed twice. |
 | **Resume** | Builds a role-specific resume straight to PDF, selecting the bullets in your profile that match this posting. It never invents a number your profile doesn't have. |
 | **Stage** | Opens the application form and fills every field your profile answers. An unanswered field is a hard stop, not a guess. Screening questions and essays get drafted and flagged, never auto-accepted. Stops with a finger over the submit button. |
@@ -44,16 +44,21 @@ export, hand it over and it drafts the whole thing for you to correct.
 
 That's the whole install. `/job scan` works as soon as setup finishes.
 
+Adding a new place to look for jobs is one entry in `sources.REGISTRY` — a function that returns
+`Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
+no step below fetching knows which source a row came from.
+
 ## Your files
 
 Setup creates one thing: **`career/.state/job.db`**, a single SQLite database.
 
 It holds your profile — identity, the answers application forms ask for, your employers and
-projects, and what you're looking for — alongside every prospect ever seen, the companies you watch,
-your filters, staged applications, and the history of each role. You never edit it by hand: tell
+projects, and what you're looking for — alongside every posting ever fetched, every prospect derived
+from one, the companies you watch, your filters, staged applications, and the history of each role. You never edit it by hand: tell
 Claude about a job you had, paste a resume, upload a CV, and it writes the rows. You talk; the data
 stays consistent. There are no per-day scan files — a scan updates the database, and a question
-about your search is a query.
+about your search is a query. Because the raw layer is kept, "what did that filter cost me?" is also
+a query, and a filter you change re-runs over this morning's fetch without touching the network.
 
 ```
 you: which companies rejected me fastest?
@@ -69,7 +74,7 @@ record — deleting it loses nothing.
 
 ## Requirements
 
-- **Scanning and scoring:** Python 3.9+. Nothing else — SQLite ships with it.
+- **Scanning and scoring:** Python 3.10+ and `pydantic` (`python3 -m pip install pydantic`, or `-r requirements.txt`). SQLite ships with Python.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).

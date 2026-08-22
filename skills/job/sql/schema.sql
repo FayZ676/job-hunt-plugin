@@ -37,6 +37,47 @@ CREATE TABLE IF NOT EXISTS filters (
   PRIMARY KEY (kind, pattern)
 );
 
+-- Everything a fetch returned, before any judgment. Fetching writes here and
+-- nothing else; ingest reads here and derives prospects. Keeping the raw layer
+-- is what makes a filter re-runnable without going back to the network, and
+-- what turns "what did that filter cost me" into a query.
+--
+-- Sources normalize into these columns so that every filter applies to every
+-- source. A source that cannot know a fact leaves the default, which reads as
+-- "unremarkable" rather than "no" -- that is what keeps ingest free of any
+-- condition naming a particular source.
+--
+-- disposition is NULL until ingest has ruled on the row: 'kept' means it was
+-- promoted to prospects, anything else names the filter that dropped it.
+CREATE TABLE IF NOT EXISTS postings (
+  key           TEXT PRIMARY KEY,
+  source        TEXT NOT NULL,
+  ats           TEXT,
+  company       TEXT NOT NULL,
+  title         TEXT NOT NULL,
+  url           TEXT,
+  apply_url     TEXT,
+  location      TEXT,
+  remote        INTEGER,
+  compensation  TEXT,
+  posted_at     TEXT,
+  description   TEXT,
+  sponsored     INTEGER NOT NULL DEFAULT 0,
+  expired       INTEGER NOT NULL DEFAULT 0,
+  comp_min      REAL,
+  comp_max      REAL,
+  comp_period   TEXT,
+  raw           TEXT,
+  first_fetched TEXT NOT NULL DEFAULT (date('now')),
+  last_fetched  TEXT NOT NULL DEFAULT (date('now')),
+  ingested_on   TEXT,
+  disposition   TEXT CHECK (disposition IS NULL OR disposition IN (
+                  'kept','upgraded','title','location','stale','seen','duplicate',
+                  'sponsored','expired','agency','noise','lowball','covered'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_postings_pending ON postings(disposition, last_fetched);
+
 CREATE TABLE IF NOT EXISTS prospects (
   key          TEXT PRIMARY KEY,
   company      TEXT NOT NULL,

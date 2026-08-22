@@ -40,14 +40,18 @@ INSERT INTO companies(slug,ats,name,source) VALUES('slug','greenhouse','Name','m
 UPDATE companies SET active=0 WHERE slug='…';
 ```
 
-**4. Check the tooling.** Only the resume build needs anything installed; scanning and scoring work
-without either.
+**4. Check the tooling.**
 
 ```bash
-command -v typst    || echo "brew install typst"
-command -v pdftoppm || echo "brew install poppler"
+python3 -c "import pydantic" 2>/dev/null || echo "python3 -m pip install pydantic"   # fetching
+command -v typst    || echo "brew install typst"                                     # resume build
+command -v pdftoppm || echo "brew install poppler"                                   # resume build
 ```
 
-**5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. A first scan that returns sensible
-companies means the filters are tuned; nothing, or thousands, means another pass — the per-filter
-drop counts say which one.
+`pydantic` is what every source parses its payload into, so fetching needs it. Typst and Poppler are
+only for the resume build; scoring and applying need neither.
+
+**5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. A first run that returns sensible
+companies means the filters are tuned; nothing, or thousands, means another pass — the drop counts
+say which one, and `ingest.py --redo` re-rules the same postings after each adjustment without
+fetching again.

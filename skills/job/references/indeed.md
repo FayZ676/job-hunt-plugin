@@ -1,8 +1,12 @@
 # Indeed
 
-A **discovery layer**, not a new place to apply. `scan.py` watches companies already chosen; Indeed
-answers what those boards cannot — *who is hiring that isn't on the list at all.* Everything it finds
-is applied to through the normal path, because an Indeed posting resolves to the employer's real ATS.
+A **discovery layer**, not a new place to apply. The board fetch watches companies already chosen;
+Indeed answers what those boards cannot — *who is hiring that isn't on the list at all.*
+
+**Indeed is not a special case.** It is one source among several, and it differs in exactly one
+respect: a browser has to collect its postings, because Indeed throttles `fetch()` but not
+navigation. Once `fetch.py harvest` has read what the browser saved, an Indeed row is a posting like
+any other — same table, same filters, same ingest, same applying path.
 
 ## Navigate, never fetch
 
@@ -65,27 +69,28 @@ await download.saveAs('…/indeed-raw.json');
 
 Same trick for the descriptions file. Nothing large ever passes through the conversation.
 
-### 3. Filter
+### 3. Load it into the raw layer
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" filter --raw <raw.json>
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/fetch.py" harvest --source indeed --file <harvest.json>
 ```
 
-**Inserts the survivors into `prospects` with no description yet**, and prints per-filter drop counts
-plus the companies found that aren't on the watchlist. It reuses `title_include`, `title_exclude`,
-`location_include`, `location_exclude`, `us_tokens` and `max_age_days` from the database, so both
-sources are filtered identically; the Indeed-specific noise filters are `filters` of kind
-`title_noise`, `agency_name_patterns` and `agency_blocklist`.
+Parses the harvest into `postings`, normalized and unjudged — including the facts only Indeed states,
+like whether a card is `sponsored` or `expired`, and the salary band it extracted. Nothing is
+filtered here.
 
-| Flag | Use |
-| ---- | --- |
-| `--include-seen` | re-insert prospects already in the database |
-| `--keep-tracked` | keep roles at companies `scan.py` already covers |
-| `--comp-floor 120000` | override the `comp_floor` setting for one run |
-| `--no-location-filter` | see what the location rule costs |
-| `--max-age-days N` | tighten the window |
+### 4. Ingest
 
-### 4. Descriptions, for survivors only
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/ingest.py"
+```
+
+The same pass that rules on board postings. There is no Indeed-specific filter and no Indeed-specific
+flag — see `references/boards.md` for the full list. Two of them matter most here: `--keep-covered`
+keeps roles at companies a board already covers, and `--redo` re-rules the stored harvest after a
+blocklist change, with no second visit to Indeed.
+
+### 5. Descriptions, for survivors only
 
 The search cards carry a truncated `snippet` that is **not good enough to score on**. Navigate to
 `/viewjob?jk=<jobkey>` for each survivor, read `#jobDescriptionText` plus `#salaryInfoAndJobType`,
@@ -93,35 +98,40 @@ accumulate in `localStorage`, and save the same way. **Cap each at ~4,000 charac
 run 9,000–14,500, and the cap is what keeps two dozen of them affordable.
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" merge --descriptions <descs.json>
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/fetch.py" descriptions --file <descs.json>
 ```
 
-`merge` attaches them to the rows `filter` already inserted and warns about any Indeed prospect still
-without one. Phase 2 then scores one list and does not care where a role came from.
+Attaches them to the rows ingest kept and warns about any prospect still without one. Phase 2 then
+scores one list and does not care where a role came from.
 
-## Dedupe, in three layers
+## Dedupe
 
-Indeed re-lists jobs already on boards `scan.py` reads, so this matters more here than anywhere else.
+Indeed re-lists jobs the boards already carry, so this matters more here than anywhere else — but
+none of it is Indeed-specific logic. Ingest applies the same three checks to every source:
 
-1. **`indeed:<jobkey>` against `prospects` and `aliases`** — the check every source gets.
-2. **Company against `companies`** — if it is an active watchlist entry, drop the Indeed copy;
-   `scan.py` already has that role with a better description and a real apply URL. Without this
-   layer, every pass re-proposes roles the watchlist covered hours earlier.
-3. **Normalized company + title**, against `prospects` and against roles already kept this run. Names
-   are normalized past `Inc`/`LLC`/`Technologies` first.
+1. **The key**, against `prospects` and `aliases`.
+2. **Source precedence** — a company whose own board is watched outranks an aggregator's copy of it,
+   which is dropped as `covered`. Without this, every pass re-proposes roles the boards covered hours
+   earlier. When the board copy arrives *after* the aggregator's, the prospect is **upgraded** in
+   place instead: same key and history, real description and apply URL.
+3. **Normalized company + title**, with names normalized past `Inc`/`LLC`/`Technologies`. Same-run
+   collisions merge, keeping the better-ranked source and both locations.
 
 ## The noise
 
 Indeed's index is mostly not for you: the first full run took **148 cards in, 24 out.**
 
+These are ordinary filters that happen to fire most often here; each applies to every source, and
+does nothing on a source that never states the fact.
+
 | Filter | Removes |
 | ------ | ------- |
-| `sponsored: true` | paid placements — almost entirely AI-trainer gig spam and unrelated listings |
+| `sponsored` | paid placements — almost entirely AI-trainer gig spam and unrelated listings |
 | `agency_blocklist` | named reposters, body shops and consultancies |
 | `agency_name_patterns` | anything reading `staffing` / `recruiting` / `consulting group` / `outsourcing` / `federal` |
 | `title_noise` | "AI Trainer", annotation, tutoring, freelance-gig phrasing |
 | `comp_floor` | yearly bands topping out below the floor — catches "Senior AI Engineer" at $31K–47K |
-| `expired: true` | dead listings still in the index |
+| `expired` | dead listings still in the index — an unlisted Ashby posting trips the same filter |
 
 **Tune the blocklist as you go.** When a run surfaces a reposter, add it — that is a permanent
 improvement, and the list is the main thing between this source and a shortlist full of staffing
@@ -135,7 +145,8 @@ application page.** Resolve it, land on the real ATS, and follow `references/app
 other role. Record the resolved URL as the application's `url` — never the `viewjob` link.
 
 **When it resolves to Greenhouse, Lever or Ashby, `INSERT` it into `companies`.** This is the
-compounding win: Indeed finds the company once, and the cheap API scan covers it every morning after.
+compounding win: Indeed finds the company once, and the cheap board fetch covers it every morning
+after — at which point ingest upgrades the prospect to the board's copy on its own.
 
 **Indeed Apply** (`indeedApplyEnabled: true` with no company site) is the exception — an in-platform
 form needing a signed-in account. Treat it like any other login wall: stage what is reachable, flag

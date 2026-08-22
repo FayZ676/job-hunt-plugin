@@ -1,34 +1,65 @@
-# The automated board scan
+# Boards and the fetch/ingest split
 
-Running the API scan, tuning what it returns, adding companies, and working the boards no API
-reaches. Indeed has its own file, `indeed.md`.
+Fetching postings, ruling on them, tuning what survives, adding companies, and working the boards no
+API reaches. Indeed rides the same path and only differs in how its bytes arrive — `indeed.md`.
 
-## Running it
+## Fetching
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/fetch.py" boards
 ```
 
-Stdlib only, no install step. Reads the company list and filters out of the database, hits every
-active Greenhouse, Lever and Ashby board in parallel, applies the mechanical filters, skips anything
-already known, and inserts the rest into `prospects`. Multi-location postings for one role merge into
-a single prospect, with the sibling ids stored as aliases so they never resurface as new.
+Needs `pydantic` (`python3 -m pip install pydantic`); nothing else. Reads the company list out of the
+database, hits every active Greenhouse, Lever and Ashby board in parallel, and writes what came back
+into `postings` — **normalized but unjudged**. No filtering happens here and no `prospects` row is
+written.
 
 | Flag | Use |
 | ---- | --- |
-| `--company Anthropic` | scan one board, repeatable, for testing a newly added slug |
-| `--include-seen` | re-insert prospects already in the database |
-| `--no-location-filter` | see what the location rule is costing |
-| `--max-age-days 7` | tighten to the last week |
+| `--company Anthropic` | fetch one board, repeatable, for testing a newly added slug |
 | `--workers N` | parallelism, default 8 |
 
 **Read the failure list.** A failing board usually means the company moved ATS or the slug is wrong.
 Fix the slug, or `UPDATE companies SET active=0 WHERE slug='…'`. Do not leave it failing every
 morning.
 
+## Ingesting
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/ingest.py"
+```
+
+Rules on every pending posting and promotes the survivors into `prospects` as `new`. Multi-location
+postings for one role merge into a single prospect, with the siblings stored as aliases so they never
+resurface. Every row it touches gets a `disposition` — `kept`, or the filter that dropped it.
+
+| Flag | Use |
+| ---- | --- |
+| `--redo` | rule again on everything, including rows already decided, without re-fetching |
+| `--source indeed` | limit to one source |
+| `--include-seen` | ignore what is already in `prospects` |
+| `--keep-covered` | keep rows whose company a better-ranked source already covers |
+| `--no-location-filter` | see what the location rule is costing |
+| `--max-age-days 7` | tighten to the last week |
+| `--comp-floor N` | override the stored floor for one run |
+
+**Source precedence.** Every source carries a rank: an employer's own board is authoritative (0), an
+aggregator is discovery (1). When a better-ranked source turns up a role an aggregator already found,
+ingest **upgrades** the existing prospect in place — swapping in the real description and apply URL,
+keeping its key and history — rather than creating a second row. That is the compounding win: a
+company gets discovered once and fetched properly forever after.
+
 ## Tuning the filters
 
-The scan prints how many postings each filter dropped. Use those counts rather than guessing.
+Ingest prints its drop counts, and because the verdicts are stored they stay queryable afterwards:
+
+```bash
+$Q "SELECT disposition, COUNT(*) n FROM postings WHERE ingested_on=date('now') GROUP BY disposition"
+$Q "SELECT company,title,location FROM postings WHERE disposition='location' LIMIT 20"
+```
+
+**Test a filter change before keeping it.** `ingest.py --redo` re-rules the stored postings with no
+network at all, so the cost of a wrong filter is one command rather than a re-scan.
 
 ```bash
 $Q "SELECT kind, pattern, note FROM filters"
@@ -38,7 +69,7 @@ $Q "DELETE FROM filters WHERE kind='title_exclude' AND pattern='(?i)contract'"
 
 | Symptom | Fix |
 | ------- | --- |
-| Obvious junk in candidates | add to `title_exclude` |
+| Obvious junk in candidates | add to `title_exclude`, then `ingest.py --redo` |
 | A real role got filtered out | add to `title_include`, or loosen `location_include` |
 | Candidates fine, scores wrong | `search_criteria` and `search_notes`, not filters |
 | Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |
@@ -52,7 +83,8 @@ with the ATS behind an iframe; view source, or check where the "Apply" button po
 
 ```bash
 $Q "INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual')"
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company Anthropic --include-seen
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/fetch.py" boards --company Anthropic
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/ingest.py"
 ```
 
 A slug that 404s is wrong, or the company is on an ATS this script cannot read. Those go in as
@@ -85,7 +117,7 @@ to dedupe against.
 
 ## The board APIs
 
-`scan.py` owns these; the notes are here for debugging a board that goes quiet.
+`sources.py` owns these; the notes are here for debugging a board that goes quiet.
 
 | ATS | Endpoint | Notes |
 | --- | -------- | ----- |
