@@ -39,39 +39,20 @@ Nothing below overrides these.
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
 | `/job ui` | Serve the read-only dashboard — `scripts/ui.py` |
-| `/job help` | Print the block below, verbatim, and stop |
+| `/job help` | `cat help.txt` — the command list, and nothing else |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op.
 
 ### `/job help`
 
-The one mode whose whole job is chat output. Print this block and nothing else — no run, no
-queries, no commentary before or after it. Keep it in sync with the table above.
+The one mode whose whole job is chat output. Print `help.txt` and nothing else — no run, no
+queries, no commentary around it.
 
+```bash
+cat "$HOME/.claude/skills/job/help.txt"
 ```
-job — scan job boards, score the openings, tailor a resume, stage the application,
-      and submit what you approve.
 
-usage: /job [command] [argument]
-
-commands:
-  (none)                      run all five phases: scan, score, resume, stage, submit
-  setup                       first-run setup: create $CAREER, build the profile, pick a watchlist
-  scan                        scan and score only (--no-indeed for watched boards only)
-  indeed                      the Indeed pass on its own, merged into the day's prospects
-  resume <JD, URL, or key>    build one tailored resume as a PDF
-  apply <key or URL>          build and stage one application, stopping before submit
-  submit                      review what is staged and submit only what you name
-  ui                          serve the read-only dashboard on 127.0.0.1
-  help                        this message
-
-notes:
-  run `/job setup` first — every other command is a no-op until $CAREER exists
-  nothing is submitted without your approval, named by you, in that run
-  a field your profile does not answer is left empty and reported, never guessed
-  everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)
-  ask about your search in plain English — it is answered with a query
-```
+Adding a mode means adding it to the table above and to `help.txt`.
 
 ## Storage
 
