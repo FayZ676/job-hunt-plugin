@@ -19,8 +19,8 @@ These hold in every phase. Nothing below overrides them.
 1. **Everything up to the submit click is unattended. The submit click never is.** Submit only what
    the user names, in that run. Silence is not approval, and an unapproved application stays staged
    rather than going out on a later run.
-2. **Never write an answer `career/profile.json` does not support.** A `null` is a hard stop: leave
-   the field empty and report it. Never infer a phone number, a salary, or a demographic answer.
+2. **Never write an answer the profile does not support.** A `NULL` is a hard stop: leave the field
+   empty and report it. `SELECT * FROM unanswered` lists them. Never infer a phone number, a salary, or a demographic answer.
 3. **Answer to the truth, including when it costs the application.** A commitment in the profile is a
    ceiling, not an opening position.
 4. **`applied` requires a verified confirmation page.** Clicking the button is not evidence.
@@ -45,18 +45,18 @@ These hold in every phase. Nothing below overrides them.
 
 ## Files
 
-Two things exist. That is the whole storage model.
+**One storage convention: `career/.state/job.db`.** Prospects, companies, filters, staged
+applications, history, and the user's whole profile — identity, experience, search criteria — are
+rows in it. Drive it with SQL.
 
-| Path | What |
-| ---- | ---- |
-| `career/profile.json` | **The only file the user owns.** Identity, application answers, experience, search criteria. Structured — see `references/profile.md`. |
-| `career/.state/job.db` | **Everything else.** Prospects, companies, filters, staged applications, history. SQLite, driven with SQL — see **The database** below. |
+The filesystem holds only what a database should not: built PDFs in `career/resumes/` (moving to
+`submitted/` when an application goes out), and a run note in `career/runs/<date>.md` if the user
+wants one to read. Both are output. Deleting either loses nothing.
 
-Plus `career/resumes/` (built, then `submitted/`) and `career/runs/` if the user wants a run note
-written; the note is a rendering of the database, not a record in its own right.
-
-**There are no per-day scan files.** A scan updates `prospects`. "What happened today" is a query,
-not a file.
+**The user never opens a file and never writes SQL.** They talk to you. Reading their career
+history, correcting a fact, adding a job, changing what they want — all of it is conversation on
+your side of the interface, and rows on this side. `references/profile.md` covers the shape and the
+ETL rules.
 
 ## The database
 
@@ -161,8 +161,8 @@ Read `references/boards.md` for flags and filter tuning.
 
 ## Phase 2 — Score
 
-Read `career/profile.json` — the `search` block is the rubric, and its `notes` field carries the
-judgement the schema cannot hold. Then:
+Read the profile — `search_criteria` is the rubric and `search_notes` carries the judgement the
+schema cannot hold. Then:
 
 ```bash
 $Q "SELECT * FROM triage WHERE status='new'"
@@ -205,14 +205,14 @@ Every field is one of three tiers, and the tier decides who answers it:
 
 | Tier | What it is | Source | Auto-filled |
 | ---- | ---------- | ------ | ----------- |
-| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` in `career/profile.json` | Yes |
-| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `work_authorization`, `availability`, `compensation`, `demographics` | Yes |
+| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `profile` table | Yes |
+| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `profile` table | Yes |
 | **Judgment** | Screening questions, essays, "why this company", anything conditional on the posting | Nothing stored | No — drafted and flagged |
 
 A judgment question gets the answer the bank supports. Where the bank does not support one, it is
-flagged for the user, **except** when a project in `profile.json` plainly answers it — then
+flagged for the user, **except** when a row in `projects` plainly answers it — then
 answer, cite that project as the evidence, and flag `evidence-backed` so the review can check the
-reasoning. A question needing a project not in the profile is a flag, not an inference.
+reasoning. A question needing a project that is not in `projects` is a flag, not an inference.
 
 Attach the resume PDF, screenshot the completed form, then record the staging. A helper keeps the
 SQL out of the way:
@@ -280,7 +280,7 @@ Only a reported rejection triggers this. Do nothing for a role that is merely qu
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
 | Form fields missing from the snapshot | Form renders after page load | Wait for the loading text to clear, re-snapshot |
-| Every staged application `blocked` | Profile still has `null`s | Fill them in `career/profile.json` once |
+| Every staged application `blocked` | Profile still has `NULL`s | `SELECT * FROM unanswered`, then fill them once |
 | Same posting staged twice | Never scored, so it re-entered as new | Phase 2 scores every prospect, including skips |
 | Zero candidates from thousands of postings | Filters too tight | Read the per-filter drop counts; usually location. the `filters` table to adjust |
 | Login wall on the apply form | Company requires an account | Stage what is reachable, flag the rest |

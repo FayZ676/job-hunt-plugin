@@ -45,7 +45,7 @@ $Q "DELETE FROM filters WHERE kind='title_exclude' AND pattern='(?i)contract'"
 | ------- | --- |
 | Obvious junk in candidates | add to `title_exclude` |
 | A real role got filtered out | add to `title_include`, or loosen `location_include` |
-| Candidates fine, scores wrong | `career/profile.json`, the `search` block |
+| Candidates fine, scores wrong | `search_criteria` and `search_notes` |
 | Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |
 | Too few candidates | check the location counter; it is usually location |
 

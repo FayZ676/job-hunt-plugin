@@ -1,6 +1,6 @@
 # Resume writing
 
-Phase 3 of `/job` in detail: turning `career/profile.json` into a one-page PDF targeted at one job
+Phase 3 of `/job` in detail: turning `the profile tables` into a one-page PDF targeted at one job
 description, with a PDF alongside it.
 
 **The deliverable is the `.pdf`.** Never hand back a markdown resume. The `.json`
@@ -8,14 +8,14 @@ spec written along the way is a build input.
 
 | Purpose | Path |
 | ------- | ---- |
-| Only content source | `career/profile.json` |
+| Only content source | `the profile tables` |
 | Output directory | `career/resumes/` |
 | Moved here once submitted | `career/resumes/submitted/` |
 | Section order | **Section order and content**, below |
 | Spec format | **Spec format**, below |
 | Recurring defects to avoid | `career/resume-patterns.md` |
 
-`career/profile.json` is the only source. Its `## Profile` section supplies the header block and
+`the profile tables` is the only source. Its `## Profile` section supplies the header block and
 Education verbatim; everything below it is content to select against the JD. Never mine an existing
 resume for bullet text — the copies in circulation carry the errors listed under Facts.
 
@@ -24,14 +24,14 @@ resume for bullet text — the copies in circulation carry the errors listed und
 1. Take the JD from the day's `career/.state/scans/<date>.json`, or as pasted text, a file path,
    or a URL. Given only a company and title, ask for the posting text.
 2. Extract its hard requirements, day-to-day responsibilities, and implied signals.
-3. Read `career/profile.json` in full and score each project on overlap with those requirements. Write
+3. Read `the profile tables` in full and score each project on overlap with those requirements. Write
    the mapping down before drafting; it decides ordering and cuts.
 4. Select: roles reverse-chronological, most-relevant project first within each role. Cut irrelevant
    projects entirely. A role with nothing relevant gets one summary bullet.
 5. Draft against Writing below, then test every line against The one-pass test.
 6. Write the spec to `career/resumes/<company>-<role-slug>.json`.
 7. Build, then look at the rendered page.
-8. Report gaps: JD requirements with no evidence in `career/profile.json`; bullets a missing number would
+8. Report gaps: JD requirements with no evidence in `the profile tables`; bullets a missing number would
    strengthen, named specifically; close-call cuts.
 
 ## Writing
@@ -39,18 +39,18 @@ resume for bullet text — the copies in circulation carry the errors listed und
 Plain professional English. The reader passes over each line once, at speed, and takes a fact away
 from it.
 
-- **One idea per bullet, one sentence, under ~30 words.** `career/profile.json` packs three ideas into a
+- **One idea per bullet, one sentence, under ~30 words.** `the profile tables` packs three ideas into a
   bullet because it is a reference document. Split them.
 - **Name what was built and what it does.** Every noun phrase must be concrete enough to picture. A
   phrase that could describe ten different systems is unfinished.
-- **Real numbers only, from `career/profile.json`.** Never invent, round up, or extrapolate. Empty
+- **Real numbers only, from `the profile tables`.** Never invent, round up, or extrapolate. Empty
   `Numbers:` fields are not an invitation to fill them. A bullet with no number is fine — flag it in
   the gap report.
 - **Mirror the JD's vocabulary where it is honest.** Their "evaluation harness" over the file's
   "accuracy harness". Never blur scikit-learn into PyTorch.
 - **Match the verb to the work's real status.** "Shipped", "automated" and "replaced" assert that an
   outcome already happened. Use "built" for work that exists and is not yet live, and check the
-  project's status line in `career/profile.json` before choosing. A projected number is not a number —
+  project's status line in `the profile tables` before choosing. A projected number is not a number —
   never print one.
 - **One judgment call per role**, written as the decision and its consequence: "enforced through the
   boto3 event system, so every service inherits the protection automatically."
@@ -100,18 +100,18 @@ the prior role. Skip it when it would only restate the bullets.
 
 ## Facts
 
-**`career/profile.json` is the only source of truth for a number, a title, or a date.** An older resume,
+**`the profile tables` is the only source of truth for a number, a title, or a date.** An older resume,
 a LinkedIn profile, or a previously generated bullet is not evidence — those are exactly where
 inflated figures survive.
 
-Keep a `## Facts` section at the bottom of `career/profile.json` for corrections that keep resurfacing:
+Keep a `## Facts` section at the bottom of `the profile tables` for corrections that keep resurfacing:
 a title that gets upgraded by mistake, a metric that gets rounded up, a project that was
 discontinued but still reads as live, work that was shared and must not be claimed solo. Read that
 section before writing bullets and never contradict it.
 
 Three rules that hold regardless of what any file says:
 
-- **A number goes on the resume only if it appears in `career/profile.json`.** No estimating, no
+- **A number goes on the resume only if it appears in `the profile tables`.** No estimating, no
   rounding up, no "over N" where N was never measured.
 - **Shared work is described as shared.** "Built with one other engineer" costs nothing and is true.
 - **Discontinued and in-progress work is labeled.** A shipped project and an abandoned one do not
@@ -136,7 +136,7 @@ block that ate the bottom third. Target one page filled to roughly the bottom ma
 **A page with visible blank space at the foot is not finished, and one page is not the goal — one
 *full* page is** (observed on builds that shipped with
 roughly an inch of dead space before he called it). Blank space is unused selection budget: there is
-always another real bullet in `career/profile.json`, another Personal Projects line, or the Publications
+always another real bullet in `the profile tables`, another Personal Projects line, or the Publications
 paragraph that could be earning that room. Iterate — add the next-most-relevant content, rebuild, look
 again, and trim back only if it spills to a second page. Expect two or three build cycles; stopping at
 the first one that fits on a page is what produces the defect. Two pages
@@ -154,7 +154,7 @@ Record the `.pdf` path on the prospect (`UPDATE prospects SET resume=…`), then
 report. `career/resumes/` therefore holds only resumes that have not gone out yet; phase 5 moves a
 resume into `career/resumes/submitted/` when its application is submitted, so the top level stays a
 worklist. Offer, without doing: a matching cover letter, and appending anything newly surfaced
-to `career/profile.json`.
+to `the profile tables`.
 
 ---
 
@@ -196,7 +196,7 @@ Roles in reverse-chronological order:
 | Research Assistant | State University | May 2022 – January 2023 |
 
 Bullets: one idea each, one sentence, under ~30 words, a number only if a real one exists in
-`career/profile.json`. 3–8 per role, ordered by relevance to the JD. A role with no relevant projects gets a single summary
+`the profile tables`. 3–8 per role, ordered by relevance to the JD. A role with no relevant projects gets a single summary
 bullet, not a full list.
 
 ### Projects — `bullets`
@@ -226,9 +226,9 @@ aspirational entries, no soft skills.
 
 ### Notes
 
-- The publication title in `career/profile.json` is recorded only by URL; fetch or confirm the exact
+- The publication title in `the profile tables` is recorded only by URL; fetch or confirm the exact
   title and author list before printing a citation.
-- Keep the contact line identical to the `## Profile` section of `career/profile.json` — it is the
+- Keep the contact line identical to the `## Profile` section of `the profile tables` — it is the
   canonical header. Same for Education.
 
 ---

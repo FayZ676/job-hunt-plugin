@@ -48,7 +48,7 @@ That's the whole install. `/job scan` works as soon as setup finishes.
 
 Setup creates exactly two things.
 
-**`career/profile.json` — the only file you own.** Identity, the answers application forms ask for,
+**`the profile tables` — the only file you own.** Identity, the answers application forms ask for,
 your employers and projects, and what you're looking for. It's structured, but you never edit it by
 hand: tell Claude about a job you had, paste a resume, upload a CV, and it writes the fields. You
 talk; the data stays consistent.
@@ -114,14 +114,14 @@ you're searching in a different field, say so — the companies and filters are 
 Claude edits them for you.
 
 The highest-leverage thing you can do is correct the profile when a scan surfaces something you'd
-never apply to, or misses something you would. Its `search.notes` field holds the reasoning that no
+never apply to, or misses something you would. Its `search_notes` field holds the reasoning that no
 schema captures, and it's read on every scoring pass.
 
 ## Upgrading from earlier versions
 
 3.0 replaces the file-based store with a database, and the markdown profile with a structured one.
 Ask Claude to migrate an existing `career/` — it reads the old `index.md`, `search-profile.md` and
-`applications.jsonl`, then writes `profile.json` and fills the database.
+`applications.jsonl`, and writes it all into the database.
 
 ## License
 

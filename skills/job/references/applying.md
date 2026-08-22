@@ -129,7 +129,7 @@ company does nothing at another. Account creation needs an email, a password (8+
 lower, numeric and special), and a privacy checkbox, then an emailed activation link.
 
 **Never invent, generate, or store a password.** Ask the user to create one in their password
-manager and record only the pointer in the `accounts` block in `career/profile.json` — that file names which accounts exist
+manager and record only the pointer in the `accounts` block in `the profile tables` — that file names which accounts exist
 and where each password lives, never the password itself.
 
 The activation link is single-use: opening it after the user has already clicked it returns "Invalid
@@ -170,12 +170,12 @@ Set `applied` only against a confirmation you have seen in a snapshot.
 ## Traps
 
 - **Application limits.** Cohere states 5 per 90 days; Deepgram states 2 per 60 days across a shared
-  limit group. **These no longer gate anything** — the limits table in `career/profile.json` is a record,
+  limit group. **These no longer gate anything** — the limits table in `the profile tables` is a record,
   not a budget. Add to it whenever a form declares one, and note in the run entry when an application
   goes out past a stated limit, so the history shows it.
 - **Published salary ranges.** Ashby prints the range on the posting — Deepgram's reads
   $180K–$240K. Read it before answering any compensation field and apply the compensation rule in
-  `career/profile.json`. Answering the $120,000 floor against a published $180K–$240K band anchors the
+  `the profile tables`. Answering the $120,000 floor against a published $180K–$240K band anchors the
   negotiation about sixty thousand dollars below where the employer opened it.
 - **Cover letter fields** are usually optional. Leave optional essay fields empty rather than filling
   them with something generic; a weak answer costs more than no answer.

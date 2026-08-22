@@ -9,7 +9,7 @@ Q='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py"'
 
 ## Score
 
-Read `career/profile.json` in full — the `search` block is the rubric and `search.notes` carries the
+Read `the profile tables` in full — `search_criteria` is the rubric and `search_notes` carries the
 judgement it cannot encode. Then take the triage list:
 
 ```bash

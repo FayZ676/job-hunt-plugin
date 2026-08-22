@@ -19,9 +19,6 @@ MAX_DESCRIPTION_CHARS = 20000
 
 CAREER = os.environ.get("JOB_CAREER_DIR", "career")
 
-# You own this. Structured, but Claude writes it -- see references/profile.md.
-PROFILE = f"{CAREER}/profile.json"
-
 # You read these.
 RUNS = f"{CAREER}/runs"
 RESUMES = f"{CAREER}/resumes"

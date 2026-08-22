@@ -10,6 +10,7 @@ without the `sqlite3` command-line tool installed.
   q.py --json "SELECT * FROM triage LIMIT 5"
   q.py -f some.sql          run a file
   q.py --schema             print the schema
+  q.py --export > job.sql   dump everything as portable SQL
 """
 
 import argparse
@@ -26,11 +27,18 @@ def main():
     ap.add_argument("-f", "--file", help="run a .sql file instead")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--schema", action="store_true", help="print the schema and exit")
+    ap.add_argument("--export", action="store_true",
+                    help="dump the whole database as SQL you can take anywhere")
     ap.add_argument("--db", default=None)
     args = ap.parse_args()
 
     if args.schema:
         print(open(jobkit.SCHEMA_SQL, encoding="utf-8").read())
+        return 0
+
+    if args.export:
+        for line in jobkit.connect(args.db).iterdump():
+            print(line)
         return 0
 
     con = jobkit.connect(args.db)
