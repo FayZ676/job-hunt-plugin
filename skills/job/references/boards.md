@@ -12,7 +12,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"
 
 Stdlib only, no install step. It hits every active board in parallel, applies the mechanical filters
 (title regex, location, posting age), drops any `key` already in the ledger, and writes
-`career/jobs/<date>-candidates.json`.
+`career/.state/scans/<date>.json`.
 
 | Flag | Use |
 | ---- | --- |
@@ -22,7 +22,7 @@ Stdlib only, no install step. It hits every active board in parallel, applies th
 | `--max-age-days 7` | tighten to the last week |
 | `--force` | overwrite an existing candidates file |
 
-`<date>-candidates.json` holds the full JD text that phases 3–4 read, so the script **refuses to
+`<date>.json` holds the full JD text that phases 3–4 read, so the script **refuses to
 overwrite** a same-day file with a smaller result. A second plain run after the ledger is written
 would otherwise wipe the day's descriptions. Rebuild a day with `--include-seen --force`.
 
@@ -31,7 +31,7 @@ Multi-location postings for one role merge into a single candidate, with the ext
 tomorrow. This also means the ledger holds more lines than jobs — count unique roles, not lines.
 
 **Read the failure list.** A failing board usually means the company moved ATS or the slug is wrong.
-Fix `career/scan-config.json` or set `"active": false`. Do not leave it failing every morning.
+Fix `career/watchlist.toml` or set `"active": false`. Do not leave it failing every morning.
 
 ## Tuning the filters
 
@@ -39,7 +39,7 @@ The scan prints how many postings each filter dropped. Use those counts rather t
 
 | Symptom | Fix |
 | ------- | --- |
-| Obvious junk in candidates | `title_exclude` in `career/scan-config.json` |
+| Obvious junk in candidates | `title_exclude` in `career/watchlist.toml` |
 | A real role got filtered out | `title_include`, or loosen `location_include` |
 | Candidates fine, scores wrong | `career/search-profile.md` |
 | Same company never has anything | `"active": false` |

@@ -21,7 +21,7 @@ resume for bullet text — the copies in circulation carry the errors listed und
 
 ## Process
 
-1. Take the JD from the day's `career/jobs/<date>-candidates.json`, or as pasted text, a file path,
+1. Take the JD from the day's `career/.state/scans/<date>.json`, or as pasted text, a file path,
    or a URL. Given only a company and title, ask for the posting text.
 2. Extract its hard requirements, day-to-day responsibilities, and implied signals.
 3. Read `career/index.md` in full and score each project on overlap with those requirements. Write

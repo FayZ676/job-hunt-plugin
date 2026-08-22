@@ -12,13 +12,16 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
+import jobkit
 from jobkit import (
     MAX_DESCRIPTION_CHARS,
     age_days,
     compile_patterns,
     iter_ledger,
+    load_config,
     matches_any,
     to_iso,
+    write_json,
 )
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) job-scan/1.0"
@@ -190,26 +193,25 @@ def collapse_duplicates(records):
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch and filter ATS job boards into a candidate list.")
-    parser.add_argument("--config", default="career/scan-config.json")
-    parser.add_argument("--ledger", default="career/applications.jsonl")
-    parser.add_argument("--out", default=None, help="candidates path; default career/jobs/<date>-candidates.json")
+    parser.add_argument("--config", default=jobkit.WATCHLIST)
+    parser.add_argument("--ledger", default=jobkit.LEDGER)
+    parser.add_argument("--out", default=None, help=f"index path; default {jobkit.scan_index()}")
     parser.add_argument("--company", action="append", help="limit run to these company names or slugs")
     parser.add_argument("--max-age-days", type=int, default=None)
     parser.add_argument("--include-seen", action="store_true", help="do not filter out keys already in the ledger")
     parser.add_argument("--no-location-filter", action="store_true")
     parser.add_argument("--workers", type=int, default=8)
-    parser.add_argument("--force", action="store_true", help="overwrite an existing candidates.json")
+    parser.add_argument("--force", action="store_true", help="overwrite an existing scan")
     args = parser.parse_args()
 
-    with open(args.config, "r", encoding="utf-8") as handle:
-        config = json.load(handle)
+    config = load_config(args.config)
 
     companies = [c for c in config.get("companies", []) if c.get("active", True)]
     if args.company:
         wanted = {w.lower() for w in args.company}
         companies = [c for c in companies if c["name"].lower() in wanted or c["slug"].lower() in wanted]
     if not companies:
-        print("No active companies matched. Check career/scan-config.json.", file=sys.stderr)
+        print(f"No active companies matched. Check {args.config}.", file=sys.stderr)
         return 1
 
     title_include = compile_patterns(config.get("title_include"))
@@ -273,8 +275,8 @@ def main():
 
     candidates.sort(key=lambda r: (r["age_days"] if r["age_days"] is not None else 9999, r["company"]))
 
-    today = datetime.now().strftime("%Y-%m-%d")
-    out_path = args.out or os.path.join("career", "jobs", f"{today}-candidates.json")
+    out_path = args.out or jobkit.scan_index()
+    jd_path = jobkit.scan_descriptions()
     if os.path.exists(out_path) and not args.force:
         try:
             with open(out_path, "r", encoding="utf-8") as handle:
@@ -284,24 +286,29 @@ def main():
         if existing and len(candidates) < existing:
             print(
                 f"refusing to overwrite {out_path}: it holds {existing} candidates and this run "
-                f"produced {len(candidates)}.\nThe descriptions in that file are what /resume reads. "
+                f"produced {len(candidates)}.\nIts descriptions are what phases 3-4 read. "
                 f"Re-run with --force to replace it, or --out to write elsewhere.",
                 file=sys.stderr)
             return 2
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as handle:
-        json.dump({
-            "scanned_at": datetime.now(timezone.utc).isoformat(),
-            "companies_scanned": len(companies) - len(failures),
-            "counts": counts,
-            "failures": [{"company": name, "error": err} for name, err in failures],
-            "candidates": candidates,
-        }, handle, indent=2)
 
-    print(f"scanned {len(companies) - len(failures)}/{len(companies)} boards -> {counts['fetched']} postings")
-    print(f"filtered: title {counts['title']} | location {counts['location']} | stale {counts['stale']} | already-seen {counts['seen']} | dupes merged {counts['duplicate']}")
+    # Descriptions are the bulk of the payload and are read one key at a time,
+    # so they live beside the index rather than inside it.
+    descriptions = {}
+    for record in candidates:
+        descriptions[record["key"]] = record.pop("description", "")
+
+    write_json(out_path, {
+        "scanned_at": datetime.now(timezone.utc).isoformat(),
+        "companies_scanned": len(companies) - len(failures),
+        "counts": counts,
+        "failures": [{"company": name, "error": err} for name, err in failures],
+        "descriptions": jd_path,
+        "candidates": candidates,
+    }, indent=2)
+    write_json(jd_path, descriptions)
+
     print(f"NEW CANDIDATES: {len(candidates)}")
-    print(f"written to {out_path}")
+    print(f"written to {out_path}  (descriptions: {jd_path})")
     if failures:
         print("\nboards that failed (likely a wrong slug or a board that moved ATS):")
         for name, err in failures:

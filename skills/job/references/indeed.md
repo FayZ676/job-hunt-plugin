@@ -80,7 +80,7 @@ const [download] = await Promise.all([
     document.body.appendChild(a); a.click();
   })
 ]);
-await download.saveAs('…/career/jobs/<date>-indeed-raw.json');
+await download.saveAs('…/career/.state/scans/<date>-indeed-raw.json');
 ```
 
 Same trick for the descriptions file. Nothing large ever passes through the conversation.
@@ -88,22 +88,22 @@ Same trick for the descriptions file. Nothing large ever passes through the conv
 ### 3. Filter
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" filter --raw career/jobs/<date>-indeed-raw.json
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" filter --raw career/.state/scans/<date>-indeed-raw.json
 ```
 
-Writes `career/jobs/<date>-indeed-pending.json` — the survivors that have earned a description fetch —
+Writes `career/.state/scans/<date>-indeed-pending.json` — the survivors that have earned a description fetch —
 and prints per-filter drop counts plus the companies found that aren't on the watchlist.
 
 | Flag | Use |
 | ---- | --- |
 | `--include-seen` | ignore the ledger, for rebuilding a run |
 | `--keep-tracked` | keep roles at companies `scan.py` already covers |
-| `--comp-floor 120000` | override the floor from `indeed-queries.json` |
+| `--comp-floor 120000` | override the floor from `indeed.toml` |
 | `--no-location-filter` | see what the location rule costs |
 
 It reuses `title_include`, `title_exclude`, `location_include`, `location_exclude`, `us_tokens`, and
-`max_age_days` from `career/scan-config.json`, so both sources are filtered identically. The
-Indeed-specific rules live in `career/indeed-queries.json`.
+`max_age_days` from `career/watchlist.toml`, so both sources are filtered identically. The
+Indeed-specific rules live in `career/indeed.toml`.
 
 ### 4. Descriptions, for survivors only
 
@@ -116,11 +116,11 @@ score on, and the cap is what keeps 24 of them affordable.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" merge \
-  --pending career/jobs/<date>-indeed-pending.json \
-  --descriptions career/jobs/<date>-indeed-descs.json --require-description
+  --pending career/.state/scans/<date>-indeed-pending.json \
+  --descriptions career/.state/scans/<date>-indeed-descs.json --require-description
 ```
 
-That folds them into `career/jobs/<date>-candidates.json` alongside the ATS results, so Phase 2 scores
+That folds them into `career/.state/scans/<date>.json` alongside the ATS results, so Phase 2 scores
 one list and does not care where a role came from.
 
 ## Dedupe, in three layers
@@ -128,7 +128,7 @@ one list and does not care where a role came from.
 Indeed re-lists jobs already on boards `scan.py` reads, so this matters more here than anywhere else.
 
 1. **`indeed:<jobkey>` against the ledger** — the ordinary check every source gets.
-2. **Company against `career/scan-config.json`** — if the company is an active watchlist entry, drop the
+2. **Company against `career/watchlist.toml`** — if the company is an active watchlist entry, drop the
    Indeed copy. `scan.py` already has that role with a better description and a real apply URL.
    Instacart proved this on 2026-08-21: its Indeed listing resolved to `gh_jid=8143145`, the same
    posting the Greenhouse fetcher returns.
@@ -172,7 +172,7 @@ So the apply path is unchanged. Resolve the URL, land on the real ATS, and follo
 `references/applying.md` as for any other role. Record the resolved URL as `resolved_ats_url` and use
 it — not the `indeed.com/viewjob` link — as the application's `url`.
 
-**When it resolves to Greenhouse, Lever, or Ashby, add the company to `career/scan-config.json`.** This
+**When it resolves to Greenhouse, Lever, or Ashby, add the company to `career/watchlist.toml`.** This
 is the compounding win: Indeed finds the company once, and the cheap API scan covers it every morning
 after. Every graduation makes the next Indeed run less necessary.
 

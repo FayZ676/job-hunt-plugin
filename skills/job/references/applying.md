@@ -88,7 +88,7 @@ Re-snapshot after filling and check every required field — marked `*` — hold
 silent failures are an unselected typeahead, a radio group that looks answered because one option is
 visible, and a file input that never received the upload.
 
-Screenshot the completed form into `career/staged/`. That screenshot is what the user reviews.
+Screenshot the completed form into `career/.state/staged/`. That screenshot is what the user reviews.
 
 **Then stop.** Do not click a control labeled Submit, Apply, Continue, or Next in phase 4. On a
 multi-page form, stop at the end of the first page and record the page count.

@@ -55,60 +55,31 @@ You can start with just Python and add the rest before your first resume.
 
 ## Your files
 
-Setup creates a `career/` directory. Everything in it is yours — the plugin reads and writes it, but
-it never leaves your machine.
+Setup creates a `career/` directory, split by who owns what.
+
+**You edit these:**
 
 | File | What it's for |
 |---|---|
 | `index.md` | Your experience and the **answer bank** — the stable answers forms ask for. The only source a resume may draw from. |
 | `search-profile.md` | What's worth applying to. Titles, level, location tiers, dealbreakers, and the scoring rubric. The highest-leverage file here. |
-| `scan-config.json` | Which companies to watch and the mechanical title/location/age filters. |
-| `indeed-queries.json` | The Indeed query matrix and noise filters. |
+| `watchlist.toml` | Which companies to watch, and the mechanical title/location/age filters. |
+| `indeed.toml` | The Indeed query matrix and noise filters. |
 | `manual-boards.md` | Companies on Workday, iCIMS, or Taleo that the API scan can't reach, checked by hand on a cadence. |
-| `applications.jsonl` | Every posting ever seen, with its score and outcome. Append-only. |
-| `jobs/<date>.md` | One note per run — what was scanned, what was shortlisted, what was submitted. |
-| `resumes/` | Built resumes. Moves to `resumes/submitted/` when an application goes out. |
-| `staged/` | Filled-but-unsubmitted applications, so a lost session is cheap to recover. |
+| `resume-patterns.md` | Resume defects worth not repeating. |
 
-`career/` is gitignored by default. It has your phone number in it.
+**You read these:**
 
-## Commands
-
-| Command | What it runs |
+| Path | What it holds |
 |---|---|
-| `/job setup` | First-run setup |
-| `/job` | All five phases |
-| `/job scan` | Scan and score, stopping at the review note |
-| `/job scan --no-indeed` | Watched boards only |
-| `/job indeed` | The Indeed pass on its own |
-| `/job resume <JD, URL, or ledger key>` | Build one resume |
-| `/job apply <ledger key or URL>` | Build and stage one application, stopping before submit |
-| `/job submit` | Review and submit whatever is staged |
+| `runs/<date>.md` | One note per run — what was scanned, shortlisted, and submitted. |
+| `resumes/` | Built resumes. Moves to `resumes/submitted/` when an application goes out. |
 
-## The rules it won't break
+**The system owns these** — `.state/` is dot-prefixed, so Obsidian and similar tools ignore it:
 
-These are load-bearing, not decoration:
-
-- **It never submits without your approval** for that specific application, in that run. Silence is
-  not approval.
-- **It never writes an answer your career file doesn't support.** A missing answer is a hard stop,
-  not a guess — it will not infer a phone number, a salary, or a demographic answer.
-- **It never puts a number on a resume that isn't in your career file.** No rounding up.
-- **It answers honestly even when that ends the application.** A start time you can't commit to is
-  answered as a start time you can't commit to.
-- **It records `applied` only after verifying a confirmation page.** Clicking the button isn't
-  evidence.
-
-## Tuning it
-
-The shipped watchlist and title filters are tuned for AI and machine learning engineering roles. If
-you're searching in a different field, rewrite `title_include` in `scan-config.json` and replace the
-companies list — it's a starting point, not a recommendation.
-
-The one file worth real time is `search-profile.md`. Every score comes from it, and the fastest way
-to improve results is to edit it whenever a scan surfaces something you'd never apply to, or misses
-something you would.
-
-## License
-
-MIT
+| Path | What it holds |
+|---|---|
+| `.state/applications.jsonl` | Every posting ever seen, with its score and outcome. Append-only. |
+| `.state/scans/<date>.json` | The day's candidates, without descriptions. |
+| `.state/scans/<date>-jd.json` | Job descriptions, keyed, pulled one at a time. |
+| `.state/staged/` | Filled-but-unsubmitted applications, so a lost session is cheap to recover. |

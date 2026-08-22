@@ -4,7 +4,7 @@
 Two passes, because the browser does the fetching and this does the judging:
 
   filter  raw search cards -> survivors that deserve a full job description
-  merge   survivors + fetched descriptions -> career/jobs/<date>-candidates.json
+  merge   survivors + fetched descriptions -> the day's scan index
 """
 
 import argparse
@@ -13,6 +13,7 @@ import json
 import os
 import sys
 
+import jobkit
 from jobkit import (
     MAX_DESCRIPTION_CHARS,
     age_days,
@@ -20,8 +21,10 @@ from jobkit import (
     iter_ledger,
     matches_any,
     norm,
+    load_config,
     norm_company,
     to_iso,
+    write_json,
 )
 
 VIEWJOB = "https://www.indeed.com/viewjob?jk={}"
@@ -42,8 +45,7 @@ def load_ledger_keys(path):
 def load_tracked_companies(path):
     if not os.path.exists(path):
         return set()
-    with open(path, "r", encoding="utf-8") as handle:
-        config = json.load(handle)
+    config = load_config(path)
     return {
         norm_company(c["name"])
         for c in config.get("companies", [])
@@ -116,10 +118,8 @@ def cmd_filter(args):
     with open(args.raw, "r", encoding="utf-8") as handle:
         cards = flatten(json.load(handle))
 
-    with open(args.queries, "r", encoding="utf-8") as handle:
-        qconf = json.load(handle)
-    with open(args.config, "r", encoding="utf-8") as handle:
-        sconf = json.load(handle)
+    qconf = load_config(args.queries)
+    sconf = load_config(args.config)
 
     title_include = compile_patterns(sconf.get("title_include"))
     title_exclude = compile_patterns(sconf.get("title_exclude"))
@@ -236,8 +236,7 @@ def cmd_filter(args):
         "counts": counts,
         "candidates": records,
     }
-    with open(args.out, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
+    write_json(args.out, payload, indent=2)
 
     print(f"indeed cards: {counts['fetched']}")
     print(
@@ -283,9 +282,8 @@ def cmd_merge(args):
                 continue
         kept.append(record)
 
-    target = args.out or os.path.join(
-        "career", "jobs", f"{dt.date.today().isoformat()}-candidates.json"
-    )
+    target = args.out or jobkit.scan_index()
+    jd_path = jobkit.scan_descriptions()
 
     if os.path.exists(target):
         with open(target, "r", encoding="utf-8") as handle:
@@ -315,9 +313,20 @@ def cmd_merge(args):
 
     existing.setdefault("counts", {})["indeed"] = pending.get("counts", {})
     existing["counts"]["indeed_added"] = added
+    existing["descriptions"] = jd_path
 
-    with open(target, "w", encoding="utf-8") as handle:
-        json.dump(existing, handle, indent=2)
+    # Keep descriptions out of the index, same as scan.py.
+    jd = {}
+    if os.path.exists(jd_path):
+        with open(jd_path, "r", encoding="utf-8") as handle:
+            jd = json.load(handle)
+    for record in existing.get("candidates", []):
+        text = record.pop("description", None)
+        if text:
+            jd[record["key"]] = text
+
+    write_json(target, existing, indent=2)
+    write_json(jd_path, jd)
 
     print(f"merged {added} indeed candidates into {target}")
     if collided:
@@ -335,10 +344,10 @@ def main():
 
     f = sub.add_parser("filter", help="raw search cards -> survivors needing descriptions")
     f.add_argument("--raw", required=True)
-    f.add_argument("--out", default=os.path.join("career", "jobs", f"{today}-indeed-pending.json"))
-    f.add_argument("--queries", default=os.path.join("career", "indeed-queries.json"))
-    f.add_argument("--config", default=os.path.join("career", "scan-config.json"))
-    f.add_argument("--ledger", default=os.path.join("career", "applications.jsonl"))
+    f.add_argument("--out", default=f"{jobkit.SCANS}/{today}-indeed-pending.json")
+    f.add_argument("--queries", default=jobkit.INDEED_CONFIG)
+    f.add_argument("--config", default=jobkit.WATCHLIST)
+    f.add_argument("--ledger", default=jobkit.LEDGER)
     f.add_argument("--max-age-days", type=int, default=None)
     f.add_argument("--comp-floor", type=int, default=None, help="drop yearly bands topping out below this")
     f.add_argument("--include-seen", action="store_true")
@@ -347,7 +356,7 @@ def main():
     f.set_defaults(func=cmd_filter)
 
     m = sub.add_parser("merge", help="survivors + descriptions -> the day's candidates file")
-    m.add_argument("--pending", default=os.path.join("career", "jobs", f"{today}-indeed-pending.json"))
+    m.add_argument("--pending", default=f"{jobkit.SCANS}/{today}-indeed-pending.json")
     m.add_argument("--descriptions", default=None)
     m.add_argument("--out", default=None)
     m.add_argument("--require-description", action="store_true")

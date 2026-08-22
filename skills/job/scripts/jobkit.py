@@ -4,9 +4,79 @@
 import json
 import os
 import re
+import sys
 from datetime import datetime, timezone
 
 MAX_DESCRIPTION_CHARS = 20000
+
+# ---------------------------------------------------------------------------
+# Layout. The one place that knows where anything lives.
+#
+# career/ splits by owner: files you edit sit at the top level, files you read
+# sit in runs/ and resumes/, and everything the system owns lives under
+# .state/ -- dot-prefixed so Obsidian and other vault tools ignore it.
+# ---------------------------------------------------------------------------
+
+CAREER = os.environ.get("JOB_CAREER_DIR", "career")
+
+# You edit these.
+WATCHLIST = f"{CAREER}/watchlist.toml"
+INDEED_CONFIG = f"{CAREER}/indeed.toml"
+PROFILE = f"{CAREER}/search-profile.md"
+INDEX = f"{CAREER}/index.md"
+MANUAL_BOARDS = f"{CAREER}/manual-boards.md"
+
+# You read these.
+RUNS = f"{CAREER}/runs"
+RESUMES = f"{CAREER}/resumes"
+SUBMITTED = f"{RESUMES}/submitted"
+
+# The system owns these.
+STATE = f"{CAREER}/.state"
+LEDGER = f"{STATE}/applications.jsonl"
+SCANS = f"{STATE}/scans"
+STAGED = f"{STATE}/staged"
+
+
+def today():
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def scan_index(date=None):
+    """Cheap candidate list: everything but the job descriptions."""
+    return f"{SCANS}/{date or today()}.json"
+
+
+def scan_descriptions(date=None):
+    """{key: description}. Read per key, never wholesale."""
+    return f"{SCANS}/{date or today()}-jd.json"
+
+
+def run_entry(date=None):
+    return f"{RUNS}/{date or today()}.md"
+
+
+def load_config(path):
+    """Read a TOML config, with a legible error on older Pythons."""
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        sys.exit("Python 3.11+ is required to read TOML config (found "
+                 f"{sys.version.split()[0]}). Upgrade Python, or pip install tomli.")
+    try:
+        with open(path, "rb") as handle:
+            return tomllib.load(handle)
+    except FileNotFoundError:
+        sys.exit(f"missing config: {path}\nRun /job setup to create it.")
+    except tomllib.TOMLDecodeError as error:
+        sys.exit(f"{path} is not valid TOML: {error}")
+
+
+def write_json(path, payload, indent=None):
+    """System-owned JSON: compact by default, since nothing reads it by eye."""
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=indent, ensure_ascii=False)
 
 _COMPANY_SUFFIXES = re.compile(
     r"(?i)[,.]?\s*\b(inc|llc|ltd|corp|corporation|co|company|technologies|technology"

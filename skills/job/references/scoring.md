@@ -4,7 +4,7 @@ Judging a candidate, and the three places the judgement gets written down.
 
 ## Score
 
-Read `career/search-profile.md` in full, then `career/jobs/<date>-candidates.json`. Score each
+Read `career/search-profile.md` in full, then `career/.state/scans/<date>.json`. Score each
 candidate 0–10 by the rubric in the profile.
 
 - **Read the `description` field.** Scoring off the title alone is the failure this step exists to
@@ -20,19 +20,36 @@ plausible ones. Do not burn the context reading 200 JDs end to end.
 
 ## The ledger
 
-`career/applications.jsonl`, one JSON object per line, append-only. **One line per candidate, every
+`career/.state/applications.jsonl`, one JSON object per line, append-only. **One line per candidate, every
 candidate.** Skipped jobs must be logged or tomorrow's run resurfaces them.
 
 ```json
 {"key":"greenhouse:anthropic:4012345","company":"Anthropic","title":"Senior AI Engineer, Applied","url":"https://…","location":"Remote (US)","posted_at":"2026-08-02T00:00:00+00:00","first_seen":"2026-08-06","score":9,"reason":"JD leads with production LLM evaluation harnesses","status":"queued"}
 ```
 
-`status` vocabulary: `queued` (shortlisted, resume not yet built) · `skipped` (scored, not pursuing) ·
-`staged` (form filled, awaiting approval) · `applied` · `rejected` · `closed` · `interviewing`.
+`status` vocabulary, roughly in lifecycle order: `queued` (shortlisted, resume not yet built) ·
+`surfaced` (seen and worth a look, not yet scored) · `skipped` (scored, not pursuing) ·
+`staged` (form filled, awaiting approval) · `applied` · `interviewing` · `rejected` ·
+`not_pursued` (shortlisted then dropped, with a reason) · `closed` (posting taken down).
 
 Status changes append a **new line with the same `key`** — last line wins. Never rewrite or delete
-earlier lines; the file is the history. Append with a heredoc or a small Python snippet so a partial
-failure cannot truncate it.
+earlier lines; the file is the history.
+
+**Write it with `ledger.py`, never by hand.** A malformed line is not a crash — it is a posting that
+silently resurfaces, or an application recorded as never sent.
+
+```bash
+L='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/ledger.py"'
+$L append --key greenhouse:anthropic:401 --company Anthropic --title "Senior AI Engineer" \
+   --url https://… --location "Remote (US)" --posted_at 2026-08-02 --score 9 --reason "…" --status queued
+$L status greenhouse:anthropic:401 --status applied --resume career/resumes/anthropic-senior-ai-engineer.pdf
+$L get greenhouse:anthropic:401     # latest state
+$L keys                             # every key ever seen, for dedupe
+$L stats                            # counts by status
+```
+
+`append` records a newly seen posting; `status` carries the role's latest state forward with a new
+status and a timestamp, so the previous lines stay intact as history.
 
 ## Reconcile resumes against the ledger
 
@@ -42,7 +59,7 @@ pipeline. Worth catching every run.
 ```bash
 python3 - <<'PY'
 import json, pathlib, re
-led = [json.loads(l) for l in open('career/applications.jsonl')]
+led = [json.loads(l) for l in open('career/.state/applications.jsonl')]
 blob = " ".join(f"{o['company']} {o['title']} {o.get('resume','')}".lower() for o in led)
 for p in sorted(pathlib.Path('career/resumes').rglob('*.pdf')):
     stem = p.stem.lower()
@@ -58,8 +75,8 @@ date. If the company is unreachable by `scan.py`, add it to `references/manual-b
 
 ## The run entry
 
-`career/jobs/<date>.md` is this skill's log — one note per day, covering the whole run through to
-submission, sitting alongside its `<date>-candidates.json`. **Keep the folder flat** so the series
+`career/runs/<date>.md` is this skill's log — one note per day, covering the whole run through to
+submission, sitting alongside its `<date>.json`. **Keep the folder flat** so the series
 reads as a run of daily notes; do not introduce per-date subfolders.
 
 ```markdown

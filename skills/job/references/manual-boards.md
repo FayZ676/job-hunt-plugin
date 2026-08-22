@@ -22,7 +22,7 @@ There's no API, so this is a browser task. For each company due on the cadence:
 1. Open the careers URL and filter for the role families `career/search-profile.md` targets.
 2. Apply the same judgement as the automated path — read `career/search-profile.md`, score 0–10, and
    name the specific JD language that drove the score.
-3. **Log it to `career/applications.jsonl` like any other candidate**, using a `manual:` key prefix so
+3. **Log it to `career/.state/applications.jsonl` like any other candidate**, using a `manual:` key prefix so
    it's distinguishable and never re-surfaces:
 
    ```json
@@ -53,7 +53,7 @@ It does **not** retire the list, for three reasons:
 **So shrink the list on evidence, not on principle.** When Indeed surfaces one of these companies on
 its own, two runs apart, that company's cadence can drop a tier — weekly to monthly, monthly to
 quarterly — and the entry should say why and when. Delete an entry only when the company graduates to
-`career/scan-config.json` by turning out to be on a supported ATS.
+`career/watchlist.toml` by turning out to be on a supported ATS.
 
 **Run the coverage audit before touching any cadence**: navigate to `indeed.com/cmp/<company>/jobs`, or
 search the company by name, and record whether its postings appear at all. Because the pass runs by
@@ -64,7 +64,7 @@ answer is what the tier changes should rest on.
 
 **Re-probe the list every few months.** Companies migrate ATSes, and a company that moves onto
 Greenhouse, Lever, or Ashby should graduate out of `career/manual-boards.md` and into
-`career/scan-config.json`, where it gets picked up automatically.
+`career/watchlist.toml`, where it gets picked up automatically.
 
 To re-probe, try each of these and look for a 200 with a non-empty job list:
 

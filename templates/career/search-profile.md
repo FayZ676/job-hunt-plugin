@@ -3,7 +3,7 @@ worth your morning. Edit it whenever a scan surfaces something you'd never apply
 something you would.
 
 Mechanical filters (which companies, title keywords, location, posting age) live in
-`career/scan-config.json`. This file is the judgement layer.
+`career/watchlist.toml`. This file is the judgement layer.
 
 > **TODO — fill these in before trusting the scores.** Every one of them changes the shortlist.
 > - Compensation floor: `TODO`
