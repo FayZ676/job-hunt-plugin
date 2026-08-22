@@ -83,3 +83,14 @@ Setup creates a `career/` directory, split by who owns what.
 | `.state/scans/<date>.json` | The day's candidates, without descriptions. |
 | `.state/scans/<date>-jd.json` | Job descriptions, keyed, pulled one at a time. |
 | `.state/staged/` | Filled-but-unsubmitted applications, so a lost session is cheap to recover. |
+
+## Upgrading from 1.x
+
+2.0 changes the layout and the config format, so a 1.x `career/` needs converting:
+
+- `scan-config.json` → `watchlist.toml`, `indeed-queries.json` → `indeed.toml`
+- `applications.jsonl`, `staged/`, and scan output move under `career/.state/`
+- run entries move from `career/jobs/<date>.md` to `career/runs/<date>.md`
+- resumes are rendered straight to PDF by Typst; Node and LibreOffice are no longer used
+
+Ask Claude to move an existing `career/` over — the layout above is all it needs.
