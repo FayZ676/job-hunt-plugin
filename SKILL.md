@@ -97,6 +97,10 @@ port from 8765 — pipeline, staged applications and their drafted essays, the w
 here, not in a web page. Point the user at it rather than reading rows aloud; keep answering
 questions with queries.
 
+Its one action is a **Run** button, which opens the platform's terminal on `claude "/job"` — a real
+interactive session, so the phases that need a person still have one. The page writes no SQL either
+way; it starts the skill, and the skill does the writing under the invariants above.
+
 **Never write run notes or daily summaries to disk.** The database is the record. Reporting is a
 query answered in the conversation — see `references/scoring.md`.
 

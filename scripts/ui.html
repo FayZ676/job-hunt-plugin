@@ -32,6 +32,24 @@ nav a {
 }
 nav a:hover { background: var(--line); }
 nav a.on { background: var(--accent); color: #fff; }
+.run { margin: 0 0 16px; }
+.run button {
+  width: 100%; border: 0; border-radius: 7px; font: inherit; font-weight: 600;
+  padding: 11px 12px; cursor: pointer; background: var(--accent); color: #fff;
+}
+.run button:hover { filter: brightness(1.08); }
+.run button[disabled] { opacity: .55; cursor: default; filter: none; }
+.run .also {
+  display: block; width: 100%; margin-top: 6px; padding: 6px; font-size: 12px;
+  font-weight: 400; background: none; color: var(--dim); border: 1px solid var(--line);
+}
+.run .also:hover { background: var(--line); color: var(--ink); filter: none; }
+.run .said { margin: 8px 2px 0; font-size: 12px; color: var(--dim); }
+.run code {
+  display: block; margin-top: 4px; font: 11px/1.5 var(--mono); color: var(--ink);
+  background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px;
+  word-break: break-all;
+}
 nav .where { margin: 18px 8px 0; font: 11px/1.5 var(--mono); color: var(--dim); word-break: break-all; }
 main { flex: 1; padding: 26px 30px 70px; max-width: 1400px; min-width: 0; }
 h2 { font-size: 21px; margin: 0 0 4px; }
@@ -91,6 +109,11 @@ ul.tight li { margin-bottom: 3px; }
 <body>
 <nav>
   <h1>Job</h1>
+  <div class="run">
+    <button id="run">▶ Run /job</button>
+    <button class="also" id="runScan">scan only</button>
+    <p class="said" id="said"></p>
+  </div>
   <a href="#/pipeline">Pipeline</a>
   <a href="#/review">Review</a>
   <a href="#/profile">Profile</a>
@@ -395,6 +418,34 @@ async function drawTable(name, offset) {
     b.onclick = () => drawTable(name, Number(b.dataset.to)));
 }
 
+const TOKEN = "__RUN_TOKEN__";
+const said = document.getElementById("said");
+
+async function run(mode, button) {
+  const buttons = document.querySelectorAll(".run button");
+  buttons.forEach(b => b.disabled = true);
+  said.textContent = "Opening a terminal…";
+  try {
+    const response = await fetch("/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Job-Token": TOKEN },
+      body: JSON.stringify({ mode })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "could not launch");
+    said.innerHTML = `Running <b>${esc(result.command)}</b> in ${esc(result.terminal)}.
+      <a href="#" id="again">Reload</a> when it finishes.`;
+    document.getElementById("again").onclick = event => { event.preventDefault(); route(); };
+  } catch (error) {
+    said.innerHTML = `Could not open a terminal — ${esc(error.message)}. Run this yourself:
+      <code>claude "${esc(mode ? "/job " + mode : "/job")}"</code>`;
+  }
+  buttons.forEach(b => b.disabled = false);
+}
+
+document.getElementById("run").onclick = () => run("");
+document.getElementById("runScan").onclick = () => run("scan");
+
 const routes = { pipeline: viewPipeline, review: viewReview, profile: viewProfile,
                  sources: viewSources, funnel: viewFunnel, tables: viewTables };
 
@@ -409,6 +460,10 @@ function route() {
 window.addEventListener("hashchange", route);
 get("/api/where").then(w => {
   document.getElementById("where").textContent = w.db;
+  if (!w.canRun) {
+    document.querySelectorAll(".run button").forEach(b => b.disabled = true);
+    said.innerHTML = 'The <code>claude</code> CLI is not on PATH, so the dashboard cannot open a run.';
+  }
 });
 route();
 </script>

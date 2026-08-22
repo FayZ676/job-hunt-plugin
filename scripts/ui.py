@@ -15,9 +15,15 @@ import http.server
 import json
 import mimetypes
 import os
+import secrets
+import shlex
+import shutil
 import socket
 import sqlite3
+import stat
+import subprocess
 import sys
+import tempfile
 import threading
 import urllib.parse
 import webbrowser
@@ -25,6 +31,9 @@ import webbrowser
 import jobkit
 
 HTML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui.html")
+
+TOKEN = secrets.token_urlsafe(24)
+MODES = {"": "/job", "scan": "/job scan", "indeed": "/job indeed"}
 
 LISTS = {
     "stats": "SELECT status, n FROM stats",
@@ -137,6 +146,54 @@ def asset(kind, key):
     return resolved if os.path.isfile(resolved) else None
 
 
+def claude_binary():
+    return shutil.which("claude")
+
+
+def terminal():
+    """The stock terminal for this platform, or whatever is actually installed."""
+    if sys.platform == "darwin":
+        return "Terminal"
+    if sys.platform == "win32":
+        return "Windows Terminal" if shutil.which("wt") else "Command Prompt"
+    for candidate in ("x-terminal-emulator", "gnome-terminal", "konsole", "xfce4-terminal", "xterm"):
+        if shutil.which(candidate):
+            return candidate
+    return None
+
+
+def launch(mode):
+    """Open a terminal running the skill, so the phases that need a person still
+    have one. Nothing here interpolates user input: mode indexes a fixed table."""
+    binary = claude_binary()
+    if not binary:
+        raise RuntimeError("the claude CLI is not on PATH")
+    prompt = MODES[mode]
+    home = os.path.expanduser("~")
+
+    if sys.platform == "darwin":
+        script = os.path.join(tempfile.gettempdir(), "job-run.command")
+        with open(script, "w", encoding="utf-8") as handle:
+            handle.write("#!/bin/sh\ncd {}\nexec {} {}\n".format(
+                shlex.quote(home), shlex.quote(binary), shlex.quote(prompt)))
+        os.chmod(script, stat.S_IRWXU)
+        subprocess.Popen(["open", "-a", "Terminal", script])
+        return "Terminal"
+
+    if sys.platform == "win32":
+        if shutil.which("wt"):
+            subprocess.Popen(["wt", "-d", home, binary, prompt])
+            return "Windows Terminal"
+        subprocess.Popen(["cmd", "/c", "start", "", "cmd", "/k", binary, prompt], cwd=home)
+        return "Command Prompt"
+
+    name = terminal()
+    if not name:
+        raise RuntimeError("no terminal emulator found")
+    subprocess.Popen([name, "-e", binary, prompt], cwd=home)
+    return name
+
+
 class Handler(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -176,12 +233,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         try:
             if route in ("/", "/index.html"):
                 with open(HTML, encoding="utf-8") as handle:
-                    return self.send(handle.read(), "text/html; charset=utf-8")
+                    page = handle.read().replace("__RUN_TOKEN__", TOKEN)
+                return self.send(page, "text/html; charset=utf-8")
 
             if route == "/api/where":
                 return self.send(json.dumps({
                     "career": jobkit.CAREER, "db": jobkit.DB, "resumes": jobkit.RESUMES,
-                    "tables": list(BROWSABLE)}))
+                    "tables": list(BROWSABLE), "terminal": terminal(),
+                    "canRun": bool(claude_binary()), "modes": list(MODES)}))
 
             if route == "/api/career":
                 return self.send(json.dumps(career(), ensure_ascii=False))
@@ -217,6 +276,26 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.fail(500, str(error))
 
     do_HEAD = do_GET
+
+    def do_POST(self):
+        if urllib.parse.urlparse(self.path).path != "/run":
+            return self.fail(404, "no such route")
+        if self.headers.get("X-Job-Token") != TOKEN:
+            return self.fail(403, "bad token")
+        if (self.headers.get("Host") or "").split(":")[0] not in ("127.0.0.1", "localhost"):
+            return self.fail(403, "bad host")
+        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            mode = json.loads(self.rfile.read(length) or "{}").get("mode", "")
+        except ValueError:
+            return self.fail(400, "bad body")
+        if mode not in MODES:
+            return self.fail(400, "not a runnable mode")
+        try:
+            where = launch(mode)
+        except (RuntimeError, OSError) as error:
+            return self.fail(500, str(error))
+        return self.send(json.dumps({"terminal": where, "command": MODES[mode]}))
 
 
 def free_port(start):

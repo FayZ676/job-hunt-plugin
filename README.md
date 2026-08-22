@@ -110,8 +110,13 @@ Chat is how you change things; the dashboard is how you see them.
 That serves a local page on `127.0.0.1`: the pipeline, staged applications with every drafted essay
 in full, your whole profile with its unanswered fields called out, the watchlist, and the funnel
 from raw postings down to a shortlist. It is **read-only, enforced by SQLite** — every request opens
-the database `mode=ro`, so nothing the page does can touch the record. Writes stay in the skill,
-where the rules below are enforced.
+the database `mode=ro`, so nothing the page itself can do will touch the record.
+
+It has one button. **Run** opens your terminal — Terminal on macOS, Windows Terminal on Windows — on
+an interactive `claude "/job"`, so the phases that need your approval still get to ask for it. The
+page starts the skill; the skill does the writing, under the rules below. That endpoint is guarded
+by a per-session token and only ever runs a command from a fixed list, so a stray page in another
+browser tab cannot trigger it.
 
 You can also just ask questions — "what's still waiting on me", "did anyone reject me this week" —
 and they're answered from the database.
