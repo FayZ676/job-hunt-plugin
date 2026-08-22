@@ -98,6 +98,7 @@ You can start with just Python and add the rest before your first resume.
 | `/job apply <key or URL>` | Build and stage one application, stopping before submit |
 | `/job submit` | Review and submit whatever is staged |
 | `/job ui` | Serve the read-only dashboard |
+| `/job help` | Print the command list |
 
 ## The dashboard
 

@@ -1,6 +1,6 @@
 ---
 name: job
-description: Scan job boards for new openings, score them against the search profile, build a tailored resume for each shortlist, fill the application form, and submit what the user approves. Use for "run the job routine", "scan and apply", "any new openings", "apply to these", the morning job search, or a resume tailored to one posting. `/job setup` on first use.
+description: Scan job boards for new openings, score them against the search profile, build a tailored resume for each shortlist, fill the application form, and submit what the user approves. Use for "run the job routine", "scan and apply", "any new openings", "apply to these", the morning job search, or a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
 ---
 
 # Job routine
@@ -25,7 +25,7 @@ Nothing below overrides these.
 6. **Chat output is minimal.** Only two things belong in chat: the Phase 5 approval prompt, and
    whatever blocks progress and needs the user — named specifically, which role and which field. No
    progress narration, no phase transitions, no summaries; the run entry is the record. A run with
-   nothing to ask about produces no chat output at all.
+   nothing to ask about produces no chat output at all. `/job help` is the one exception.
 
 ## Modes
 
@@ -39,8 +39,39 @@ Nothing below overrides these.
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
 | `/job ui` | Serve the read-only dashboard — `scripts/ui.py` |
+| `/job help` | Print the block below, verbatim, and stop |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op.
+
+### `/job help`
+
+The one mode whose whole job is chat output. Print this block and nothing else — no run, no
+queries, no commentary before or after it. Keep it in sync with the table above.
+
+```
+job — scan job boards, score the openings, tailor a resume, stage the application,
+      and submit what you approve.
+
+usage: /job [command] [argument]
+
+commands:
+  (none)                      run all five phases: scan, score, resume, stage, submit
+  setup                       first-run setup: create $CAREER, build the profile, pick a watchlist
+  scan                        scan and score only (--no-indeed for watched boards only)
+  indeed                      the Indeed pass on its own, merged into the day's prospects
+  resume <JD, URL, or key>    build one tailored resume as a PDF
+  apply <key or URL>          build and stage one application, stopping before submit
+  submit                      review what is staged and submit only what you name
+  ui                          serve the read-only dashboard on 127.0.0.1
+  help                        this message
+
+notes:
+  run `/job setup` first — every other command is a no-op until $CAREER exists
+  nothing is submitted without your approval, named by you, in that run
+  a field your profile does not answer is left empty and reported, never guessed
+  everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)
+  ask about your search in plain English — it is answered with a query
+```
 
 ## Storage
 
