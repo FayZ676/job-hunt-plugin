@@ -62,10 +62,10 @@ $Q "SELECT p.company, p.title,
     ORDER BY days"
 ```
 
-## The run report
+## Reporting
 
-There is no report command — the note is a rendering. Query what you need and write the markdown to
-`career/runs/<date>.md` when the user wants something to read. Deleting it loses nothing.
+There is no report command and no run note. The database is the record, so a request for "what
+happened today" is a query whose answer goes in the conversation — never a file on disk.
 
 ```bash
 $Q --json "SELECT company,title,score,status,reason,url,resume FROM prospects WHERE first_seen=date('now')"

@@ -66,9 +66,9 @@ you: what did I apply to in August that's still quiet?
 you: stop showing me contract roles
 ```
 
-Built resumes land in `career/resumes/`, moving to `submitted/` when an application goes out. A run
-note can be written to `career/runs/<date>.md`, but it's a rendering of the database rather than a
-record — deleting it loses nothing.
+Built resumes land in `career/resumes/`, moving to `submitted/` when an application goes out. That
+is the only output on disk — the database is the record, and reporting is a query answered in the
+conversation.
 
 `career/` is gitignored by default. It has your phone number in it.
 

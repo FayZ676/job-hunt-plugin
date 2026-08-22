@@ -12,8 +12,8 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/q.py" \
 ```
 
 That creates `career/.state/job.db` — the schema applies on connect — and seeds it with companies on
-Greenhouse, Lever and Ashby plus a starting set of filters. `career/resumes/` and `career/runs/` come
-from the template and hold output only.
+Greenhouse, Lever and Ashby plus a starting set of filters. `career/resumes/` comes from the
+template and holds output only.
 
 **2. Fill the profile by interviewing them.** They talk; you write the rows. Never hand them a form
 or a file to edit — chat is the whole interface. `references/profile.md` has the shape and the rules.

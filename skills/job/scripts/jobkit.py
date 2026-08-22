@@ -14,7 +14,7 @@ MAX_DESCRIPTION_CHARS = 20000
 # Layout. The one place that knows where anything lives.
 #
 # career/ splits by owner: files you edit sit at the top level, files you read
-# sit in runs/ and resumes/, and everything the system owns lives under
+# sit in resumes/, and everything the system owns lives under
 # .state/ -- dot-prefixed so Obsidian and other vault tools ignore it.
 # ---------------------------------------------------------------------------
 

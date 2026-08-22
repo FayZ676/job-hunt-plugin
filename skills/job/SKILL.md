@@ -75,9 +75,11 @@ must not fight:
   tokens and most belong to roles triage already ruled out. Pull them one at a time, for survivors
   only. `SELECT * FROM prospects` is almost always a mistake, and `SELECT * FROM postings` more so.
 
-The filesystem holds only what a database should not: built PDFs in `career/resumes/` (moved to
-`submitted/` when an application goes out), and a run note in `career/runs/<date>.md` if the user
-wants one. Both are output; deleting either loses nothing.
+The filesystem holds only what a database should not: built PDFs in `career/resumes/`, moved to
+`submitted/` when an application goes out. That is output; deleting it loses nothing.
+
+**Never write run notes or daily summaries to disk.** The database is the record. Reporting is a
+query answered in the conversation — see `references/scoring.md`.
 
 **The user never opens a file and never writes SQL.** Reading their career history, correcting a
 fact, changing what they want — conversation on their side, rows on yours (`references/profile.md`).
