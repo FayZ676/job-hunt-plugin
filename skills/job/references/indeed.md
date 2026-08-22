@@ -96,14 +96,15 @@ and prints per-filter drop counts plus the companies found that aren't on the wa
 
 | Flag | Use |
 | ---- | --- |
-| `--include-seen` | ignore the ledger, for rebuilding a run |
+| `--include-seen` | re-insert prospects already in the database |
 | `--keep-tracked` | keep roles at companies `scan.py` already covers |
-| `--comp-floor 120000` | override the floor from `indeed.toml` |
+| `--comp-floor 120000` | override the `comp_floor` setting for one run |
 | `--no-location-filter` | see what the location rule costs |
 
 It reuses `title_include`, `title_exclude`, `location_include`, `location_exclude`, `us_tokens`, and
-`max_age_days` from `career/watchlist.toml`, so both sources are filtered identically. The
-Indeed-specific rules live in `career/indeed.toml`.
+`max_age_days` from the database, so both sources are filtered identically. The
+Indeed-specific settings and noise filters live in the database (`settings`, and `filters` of kind
+`title_noise`, `agency_name_patterns`, `agency_blocklist`).
 
 ### 4. Descriptions, for survivors only
 
@@ -127,12 +128,12 @@ one list and does not care where a role came from.
 
 Indeed re-lists jobs already on boards `scan.py` reads, so this matters more here than anywhere else.
 
-1. **`indeed:<jobkey>` against the ledger** — the ordinary check every source gets.
-2. **Company against `career/watchlist.toml`** — if the company is an active watchlist entry, drop the
+1. **`indeed:<jobkey>` against `prospects` and `aliases`** — the ordinary check every source gets.
+2. **Company against the `companies` table** — if the company is an active watchlist entry, drop the
    Indeed copy. `scan.py` already has that role with a better description and a real apply URL.
    Instacart proved this on 2026-08-21: its Indeed listing resolved to `gh_jid=8143145`, the same
    posting the Greenhouse fetcher returns.
-3. **Normalized company + title** — against the ledger and against roles already merged into today's
+3. **Normalized company + title** — against `prospects` and against roles already inserted this
    candidates. Names are normalized past `Inc`/`LLC`/`Technologies` before comparing.
 
 Layer 2 is what keeps the run honest. Without it every Indeed pass re-proposes roles the watchlist
@@ -172,7 +173,7 @@ So the apply path is unchanged. Resolve the URL, land on the real ATS, and follo
 `references/applying.md` as for any other role. Record the resolved URL as `resolved_ats_url` and use
 it — not the `indeed.com/viewjob` link — as the application's `url`.
 
-**When it resolves to Greenhouse, Lever, or Ashby, add the company to `career/watchlist.toml`.** This
+**When it resolves to Greenhouse, Lever, or Ashby, add it: `db.py companies --add "Name:ats:slug"`.** This
 is the compounding win: Indeed finds the company once, and the cheap API scan covers it every morning
 after. Every graduation makes the next Indeed run less necessary.
 
@@ -194,7 +195,7 @@ other login wall: stage what is reachable and flag it.
 
 ## What Indeed does not replace
 
-`references/manual-boards.md` still exists, and Indeed does not retire it outright — see that file's
+the manual-boards section of `references/boards.md` still exists, and Indeed does not retire it outright — see that file's
 own note. Indeed indexes what employers choose to syndicate, and it is a keyword search rather than a
 watch on a specific company. It **widens** coverage; it does not **guarantee** it for any particular
 employer. But now that the pass runs unthrottled, the per-company coverage audit described in that file

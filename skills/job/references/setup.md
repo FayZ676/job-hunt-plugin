@@ -1,38 +1,42 @@
 # First-run setup
 
-Run when `career/` is missing, or when the user asks for setup. It exists so a new
-user is running real scans the same day they install the plugin.
+Run when `career/` is missing, or when the user asks for setup. It exists so a new user is running
+real scans the same day they install the plugin.
 
-**1. Copy the templates.** From the project root:
+**1. Create the two things that exist.** From the project root:
 
 ```bash
 cp -R "${CLAUDE_PLUGIN_ROOT}/templates/career" ./career
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py" init \
+  --seed "${CLAUDE_PLUGIN_ROOT}/skills/job/seed/watchlist.toml"
 ```
 
-That gives them the six files they edit — `watchlist.toml` (a starter list of companies on
-Greenhouse, Lever, and Ashby), `indeed.toml`, `search-profile.md`, `index.md`,
-`manual-boards.md`, `resume-patterns.md` — plus empty `runs/` and `resumes/` to read, and a
-`.state/` directory the system owns. Tell them about the first six; `.state/` is not theirs to edit.
+That gives them `career/profile.json` — the only file they own — and a database seeded with 137
+companies on Greenhouse, Lever and Ashby plus a starting set of filters.
 
-**2. Interview the user, then fill the templates for them.** Do not hand back a wall of `TODO`s and
-ask them to edit files — ask the questions in chat, and write the answers in. Ask about:
+**2. Fill the profile by interviewing them, not by handing over a form.** They talk; you write
+`profile.json`. Read `references/profile.md` for the shape and the rules. Cover:
 
-- **Identity and contact** — everything under `### Identity` in `career/index.md`.
-- **Work authorization, availability, compensation floor** — the rest of the answer bank.
-  Demographic self-identification is optional; `Decline to self-identify` is a complete answer, and
-  offering that is better than pressing.
-- **What they're looking for** — titles that fit, titles that don't, level, years of experience,
-  hard dealbreakers. This becomes `career/search-profile.md`.
-- **Where they'll work** — remote only, or a home metro. Their answer replaces the `YOUR_CITY`
-  placeholders in `watchlist.toml` and the locations in `indeed.toml`.
-- **Their experience** — employers, dates, titles, and the projects underneath each. This is the
-  longest part and it is the one that matters most: **`career/index.md` is the only thing a resume
-  may be built from**, so a thin file produces thin resumes. Offer to read a résumé, CV, or LinkedIn
-  export if they have one, and draft `career/index.md` from it for them to correct.
+- **Identity and contact**, work authorization, availability, compensation floor. Demographics are
+  optional and `"Decline to self-identify"` is a complete answer — offer that rather than pressing.
+- **What they're looking for** — titles that fit and don't, level, years of experience, hard
+  dealbreakers, home metro. This becomes the `search` block, and whatever reasoning they give that
+  a schema cannot hold goes in `search.notes`.
+- **Their experience.** The longest part and the one that matters most: `employers[].projects[]` is
+  **the only source a resume may draw from**, so a thin profile produces thin resumes. Offer to read
+  a resume, CV, or LinkedIn export and draft it for them to correct.
 
-**3. Tune the watchlist.** The shipped `companies` list in `watchlist.toml` is AI- and ML-flavored, and so are the
-`title_include` regexes. If the user is hiring into a different field, rewrite both — the watchlist
-is a starting point, not a recommendation.
+A `null` left in the profile is not a failure — it is a hard stop later, surfaced honestly. Tell
+them which ones will block an application.
+
+**3. Tune the watchlist.** The seeded companies and title filters are AI- and ML-flavored. If they
+are hiring into a different field, rewrite both:
+
+```bash
+db.py filters --kind title_include --add '…'
+db.py companies --add "Name:greenhouse:slug"
+db.py companies --deactivate <slug>
+```
 
 **4. Check the tooling.** Only the resume build needs anything installed:
 
@@ -41,12 +45,8 @@ command -v typst || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 ```
 
-Scanning and scoring work without either; the user can start there and install before the first
-resume.
+Scanning and scoring work without either.
 
-**5. Do a dry run.** `/job scan --no-indeed` and show them the review note. A first scan that returns
-sensible companies is the signal that `watchlist.toml` is tuned; one that returns nothing or
-thousands means the filters need another pass, and the per-filter drop counts say which one.
-
-**Setup is done when `career/index.md` has no `TODO` left in the answer bank.** A `TODO` there blocks
-applications later, so it is cheaper to resolve it now.
+**5. Do a dry run.** `/job scan --no-indeed`, then `db.py list --new`. A first scan that returns
+sensible companies means the filters are tuned; nothing, or thousands, means another pass — the
+per-filter drop counts say which one.

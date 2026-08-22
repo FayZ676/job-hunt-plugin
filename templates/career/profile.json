@@ -1,0 +1,95 @@
+{
+  "_readme": "The one file you own. Claude writes it for you — tell it about a job you had, paste a resume, upload a CV, and it fills this in. Every field is optional; null means 'not answered yet' and is a hard stop when a form asks for it. The `notes` fields are free text the model reads for judgement that no schema captures.",
+
+  "identity": {
+    "full_name": null,
+    "preferred_name": null,
+    "email": null,
+    "phone": null,
+    "location": null,
+    "street_address": null,
+    "linkedin": null,
+    "github": null,
+    "website": null
+  },
+
+  "work_authorization": {
+    "authorized_in_country_of_residence": null,
+    "requires_sponsorship_now_or_future": null,
+    "over_18": null,
+    "notes": null
+  },
+
+  "availability": {
+    "employment_type": null,
+    "earliest_start": null,
+    "notice_period": null,
+    "earliest_daily_start": null,
+    "willing_to_relocate": null,
+    "remote_preference": null,
+    "notes": null
+  },
+
+  "compensation": {
+    "floor": null,
+    "currency": "USD",
+    "notes": "How to answer when a posting publishes a range, and when it publishes nothing."
+  },
+
+  "demographics": {
+    "_note": "Optional everywhere. \"Decline to self-identify\" is a complete answer.",
+    "gender": null,
+    "race_ethnicity": null,
+    "hispanic_or_latino": null,
+    "veteran_status": null,
+    "disability_status": null
+  },
+
+  "education": [
+    { "degree": null, "institution": null, "start": null, "end": null }
+  ],
+
+  "employers": [
+    {
+      "name": null,
+      "title": null,
+      "start": null,
+      "end": null,
+      "current": false,
+      "projects": [
+        {
+          "name": null,
+          "start": null,
+          "end": null,
+          "summary": "One sentence on what the system does.",
+          "bullets": [],
+          "technologies": [],
+          "metrics": [],
+          "shared_with": null,
+          "status": "shipped"
+        }
+      ]
+    }
+  ],
+
+  "search": {
+    "level": null,
+    "titles": { "preferred": [], "acceptable": [], "excluded": [] },
+    "title_penalties": {},
+    "experience": { "years": null, "relevant_years": null, "floor_penalties": [] },
+    "location": { "home_metro": null, "tiers": [] },
+    "score_up": [],
+    "score_down": [],
+    "dealbreakers": [],
+    "shortlist_threshold": 7,
+    "notes": "Judgement that resists a schema: why certain trade-offs go the way they do, so the model can generalise to cases nobody enumerated."
+  },
+
+  "facts": [],
+
+  "company_limits": {},
+
+  "accounts": [
+    { "employer": null, "system": null, "login_email": null, "password_location": null, "created": null }
+  ]
+}

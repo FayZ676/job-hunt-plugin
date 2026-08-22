@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "job-hunt",
-      "description": "Scan company job boards, score openings against your own profile, build a tailored resume for each one, fill the application form in the browser, and submit only what you approve.",
+      "description": "Scan job boards, score openings against a structured profile, build tailored resumes, fill application forms, and submit only what you approve. One database, one profile.",
       "author": {
         "name": "Faizi Fifita",
         "url": "https://github.com/FayZ676"

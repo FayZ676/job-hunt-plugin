@@ -9,8 +9,8 @@ Carries a posting from "it exists on a board somewhere" to "the application is s
 
 **scan → score → resume → stage → submit**
 
-**The deliverable is submitted applications and a ledger that records them.** A run that stages four
-and submits none has not finished; it is waiting on the user.
+**The deliverable is submitted applications, recorded.** A run that stages four and submits none has
+not finished; it is waiting on the user.
 
 ## Invariants
 
@@ -19,10 +19,10 @@ These hold in every phase. Nothing below overrides them.
 1. **Everything up to the submit click is unattended. The submit click never is.** Submit only what
    the user names, in that run. Silence is not approval, and an unapproved application stays staged
    rather than going out on a later run.
-2. **Never write an answer `career/index.md` does not support.** A `TODO` is a hard stop: leave the
-   field empty and report it. Never infer a phone number, a salary, or a demographic answer.
-3. **Answer to the truth, including when it costs the application.** A commitment in the answer bank
-   is a ceiling, not an opening position.
+2. **Never write an answer `career/profile.json` does not support.** A `null` is a hard stop: leave
+   the field empty and report it. Never infer a phone number, a salary, or a demographic answer.
+3. **Answer to the truth, including when it costs the application.** A commitment in the profile is a
+   ceiling, not an opening position.
 4. **`applied` requires a verified confirmation page.** Clicking the button is not evidence.
 5. **Essays and screening answers are drafted, never auto-accepted.**
 6. **Chat output is minimal.** Only two things belong in chat: the Phase 5 approval prompt, and
@@ -37,60 +37,55 @@ These hold in every phase. Nothing below overrides them.
 | `/job` | All five phases |
 | `/job scan` | Phases 1–2, ending at the run entry (`--no-indeed` for watched boards only) |
 | `/job indeed` | The Indeed pass on its own, merged into the day's candidates |
-| `/job resume <JD, URL, or ledger key>` | Phase 3 for one role |
-| `/job apply <ledger key or URL>` | Phases 3–4 for one role, stopping before submit |
+| `/job resume <JD, URL, or key>` | Phase 3 for one role |
+| `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
 
 **If `career/` does not exist, run setup first** — `/job` on an unconfigured directory is a no-op.
 
 ## Files
 
-`career/` is split by who owns what, relative to the project root you run Claude from.
-
-**The user edits these.** Never rewrite one without being asked.
+Two things exist. That is the whole storage model.
 
 | Path | What |
 | ---- | ---- |
-| `career/watchlist.toml` | Watched companies and mechanical filters |
-| `career/indeed.toml` | Indeed queries and noise filters |
-| `career/search-profile.md` | What is worth applying to |
-| `career/index.md` | Accomplishments, and the answer bank |
-| `career/manual-boards.md` | Companies checked by hand, on a cadence |
-| `career/resume-patterns.md` | Recurring resume defects |
-| `career/accounts.md` | Which employer logins exist, and where each password lives |
+| `career/profile.json` | **The only file the user owns.** Identity, application answers, experience, search criteria. Structured — see `references/profile.md`. |
+| `career/.state/job.db` | **Everything else.** Prospects, companies, filters, staged applications, history. SQLite; drive it with `db.py`, never by hand-editing. |
 
-**The user reads these.** Written by this skill, for them.
+Plus `career/resumes/` (built, then `submitted/`) and `career/runs/` if the user wants a run note
+written; the note is a rendering of the database, not a record in its own right.
 
-| Path | What |
-| ---- | ---- |
-| `career/runs/<date>.md` | Run entry, one per day |
-| `career/resumes/` → `submitted/` | Resumes, before and after they go out |
+**There are no per-day scan files.** A scan updates `prospects`. "What happened today" is a query,
+not a file.
 
-**The system owns these.** `.state/` is dot-prefixed so vault tools ignore it; do not surface
-these paths to the user as things to open.
+## The database
 
-| Path | What |
-| ---- | ---- |
-| `career/.state/applications.jsonl` | Ledger of every posting ever seen |
-| `career/.state/scans/<date>.json` | The day's candidates, without descriptions |
-| `career/.state/scans/<date>-jd.json` | Descriptions, keyed — read one at a time |
-| `career/.state/staged/<date>-<slug>.json` | Staged applications |
+```bash
+DB='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py"'
+$DB list --new                      # triage view — never includes descriptions
+$DB list --status shortlisted --json
+$DB describe <key> [<key> …]        # pull descriptions, only for what survived triage
+$DB show <key>                      # one prospect in full, with its history
+$DB score <key> --score 9 --reason "…"
+$DB status <key> --status applied --resume career/resumes/<slug>.pdf
+$DB companies [--manual] [--add "Name:ats:slug"] [--checked <slug>]
+$DB filters --kind title_exclude --add '(?i)contract'
+$DB stats
+$DB report [--date YYYY-MM-DD]      # the run note, derived
+$DB query "SELECT …"                # anything the subcommands do not cover
+```
 
-Reference material, inside this plugin:
+**`list` never returns descriptions and `describe` returns nothing else.** That split is the whole
+reason scoring is affordable: a day's descriptions run to tens of thousands of tokens, and most
+belong to roles the index already ruled out.
 
-| Path | Read it for |
-| ---- | ----------- |
-| `references/setup.md` | First-run setup |
-| `references/boards.md` | The API scan: flags, filter tuning, adding companies, endpoints |
-| `references/indeed.md` | The Indeed pass |
-| `references/manual-boards.md` | Boards no API reaches |
-| `references/scoring.md` | Scoring, the ledger CLI and schema, the run entry |
-| `references/applying.md` | Form mechanics and traps per ATS |
-| `references/resume.md` | Writing rules, section order, spec format |
+When the user asks a question about their search — what they applied to, what went quiet, which
+companies reject fastest — **answer it with `query`**, not by reading files.
+
 
 ## Phase 1 — Scan
 
-Two sources feed one candidate list.
+Two sources, one destination: the `prospects` table.
 
 **A. The watched boards.** Run from the project root:
 
@@ -98,52 +93,53 @@ Two sources feed one candidate list.
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"
 ```
 
-Writes two files: `career/.state/scans/<date>.json`, the candidate index, and
-`career/.state/scans/<date>-jd.json`, the descriptions keyed by candidate.
+Reads the company list and filters out of the database, fetches every active Greenhouse, Lever and
+Ashby board in parallel, and inserts what is new. Anything already known — by key or alias — is
+skipped, so re-running is free.
 
-**B. Indeed.** Answers what the watchlist structurally cannot — who is hiring that isn't on it. A
-browser pass, not a script: search from inside a loaded Indeed page, filter, then fetch descriptions
-for survivors only.
+**B. Indeed.** Finds who is hiring that no watchlist has. A browser pass:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" filter --raw <raw.json>
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/indeed_filter.py" merge --descriptions <descs.json>
 ```
 
-`merge` folds the finds into the same `<date>.json`, so Phase 2 scores one list.
+`filter` stores survivors with no description yet; fetch descriptions for those only, then `merge`
+attaches them. **Read `references/indeed.md` first** — the rule that matters is **navigate to each
+search URL, never `fetch()` it**; navigation is not rate-limited, XHR is throttled to 403.
 
-**Read `references/indeed.md` first.** The rule that matters: **navigate to each search URL, never
-`fetch()` it** — navigation is not rate-limited, XHR is throttled to 403.
+**C. Manual boards.** Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a
+cadence. `db.py companies --manual` lists them with when each was last checked; check what is due,
+record finds with `db.py upsert`, and mark the board `db.py companies --checked <slug>`.
 
-Read `references/boards.md` for flags, filter tuning, and adding companies;
-`references/manual-boards.md` for the by-hand cadence.
+When a find resolves to a supported ATS, add it: `db.py companies --add "Name:greenhouse:slug"`.
+That is the point of the Indeed pass — found by hand once, scanned automatically every morning after.
+
+Read `references/boards.md` for flags and filter tuning.
 
 ## Phase 2 — Score
 
-Read `career/search-profile.md` in full, then the day's index — `career/.state/scans/<date>.json`,
-which carries title, company, location, compensation and age but **no descriptions**.
+Read `career/profile.json` — the `search` block is the rubric, and its `notes` field carries the
+judgement the schema cannot hold. Then:
 
-**Triage on the index first, then read descriptions only for the plausible ones.** Descriptions
-live in `<date>-jd.json` keyed by candidate; pull the handful you need with a `python3 -c` one-liner
-or `jq`, never by loading the whole file. A day's descriptions run to tens of thousands of tokens
-and most of them belong to roles the index already ruled out.
+```bash
+$DB list --new
+```
 
-Score each candidate you read 0–10 by the profile's rubric. Every score cites the specific JD
-language that drove it. Dealbreakers are a hard zero. A score given without reading that role's
-description is a title-match, which is the failure this phase exists to prevent.
+**Triage on that list, then pull descriptions only for the plausible ones** with
+`$DB describe <key> …`. Scoring off a title alone is the failure this phase exists to prevent, so
+anything you score must have had its description read; but reading all of them is how a run
+burns its context for nothing.
 
-Append one ledger line per candidate, shortlisted or not, with
-`python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/ledger.py" append`. Never hand-write the file.
+```bash
+$DB score <key> --score 9 --reason "the JD language that drove it, quoted"
+```
 
-**Shortlist threshold: 7 or above.** Below that, log it `skipped`; the user can promote one by hand.
-No daily cap and no per-company cap — where `career/index.md` records a per-company limit, note in
-the run entry that an application went past it, but do not hold the application back.
+`score` sets the status automatically: at or above the profile's `shortlist_threshold` it becomes
+`shortlisted`, below it `skipped`. Every prospect gets scored — a skipped one that is never scored
+comes back tomorrow as new.
 
-Then write `career/runs/<date>.md` with the scan counts and shortlist, and **update it in place** as
-phases 3–5 complete. Every shortlisted role carries an `Outcome` line by the end of the run:
-`submitted <timestamp>, confirmation verified` · `staged, waiting on <what>` · `blocked on <missing
-answer>` · `not pursued — <reason>`. A run that ends without the entry reflecting what happened has
-not finished. `references/scoring.md` holds the ledger schema and the run-entry format.
+Dealbreakers from the profile are a hard zero regardless of how well the rest reads.
 
 ## Phase 3 — Resume
 
@@ -156,7 +152,7 @@ pdftoppm -jpeg -r 95 career/resumes/<slug>.pdf /tmp/page
 ```
 
 **Read the rendered image before moving on.** A resume that never got looked at is not ready to
-attach. Record the resume path on the role's ledger line.
+attach. Then record it: `$DB status <key> --status shortlisted --resume career/resumes/<slug>.pdf`.
 
 ## Phase 4 — Stage
 
@@ -167,40 +163,28 @@ Every field is one of three tiers, and the tier decides who answers it:
 
 | Tier | What it is | Source | Auto-filled |
 | ---- | ---------- | ------ | ----------- |
-| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `## Application answers` in `career/index.md` | Yes |
-| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | Same section | Yes |
+| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` in `career/profile.json` | Yes |
+| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `work_authorization`, `availability`, `compensation`, `demographics` | Yes |
 | **Judgment** | Screening questions, essays, "why this company", anything conditional on the posting | Nothing stored | No — drafted and flagged |
 
 A judgment question gets the answer the bank supports. Where the bank does not support one, it is
-flagged for the user, **except** when a project in `career/index.md` plainly answers it — then
+flagged for the user, **except** when a project in `profile.json` plainly answers it — then
 answer, cite that project as the evidence, and flag `evidence-backed` so the review can check the
-reasoning. A question needing a project not in the file is a flag, not an inference.
+reasoning. A question needing a project not in the profile is a flag, not an inference.
 
-Attach the resume PDF, screenshot the completed form, and write
-`career/.state/staged/<date>-<slug>.json`:
+Attach the resume PDF, screenshot the completed form, then record the staging. A helper keeps the
+SQL out of the way:
 
-```json
-{
-  "key": "ashby:cohere:3fe03041",
-  "company": "Cohere",
-  "title": "Applied AI Engineer, Agents & Automations",
-  "url": "https://jobs.ashbyhq.com/cohere/…/application",
-  "ats": "ashby",
-  "resume": "career/resumes/cohere-applied-ai-engineer.pdf",
-  "screenshot": "career/.state/staged/2026-08-18-cohere.png",
-  "status": "ready",
-  "fields": [
-    {"label": "Name", "value": "Ada Lovelace", "tier": "identity"},
-    {"label": "Do you have the legal right to work without visa sponsorship?", "value": "Yes", "tier": "policy"},
-    {"label": "Tell us about an AI-powered product you built…", "value": "…", "tier": "judgment", "flag": "needs-review"}
-  ],
-  "blocked_on": []
-}
+```bash
+$DB stage <key> --url <apply-url> --ats ashby --screenshot <png> --status ready \
+  --field "Name|Ada Lovelace|identity" \
+  --field "Do you have the legal right to work without sponsorship?|Yes|policy" \
+  --field "Tell us about an AI product you built…|…|judgment|needs-review"
 ```
 
-`status`: `ready` (every field filled) · `blocked` (a `TODO` or an unanswerable question) ·
-`submitted` · `abandoned`. Keep the browser tab open; staging survives a lost session through this
-file, and refilling from it is cheap.
+`--status ready` means every field is filled; `blocked` means a `null` in the profile or a question
+nothing answers — name what is missing with `--blocked-on`. Keep the browser tab open; the staged
+rows survive a lost session and refilling from them is cheap.
 
 ## Phase 5 — Review and submit
 
@@ -214,11 +198,14 @@ Then ask which to submit, accepting "all", a subset, or none.
 For each approved application: click submit, wait for the confirmation page, and **verify it**. A
 validation error means it was not submitted — repair the named field and re-present it.
 
-Then, together: record the status with `ledger.py status <key> --status applied --resume <path>`;
-**move the resume's `.pdf` and `.json` into `career/resumes/submitted/`** and record the new
-path on that line; mark the staged file `submitted`; set the role's `Outcome` in the run entry. All
-four move together, so a run interrupted between them is visibly incomplete rather than silently
-wrong.
+Then, for each submitted application:
+
+```bash
+$DB status <key> --status applied --resume career/resumes/submitted/<slug>.pdf --note "confirmation verified"
+```
+
+and move the resume's `.pdf` and `.json` into `career/resumes/submitted/`. The status change and the
+file move go together; the database records where the document that went out actually lives.
 
 ## Phase 6 — Report
 
@@ -227,27 +214,30 @@ which role, which field, which file — without restating what went cleanly alon
 
 ## Recording a rejection
 
-When the user reports one, three things happen together:
+```bash
+$DB status <key> --status rejected --note "3 days, no interview — resume screen"
+```
 
-1. **Record it** with `ledger.py status <key> --status rejected --resume-deleted <path>`. Note the shape when
-   visible — days from submission, and whether any interview stage happened. A rejection three days
-   out with no interview is a resume screen, and that is worth knowing across roles.
-2. **Delete the resume's `.pdf` and `.json` from `career/resumes/submitted/`.** Record the
-   removed path as `resume_deleted` and set `resume` to `null`, so the ledger still says which
-   document went out. **A synced folder can re-materialize a deleted file** — re-list the directory
-   after deleting and delete again if it reappeared.
-3. **Set the role's `Outcome`** in its run entry to `rejected <date>`, leaving the submission line.
+Then **delete the resume's `.pdf` and `.json` from `career/resumes/submitted/`** and clear the
+pointer with `--resume ""`, so the record still says an application went out while the dead
+document is gone. Note the shape in the note when it is visible: days from submission, and whether
+any interview stage happened. A rejection three days out with no interview is a resume screen, and
+that is worth knowing across roles — it is also now a query.
+
+**A synced folder can re-materialize a deleted file.** Re-list the directory after deleting and
+delete again if it reappeared.
 
 Only a reported rejection triggers this. Do nothing for a role that is merely quiet.
+
 
 ## Failure modes
 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
 | Form fields missing from the snapshot | Form renders after page load | Wait for the loading text to clear, re-snapshot |
-| Every staged application `blocked` | Answer bank still has `TODO`s | Fill them in `career/index.md` once |
-| Same posting staged twice | Ledger line never written | Phase 2 writes the ledger before Phase 4 runs |
-| Zero candidates from thousands of postings | Filters too tight | Read the per-filter drop counts; usually location |
+| Every staged application `blocked` | Profile still has `null`s | Fill them in `career/profile.json` once |
+| Same posting staged twice | Never scored, so it re-entered as new | Phase 2 scores every prospect, including skips |
+| Zero candidates from thousands of postings | Filters too tight | Read the per-filter drop counts; usually location. `db.py filters` to adjust |
 | Login wall on the apply form | Company requires an account | Stage what is reachable, flag the rest |
 | Indeed returns 429 or 403 | The pass used `fetch()` | Navigate to each URL instead |
-| Indeed re-proposes a watchlist role | Company spelled differently in `watchlist.toml` | Reconcile the spelling so dedupe matches |
+| Indeed re-proposes a watchlist role | Company name differs from its `companies` row | Reconcile the spelling so dedupe matches |

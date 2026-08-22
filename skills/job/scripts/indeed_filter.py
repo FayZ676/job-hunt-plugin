@@ -10,47 +10,25 @@ Two passes, because the browser does the fetching and this does the judging:
 import argparse
 import datetime as dt
 import json
-import os
 import sys
 
+import db as jobdb
 import jobkit
 from jobkit import (
     MAX_DESCRIPTION_CHARS,
     age_days,
     compile_patterns,
-    iter_ledger,
     matches_any,
     norm,
-    load_config,
     norm_company,
     to_iso,
-    write_json,
 )
 
 VIEWJOB = "https://www.indeed.com/viewjob?jk={}"
 APPLYSTART = "https://www.indeed.com/applystart?jk={}&from=vj"
 
 
-def load_ledger_keys(path):
-    keys, pairs = set(), set()
-    for entry in iter_ledger(path):
-        if entry.get("key"):
-            keys.add(entry["key"])
-        keys.update(entry.get("duplicate_keys") or [])
-        if entry.get("company") and entry.get("title"):
-            pairs.add((norm_company(entry["company"]), norm(entry["title"])))
-    return keys, pairs
 
-
-def load_tracked_companies(path):
-    if not os.path.exists(path):
-        return set()
-    config = load_config(path)
-    return {
-        norm_company(c["name"])
-        for c in config.get("companies", [])
-        if c.get("active", True)
-    }
 
 
 def compensation(card):
@@ -118,8 +96,21 @@ def cmd_filter(args):
     with open(args.raw, "r", encoding="utf-8") as handle:
         cards = flatten(json.load(handle))
 
-    qconf = load_config(args.queries)
-    sconf = load_config(args.config)
+    con = jobdb.connect(args.db)
+    settings = {r["key"]: r["value"] for r in con.execute("SELECT key,value FROM settings").fetchall()}
+    def patterns(kind):
+        return [r["pattern"] for r in con.execute(
+            "SELECT pattern FROM filters WHERE kind=?", (kind,)).fetchall()]
+    qconf = {
+        "comp_floor": int(settings.get("comp_floor", 0)),
+        "fromage_days": int(settings.get("fromage_days", 7)),
+        "title_noise": patterns("title_noise"),
+        "agency_name_patterns": patterns("agency_name_patterns"),
+        "agency_blocklist": patterns("agency_blocklist"),
+    }
+    sconf = {k: patterns(k) for k in
+             ("title_include", "title_exclude", "location_include", "location_exclude", "us_tokens")}
+    sconf["max_age_days"] = int(settings.get("max_age_days", 30))
 
     title_include = compile_patterns(sconf.get("title_include"))
     title_exclude = compile_patterns(sconf.get("title_exclude"))
@@ -135,8 +126,13 @@ def cmd_filter(args):
     if args.include_seen:
         ledger_keys, ledger_pairs = set(), set()
     else:
-        ledger_keys, ledger_pairs = load_ledger_keys(args.ledger)
-    tracked = set() if args.keep_tracked else load_tracked_companies(args.config)
+        ledger_keys = {r["key"] for r in con.execute(
+            "SELECT key FROM prospects UNION SELECT alias_key AS key FROM aliases").fetchall()}
+        ledger_pairs = {(norm_company(r["company"]), norm(r["title"])) for r in
+                        con.execute("SELECT company,title FROM prospects").fetchall()}
+    tracked = set() if args.keep_tracked else {
+        norm_company(r["name"]) for r in
+        con.execute("SELECT name FROM companies WHERE active=1").fetchall()}
 
     counts = {
         "fetched": len(cards),
@@ -230,13 +226,18 @@ def cmd_filter(args):
         key=lambda r: (r["age_days"] if r["age_days"] is not None else 9999, r["company"]),
     )
 
-    payload = {
-        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "source": "indeed",
-        "counts": counts,
-        "candidates": records,
-    }
-    write_json(args.out, payload, indent=2)
+    con = jobdb.connect(args.db)
+    for record in records:
+        con.execute(
+            "INSERT OR IGNORE INTO prospects(key,company,title,url,apply_url,location,remote,"
+            "compensation,posted_at,first_seen,last_seen,source,status) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,'indeed','new')",
+            (record["key"], record["company"], record["title"], record.get("url"),
+             record.get("apply_url"), record.get("location"), int(bool(record.get("remote"))),
+             record.get("compensation"), record.get("posted_at"), jobkit.today(), jobkit.today()))
+        con.execute("INSERT INTO events(key,at,status,note) VALUES(?,?,'new','indeed')",
+                    (record["key"], jobdb.now()))
+    con.commit()
 
     print(f"indeed cards: {counts['fetched']}")
     print(
@@ -244,7 +245,7 @@ def cmd_filter(args):
         "location {location} | stale {stale} | expired {expired} | already-seen {seen} | "
         "already-tracked {tracked} | dupes {duplicate}".format(**counts)
     )
-    print(f"NEEDS DESCRIPTION: {len(records)} -> {args.out}")
+    print(f"NEEDS DESCRIPTION: {len(records)}  (db.py list --new --json to fetch them)")
     if discovered:
         print("\ncompanies not on the automated watchlist:")
         for name, n in sorted(discovered.items(), key=lambda kv: -kv[1]):
@@ -253,86 +254,35 @@ def cmd_filter(args):
 
 
 def cmd_merge(args):
-    with open(args.pending, "r", encoding="utf-8") as handle:
-        pending = json.load(handle)
-    records = pending["candidates"]
+    """Attach fetched descriptions to prospects the filter pass already stored."""
+    con = jobdb.connect(args.db)
+    with open(args.descriptions, "r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    items = payload if isinstance(payload, list) else payload.get("descriptions", [])
 
-    descriptions = {}
-    if args.descriptions and os.path.exists(args.descriptions):
-        with open(args.descriptions, "r", encoding="utf-8") as handle:
-            payload = json.load(handle)
-        for item in payload if isinstance(payload, list) else payload.get("descriptions", []):
-            jobkey = item.get("jobkey") or item.get("jk")
-            if jobkey:
-                descriptions[f"indeed:{jobkey}"] = item
-
-    kept = []
-    missing = 0
-    for record in records:
-        detail = descriptions.get(record["key"])
-        if detail:
-            record["description"] = (detail.get("description") or "")[:MAX_DESCRIPTION_CHARS]
-            if detail.get("resolved_url"):
-                record["resolved_ats_url"] = detail["resolved_url"]
-            if detail.get("compensation") and not record.get("compensation"):
-                record["compensation"] = detail["compensation"]
-        if not record["description"]:
+    filled = missing = 0
+    for item in items:
+        jobkey = item.get("jobkey") or item.get("key")
+        if not jobkey:
+            continue
+        key = jobkey if str(jobkey).startswith("indeed:") else f"indeed:{jobkey}"
+        text = (item.get("description") or "")[:MAX_DESCRIPTION_CHARS]
+        if not text:
             missing += 1
-            if args.require_description:
-                continue
-        kept.append(record)
-
-    target = args.out or jobkit.scan_index()
-    jd_path = jobkit.scan_descriptions()
-
-    if os.path.exists(target):
-        with open(target, "r", encoding="utf-8") as handle:
-            existing = json.load(handle)
-    else:
-        existing = {
-            "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
-            "counts": {},
-            "candidates": [],
-        }
-
-    have = {c.get("key") for c in existing.get("candidates", [])}
-    have_pairs = {
-        (norm_company(c.get("company")), norm(c.get("title")))
-        for c in existing.get("candidates", [])
-    }
-
-    added, collided = 0, 0
-    for record in kept:
-        if record["key"] in have:
             continue
-        if (norm_company(record["company"]), norm(record["title"])) in have_pairs:
-            collided += 1
-            continue
-        existing.setdefault("candidates", []).append(record)
-        added += 1
+        filled += con.execute(
+            "UPDATE prospects SET description=?, last_seen=? WHERE key=?",
+            (text, jobkit.today(), key)).rowcount
+    con.commit()
 
-    existing.setdefault("counts", {})["indeed"] = pending.get("counts", {})
-    existing["counts"]["indeed_added"] = added
-    existing["descriptions"] = jd_path
-
-    # Keep descriptions out of the index, same as scan.py.
-    jd = {}
-    if os.path.exists(jd_path):
-        with open(jd_path, "r", encoding="utf-8") as handle:
-            jd = json.load(handle)
-    for record in existing.get("candidates", []):
-        text = record.pop("description", None)
-        if text:
-            jd[record["key"]] = text
-
-    write_json(target, existing, indent=2)
-    write_json(jd_path, jd)
-
-    print(f"merged {added} indeed candidates into {target}")
-    if collided:
-        print(f"skipped {collided} already present from an ATS board this run")
+    empty = con.execute(
+        "SELECT COUNT(*) n FROM prospects WHERE source='indeed' AND "
+        "(description IS NULL OR description='')").fetchone()["n"]
+    print(f"attached {filled} descriptions")
     if missing:
-        print(f"warning: {missing} records still have no description")
+        print(f"{missing} entries carried no description text")
+    if empty:
+        print(f"warning: {empty} indeed prospects still have none")
     return 0
 
 
@@ -344,10 +294,7 @@ def main():
 
     f = sub.add_parser("filter", help="raw search cards -> survivors needing descriptions")
     f.add_argument("--raw", required=True)
-    f.add_argument("--out", default=f"{jobkit.SCANS}/{today}-indeed-pending.json")
-    f.add_argument("--queries", default=jobkit.INDEED_CONFIG)
-    f.add_argument("--config", default=jobkit.WATCHLIST)
-    f.add_argument("--ledger", default=jobkit.LEDGER)
+    f.add_argument("--db", default=None)
     f.add_argument("--max-age-days", type=int, default=None)
     f.add_argument("--comp-floor", type=int, default=None, help="drop yearly bands topping out below this")
     f.add_argument("--include-seen", action="store_true")
@@ -356,10 +303,8 @@ def main():
     f.set_defaults(func=cmd_filter)
 
     m = sub.add_parser("merge", help="survivors + descriptions -> the day's candidates file")
-    m.add_argument("--pending", default=f"{jobkit.SCANS}/{today}-indeed-pending.json")
     m.add_argument("--descriptions", default=None)
-    m.add_argument("--out", default=None)
-    m.add_argument("--require-description", action="store_true")
+    m.add_argument("--db", default=None)
     m.set_defaults(func=cmd_merge)
 
     args = parser.parse_args()

@@ -19,37 +19,21 @@ MAX_DESCRIPTION_CHARS = 20000
 
 CAREER = os.environ.get("JOB_CAREER_DIR", "career")
 
-# You edit these.
-WATCHLIST = f"{CAREER}/watchlist.toml"
-INDEED_CONFIG = f"{CAREER}/indeed.toml"
-PROFILE = f"{CAREER}/search-profile.md"
-INDEX = f"{CAREER}/index.md"
-MANUAL_BOARDS = f"{CAREER}/manual-boards.md"
+# You own this. Structured, but Claude writes it -- see references/profile.md.
+PROFILE = f"{CAREER}/profile.json"
 
 # You read these.
 RUNS = f"{CAREER}/runs"
 RESUMES = f"{CAREER}/resumes"
 SUBMITTED = f"{RESUMES}/submitted"
 
-# The system owns these.
+# The system owns this. One database: prospects, companies, filters, staged.
 STATE = f"{CAREER}/.state"
-LEDGER = f"{STATE}/applications.jsonl"
-SCANS = f"{STATE}/scans"
-STAGED = f"{STATE}/staged"
+DB = f"{STATE}/job.db"
 
 
 def today():
     return datetime.now().strftime("%Y-%m-%d")
-
-
-def scan_index(date=None):
-    """Cheap candidate list: everything but the job descriptions."""
-    return f"{SCANS}/{date or today()}.json"
-
-
-def scan_descriptions(date=None):
-    """{key: description}. Read per key, never wholesale."""
-    return f"{SCANS}/{date or today()}-jd.json"
 
 
 def run_entry(date=None):

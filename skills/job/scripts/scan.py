@@ -4,25 +4,15 @@ import argparse
 import concurrent.futures
 import html
 import json
-import os
 import re
 import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
 
+import db as jobdb
 import jobkit
-from jobkit import (
-    MAX_DESCRIPTION_CHARS,
-    age_days,
-    compile_patterns,
-    iter_ledger,
-    load_config,
-    matches_any,
-    to_iso,
-    write_json,
-)
+from jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, to_iso
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) job-scan/1.0"
 TAG_RE = re.compile(r"<[^>]+>")
@@ -163,10 +153,6 @@ def fetch_ashby(company):
 FETCHERS = {"greenhouse": fetch_greenhouse, "lever": fetch_lever, "ashby": fetch_ashby}
 
 
-def load_seen_keys(ledger_path):
-    return {e["key"]: e for e in iter_ledger(ledger_path) if e.get("key")}
-
-
 def collapse_duplicates(records):
     grouped = {}
     for record in records:
@@ -193,25 +179,29 @@ def collapse_duplicates(records):
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch and filter ATS job boards into a candidate list.")
-    parser.add_argument("--config", default=jobkit.WATCHLIST)
-    parser.add_argument("--ledger", default=jobkit.LEDGER)
-    parser.add_argument("--out", default=None, help=f"index path; default {jobkit.scan_index()}")
     parser.add_argument("--company", action="append", help="limit run to these company names or slugs")
     parser.add_argument("--max-age-days", type=int, default=None)
-    parser.add_argument("--include-seen", action="store_true", help="do not filter out keys already in the ledger")
+    parser.add_argument("--include-seen", action="store_true", help="do not skip prospects already in the database")
     parser.add_argument("--no-location-filter", action="store_true")
     parser.add_argument("--workers", type=int, default=8)
-    parser.add_argument("--force", action="store_true", help="overwrite an existing scan")
+    parser.add_argument("--db", default=None)
     args = parser.parse_args()
 
-    config = load_config(args.config)
+    con = jobdb.connect(args.db)
+    config = {kind: [r["pattern"] for r in con.execute(
+        "SELECT pattern FROM filters WHERE kind=?", (kind,)).fetchall()]
+        for kind in ("title_include", "title_exclude", "location_include",
+                     "location_exclude", "us_tokens")}
+    setting = con.execute("SELECT value FROM settings WHERE key='max_age_days'").fetchone()
+    config["max_age_days"] = int(setting["value"]) if setting else 30
 
-    companies = [c for c in config.get("companies", []) if c.get("active", True)]
+    companies = [dict(r) for r in con.execute(
+        "SELECT name, ats, slug FROM companies WHERE active=1 AND ats IN ('greenhouse','lever','ashby') ORDER BY name").fetchall()]
     if args.company:
         wanted = {w.lower() for w in args.company}
         companies = [c for c in companies if c["name"].lower() in wanted or c["slug"].lower() in wanted]
     if not companies:
-        print(f"No active companies matched. Check {args.config}.", file=sys.stderr)
+        print("No active companies matched. Add some with: db.py companies --add", file=sys.stderr)
         return 1
 
     title_include = compile_patterns(config.get("title_include"))
@@ -238,7 +228,9 @@ def main():
             except Exception as error:
                 failures.append((company["name"], f"{type(error).__name__}: {error}"))
 
-    seen = {} if args.include_seen else load_seen_keys(args.ledger)
+    seen = set() if args.include_seen else {
+        r["key"] for r in con.execute(
+            "SELECT key FROM prospects UNION SELECT alias_key AS key FROM aliases").fetchall()}
 
     counts = {"fetched": len(all_records), "title": 0, "location": 0, "stale": 0, "seen": 0}
     candidates = []
@@ -275,40 +267,24 @@ def main():
 
     candidates.sort(key=lambda r: (r["age_days"] if r["age_days"] is not None else 9999, r["company"]))
 
-    out_path = args.out or jobkit.scan_index()
-    jd_path = jobkit.scan_descriptions()
-    if os.path.exists(out_path) and not args.force:
-        try:
-            with open(out_path, "r", encoding="utf-8") as handle:
-                existing = len(json.load(handle).get("candidates", []))
-        except Exception:
-            existing = 0
-        if existing and len(candidates) < existing:
-            print(
-                f"refusing to overwrite {out_path}: it holds {existing} candidates and this run "
-                f"produced {len(candidates)}.\nIts descriptions are what phases 3-4 read. "
-                f"Re-run with --force to replace it, or --out to write elsewhere.",
-                file=sys.stderr)
-            return 2
-
-    # Descriptions are the bulk of the payload and are read one key at a time,
-    # so they live beside the index rather than inside it.
-    descriptions = {}
     for record in candidates:
-        descriptions[record["key"]] = record.pop("description", "")
-
-    write_json(out_path, {
-        "scanned_at": datetime.now(timezone.utc).isoformat(),
-        "companies_scanned": len(companies) - len(failures),
-        "counts": counts,
-        "failures": [{"company": name, "error": err} for name, err in failures],
-        "descriptions": jd_path,
-        "candidates": candidates,
-    }, indent=2)
-    write_json(jd_path, descriptions)
+        con.execute(
+            "INSERT INTO prospects(key,company,title,url,apply_url,location,remote,compensation,"
+            "posted_at,first_seen,last_seen,source,ats,description,status) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,'new')",
+            (record["key"], record["company"], record["title"], record.get("url"),
+             record.get("apply_url"), record.get("location"), int(bool(record.get("remote"))),
+             record.get("compensation"), record.get("posted_at"), jobkit.today(), jobkit.today(),
+             record.get("source"), record.get("ats"), record.get("description")))
+        con.execute("INSERT INTO events(key,at,status,note) VALUES(?,?,'new','first seen')",
+                    (record["key"], jobdb.now()))
+        for alias in record.get("duplicate_keys") or []:
+            con.execute("INSERT OR IGNORE INTO aliases(alias_key,key) VALUES(?,?)",
+                        (alias, record["key"]))
+    con.commit()
 
     print(f"NEW CANDIDATES: {len(candidates)}")
-    print(f"written to {out_path}  (descriptions: {jd_path})")
+    print(f"stored in {args.db or jobkit.DB}")
     if failures:
         print("\nboards that failed (likely a wrong slug or a board that moved ATS):")
         for name, err in failures:

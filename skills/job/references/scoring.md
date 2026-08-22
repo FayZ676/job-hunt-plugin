@@ -1,123 +1,79 @@
 # Scoring and the record
 
-Judging a candidate, and the three places the judgement gets written down.
+There is one record: the `prospects` table. Scoring writes to it, status changes write to it, and
+"what happened" is read back out of it.
 
 ## Score
 
-Read `career/search-profile.md` in full, then `career/.state/scans/<date>.json`. Score each
-candidate 0–10 by the rubric in the profile.
+Read `career/profile.json` in full — the `search` block is the rubric and `search.notes` carries the
+judgement it cannot encode. Then take the triage list:
 
-- **Read the `description` field.** Scoring off the title alone is the failure this step exists to
+```bash
+DB='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py"'
+$DB list --new
+```
+
+That view has title, company, location, compensation and age. **It has no descriptions**, which is
+deliberate: a day's descriptions run to tens of thousands of tokens and most belong to roles the
+list already rules out.
+
+Triage on it, then pull only what survives:
+
+```bash
+$DB describe <key> <key> <key>
+```
+
+- **Read the description before scoring.** Scoring off the title is the failure this step exists to
   prevent. A "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer" req that is
   really data plumbing.
-- **Every score cites the specific JD language that drove it**, quoted or named.
+- **Every score cites the specific JD language that drove it**, quoted or named, in `--reason`.
 - Apply dealbreakers first. A dealbreaker is a hard zero regardless of how well the rest reads.
-- Check the profile's TODO block. Where a score genuinely turns on an unfilled item, score on the
-  stated assumption and mark the role assumption-dependent in the run entry.
-
-With many candidates, triage on title and company first, then read descriptions in full only for the
-plausible ones. Do not burn the context reading 200 JDs end to end.
-
-## The ledger
-
-`career/.state/applications.jsonl`, one JSON object per line, append-only. **One line per candidate, every
-candidate.** Skipped jobs must be logged or tomorrow's run resurfaces them.
-
-```json
-{"key":"greenhouse:anthropic:4012345","company":"Anthropic","title":"Senior AI Engineer, Applied","url":"https://…","location":"Remote (US)","posted_at":"2026-08-02T00:00:00+00:00","first_seen":"2026-08-06","score":9,"reason":"JD leads with production LLM evaluation harnesses","status":"queued"}
-```
-
-`status` vocabulary, roughly in lifecycle order: `queued` (shortlisted, resume not yet built) ·
-`surfaced` (seen and worth a look, not yet scored) · `skipped` (scored, not pursuing) ·
-`staged` (form filled, awaiting approval) · `applied` · `interviewing` · `rejected` ·
-`not_pursued` (shortlisted then dropped, with a reason) · `closed` (posting taken down).
-
-Status changes append a **new line with the same `key`** — last line wins. Never rewrite or delete
-earlier lines; the file is the history.
-
-**Write it with `ledger.py`, never by hand.** A malformed line is not a crash — it is a posting that
-silently resurfaces, or an application recorded as never sent.
+- Where a score turns on something still `null` in the profile, score on a stated assumption and say
+  so in the reason.
 
 ```bash
-L='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/ledger.py"'
-$L append --key greenhouse:anthropic:401 --company Anthropic --title "Senior AI Engineer" \
-   --url https://… --location "Remote (US)" --posted_at 2026-08-02 --score 9 --reason "…" --status queued
-$L status greenhouse:anthropic:401 --status applied --resume career/resumes/anthropic-senior-ai-engineer.pdf
-$L get greenhouse:anthropic:401     # latest state
-$L keys                             # every key ever seen, for dedupe
-$L stats                            # counts by status
+$DB score <key> --score 9 --reason "JD leads with production LLM evaluation harnesses"
 ```
 
-`append` records a newly seen posting; `status` carries the role's latest state forward with a new
-status and a timestamp, so the previous lines stay intact as history.
+At or above the profile's `shortlist_threshold` this sets `shortlisted`; below it, `skipped`.
+**Score every prospect, including the ones you skip** — an unscored row stays `new` and comes back
+tomorrow.
 
-## Reconcile resumes against the ledger
-
-A resume in `career/resumes/` with no matching ledger line means an application fell out of the
-pipeline. Worth catching every run.
+## Status
 
 ```bash
-python3 - <<'PY'
-import json, pathlib, re
-led = [json.loads(l) for l in open('career/.state/applications.jsonl')]
-blob = " ".join(f"{o['company']} {o['title']} {o.get('resume','')}".lower() for o in led)
-for p in sorted(pathlib.Path('career/resumes').rglob('*.pdf')):
-    stem = p.stem.lower()
-    company = re.split(r'-(senior|staff|ai|ml|software|lead)', stem)[0].replace('-', ' ')
-    if company not in blob and stem not in blob:
-        print("UNTRACKED:", p)
-PY
+$DB status <key> --status applied --resume career/resumes/submitted/<slug>.pdf --note "confirmation verified"
 ```
 
-Anything printed needs a ledger line before the run finishes. Ask the user whether it was submitted —
-`applied` against `queued` is their call, never an assumption — and record the resume path and build
-date. If the company is unreachable by `scan.py`, add it to `references/manual-boards.md` too.
+Vocabulary, roughly in lifecycle order: `new` · `scored` · `shortlisted` · `skipped` · `staged` ·
+`applied` · `interviewing` · `rejected` · `not_pursued` · `closed`.
 
-## The run entry
+Every change appends to `events`, so the history is intact without duplicating the row. `db.py show
+<key>` prints a prospect with its full timeline.
 
-`career/runs/<date>.md` is this skill's log — one note per day, covering the whole run through to
-submission, sitting alongside its `<date>.json`. **Keep the folder flat** so the series
-reads as a run of daily notes; do not introduce per-date subfolders.
+## Answering questions
 
-```markdown
-# Job run — 2026-08-18
+The reason this is a database: the user can ask things, and you answer with a query rather than by
+reading files.
 
-**Scanned:** 137 boards · 14,455 postings · 20 new after filters · 4 manual-board roles reviewed
-**Indeed:** 16 queries · 148 cards · 123 dropped as noise or dupes · 24 new · 23 companies not on the watchlist
-**Shortlisted:** 3 · **Logged and skipped:** 21
-**Resumes built:** 3 · **Staged:** 3 · **Submitted:** 2 · **Waiting on you:** 1
-
-One line on the shape of the day.
-
-## Applications
-
-### 1. Northwind Analytics — Machine Learning Engineer  ·  **9/10**  (manual board)
-- **Location:** Remote — USA · **Posted:** 10 days ago · **Comp:** $138.3K–$232.5K by state band
-- **Why:** the specific JD language that drove the score, quoted.
-- **Gaps:** what the JD asks for that the file does not answer.
-- **Link:** https://…
-- **Resume:** `career/resumes/northwind-machine-learning-engineer.pdf`
-- **Outcome:** submitted 2026-08-18 14:22, confirmation verified
-
-### 2. Kestrel Labs — Software Engineer, Model Evaluation  ·  **8/10**
-- …
-- **Outcome:** staged, waiting on review of the "most impressive thing built with AI" essay
-
-## Also new, not shortlisted
-
-| Company | Title | Score | Why not |
-|---|---|---|---|
-
-## Manual boards
-
-Checked: … · Not due: … · Deferred: …
-
-## Boards that failed
+```bash
+$DB stats
+$DB query "SELECT company, title, score FROM prospects WHERE status='applied' ORDER BY score DESC"
+$DB query "SELECT company, COUNT(*) n FROM prospects WHERE status='rejected' GROUP BY company"
+$DB query "SELECT p.company, p.title, julianday(e2.at) - julianday(e1.at) AS days
+           FROM events e1 JOIN events e2 ON e1.key = e2.key
+           JOIN prospects p ON p.key = e1.key
+           WHERE e1.status='applied' AND e2.status='rejected'"
 ```
 
-`Outcome` is the line that makes this a run entry: `submitted <timestamp>, confirmation verified` ·
-`staged, waiting on <what>` · `blocked on <missing answer>` · `not pursued — <reason>`. Every
-shortlisted role carries one by the end of the run.
+That last one answers "how fast do rejections come back, and did an interview happen" — the sort of
+thing the old append-only file could not be asked at all.
 
-This file is rendered markdown. Keep links bare or as markdown links, and keep the applications section
-at the top where it reads without scrolling.
+## The run report
+
+```bash
+$DB report [--date YYYY-MM-DD]
+```
+
+Derived from the database, not stored. Write it to `career/runs/<date>.md` when the user wants a
+note to read; that file is a rendering, and deleting it loses nothing.

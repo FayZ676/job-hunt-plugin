@@ -8,12 +8,12 @@ fills; only phase 5 submits.
 | ATS | Apply URL | Notes |
 | --- | --------- | ----- |
 | **Ashby** | Job URL + `/application` | Renders client-side; see the wait below |
-| **Greenhouse** | `job-boards.greenhouse.io/<slug>/jobs/<id>` | Company career pages embed this in an iframe. Go to the canonical URL directly, from the `gh_jid` in the ledger key |
+| **Greenhouse** | `job-boards.greenhouse.io/<slug>/jobs/<id>` | Company career pages embed this in an iframe. Go to the canonical URL directly, from the `gh_jid` in the prospect key |
 | **Lever** | `jobs.lever.co/<slug>/<id>/apply` | Server-rendered and predictable to fill, but **submission is gated by hCaptcha** — see below |
 | **Workday** | `<company>.wd<N>.myworkdayjobs.com/...` | **Fully drivable.** Needs a per-employer account; then Apply Manually runs a five-step flow — see below |
 | **iCIMS, Taleo, SmartRecruiters** | varies | Untested. Do not assume they are blocked — try one before writing them off |
 
-The ledger `key` prefix names the ATS: `ashby:`, `greenhouse:`, `lever:`, `manual:`.
+The prospect `key` prefix names the ATS: `ashby:`, `greenhouse:`, `lever:`, `manual:`.
 
 ## Reading the form
 
@@ -88,7 +88,7 @@ Re-snapshot after filling and check every required field — marked `*` — hold
 silent failures are an unselected typeahead, a radio group that looks answered because one option is
 visible, and a file input that never received the upload.
 
-Screenshot the completed form into `career/.state/staged/`. That screenshot is what the user reviews.
+Screenshot the completed form into `career/resumes/`. That screenshot is what the user reviews.
 
 **Then stop.** Do not click a control labeled Submit, Apply, Continue, or Next in phase 4. On a
 multi-page form, stop at the end of the first page and record the page count.
@@ -129,7 +129,7 @@ company does nothing at another. Account creation needs an email, a password (8+
 lower, numeric and special), and a privacy checkbox, then an emailed activation link.
 
 **Never invent, generate, or store a password.** Ask the user to create one in their password
-manager and record only the pointer in `career/accounts.md` — that file names which accounts exist
+manager and record only the pointer in the `accounts` block in `career/profile.json` — that file names which accounts exist
 and where each password lives, never the password itself.
 
 The activation link is single-use: opening it after the user has already clicked it returns "Invalid
@@ -165,22 +165,22 @@ replaced. **Validation errors mean nothing was submitted** — the page stays, w
 the offending fields. Repair those fields and re-present the application for approval; do not
 resubmit silently.
 
-Record `applied` in the ledger only against a confirmation you have seen in a snapshot.
+Set `applied` only against a confirmation you have seen in a snapshot.
 
 ## Traps
 
 - **Application limits.** Cohere states 5 per 90 days; Deepgram states 2 per 60 days across a shared
-  limit group. **These no longer gate anything** — the limits table in `career/index.md` is a record,
+  limit group. **These no longer gate anything** — the limits table in `career/profile.json` is a record,
   not a budget. Add to it whenever a form declares one, and note in the run entry when an application
   goes out past a stated limit, so the history shows it.
 - **Published salary ranges.** Ashby prints the range on the posting — Deepgram's reads
   $180K–$240K. Read it before answering any compensation field and apply the compensation rule in
-  `career/index.md`. Answering the $120,000 floor against a published $180K–$240K band anchors the
+  `career/profile.json`. Answering the $120,000 floor against a published $180K–$240K band anchors the
   negotiation about sixty thousand dollars below where the employer opened it.
 - **Cover letter fields** are usually optional. Leave optional essay fields empty rather than filling
   them with something generic; a weak answer costs more than no answer.
 - **"How did you hear about us?"** — answer the company's job board, which is true.
-- **Duplicate applications.** Check the ledger for the `key` before staging. A second application to
+- **Duplicate applications.** Check `db.py show <key>` before staging. A second application to
   the same role reads as carelessness and can burn a limit.
 - **Login walls.** Some forms require an account before showing fields. Flag for the user.
 - **Stale refs.** Any click that re-renders invalidates every ref in the snapshot. Re-snapshot.

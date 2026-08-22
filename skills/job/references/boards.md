@@ -1,7 +1,7 @@
 # The automated board scan
 
-Everything about the API scan: running it, tuning what it returns, and adding companies to it.
-The other two sources have their own files — `indeed.md` and `manual-boards.md`.
+Everything about boards: running the API scan, tuning what it returns, adding companies, and
+working the ones no API reaches. The Indeed pass has its own file, `indeed.md`.
 
 ## Running it
 
@@ -10,52 +10,77 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py"
 ```
 
-Stdlib only, no install step. It hits every active board in parallel, applies the mechanical filters
-(title regex, location, posting age), drops any `key` already in the ledger, and writes
-`career/.state/scans/<date>.json`.
+Stdlib only, no install step. It reads the company list and filters out of the database, hits every
+active board in parallel, applies the mechanical filters, skips anything already known, and inserts
+the rest into `prospects`.
 
 | Flag | Use |
 | ---- | --- |
 | `--company Anthropic` | scan one board, repeatable, for testing a newly added slug |
-| `--include-seen` | ignore the ledger, for rebuilding a run entry |
+| `--include-seen` | re-insert prospects already in the database |
 | `--no-location-filter` | see what the location rule is costing |
 | `--max-age-days 7` | tighten to the last week |
-| `--force` | overwrite an existing candidates file |
 
-`<date>.json` holds the full JD text that phases 3–4 read, so the script **refuses to
-overwrite** a same-day file with a smaller result. A second plain run after the ledger is written
-would otherwise wipe the day's descriptions. Rebuild a day with `--include-seen --force`.
 
-Multi-location postings for one role merge into a single candidate, with the extra ids in
-`duplicate_keys`. **Log every one of those ids to the ledger**, or the siblings return as new
-tomorrow. This also means the ledger holds more lines than jobs — count unique roles, not lines.
+
+
+Multi-location postings for one role merge into a single prospect, with the sibling ids stored as
+aliases so they never resurface as new.
 
 **Read the failure list.** A failing board usually means the company moved ATS or the slug is wrong.
-Fix `career/watchlist.toml` or set `"active": false`. Do not leave it failing every morning.
+Fix the slug, or `$DB companies --deactivate <slug>`. Do not leave it failing every morning.
 
 ## Tuning the filters
 
 The scan prints how many postings each filter dropped. Use those counts rather than guessing.
 
+```bash
+DB='python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/db.py"'
+$DB filters --kind title_exclude
+$DB filters --kind title_exclude --add '(?i)contract' --note "no contract roles"
+$DB filters --kind title_exclude --remove '(?i)contract'
+```
+
 | Symptom | Fix |
 | ------- | --- |
-| Obvious junk in candidates | `title_exclude` in `career/watchlist.toml` |
-| A real role got filtered out | `title_include`, or loosen `location_include` |
-| Candidates fine, scores wrong | `career/search-profile.md` |
-| Same company never has anything | `"active": false` |
+| Obvious junk in candidates | add to `title_exclude` |
+| A real role got filtered out | add to `title_include`, or loosen `location_include` |
+| Candidates fine, scores wrong | `career/profile.json`, the `search` block |
+| Same company never has anything | `$DB companies --deactivate <slug>` |
 | Too few candidates | check the location counter; it is usually location |
 
 ## Adding companies
 
-Find the ATS slug from the careers page URL — `boards.greenhouse.io/<slug>`, `jobs.lever.co/<slug>`,
-`jobs.ashbyhq.com/<slug>` — add an entry to `companies`, then verify:
+Find the ATS slug in the careers-page URL — `boards.greenhouse.io/<slug>`, `jobs.lever.co/<slug>`,
+`jobs.ashbyhq.com/<slug>` — then:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company "<Name>" --include-seen
+$DB companies --add "Anthropic:greenhouse:anthropic"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/job/scripts/scan.py" --company Anthropic --include-seen
 ```
 
-A slug that 404s is wrong, or the company is on an ATS this script does not support (Workday, Taleo,
-iCIMS, SmartRecruiters) — see **The board APIs** below, and `references/manual-boards.md`.
+A slug that 404s is wrong, or the company is on an ATS this script cannot read (Workday, Taleo,
+iCIMS, SmartRecruiters). Those go in as manual boards instead.
+
+## Manual boards
+
+Companies no API reaches are rows with `ats='manual'` and a cadence, in the same table:
+
+```bash
+$DB companies --add "Galois:manual:galois" --careers-url https://galois.com/careers/ \
+   --cadence Weekly --why "formal methods; local"
+$DB companies --manual          # the list, with when each was last checked
+$DB companies --checked galois  # after checking one
+```
+
+The automated watchlist skews toward venture-backed product companies, because that is who uses the
+three supported ATSes. Large regional employers, banks, insurers, health systems and manufacturers
+are on Workday or iCIMS instead, so leaving them out biases the whole search.
+
+Check what is due, score finds the same way as any other prospect, and record them with
+`$DB upsert --key manual:<slug>:<role>-<year>-<month> …`. **A company that migrates onto a supported
+ATS should change `ats`** and start being scanned automatically.
+
 
 ## The board APIs
 

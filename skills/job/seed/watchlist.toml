@@ -188,3 +188,78 @@ companies = [
   { name = "Writer", ats = "ashby", slug = "writer" },
   { name = "Zapier", ats = "ashby", slug = "zapier" },
 ]
+
+# ---- Indeed pass -------------------------------------------------------
+
+fromage_days = 7
+comp_floor = 100000
+delay_ms = 3000
+
+title_noise = [
+  '(?i)\bai trainer\b',
+  '(?i)\b(data annotat|annotation specialist|labeler|transcriptionist)',
+  '(?i)\b(freelance|gig|side income|work from home opportunity)\b',
+  '(?i)\b(tutor|coach|instructor|teach)\b',
+  '(?i)\bearn (money|cash)\b',
+]
+
+agency_name_patterns = [
+  '(?i)\b(staffing|recruit(ing|ers|ment)?|talent (solutions|acquisition|group)|headhunt)',
+  '(?i)\b(consultancy|consulting services|it services|outsourc)',
+  '(?i)\bplacement|contract(ing)? services\b',
+  '(?i)\b(consulting group|associates,? inc|federal|govcio|gov ?con)\b',
+]
+
+agency_blocklist = [
+  "Accenture",
+  "Apex Systems",
+  "Blu Omega",
+  "Bright Vision Technologies",
+  "Calance US",
+  "Capgemini",
+  "Career.io",
+  "ClearanceJobs",
+  "Cognizant",
+  "Collabera",
+  "Comtech Global Inc",
+  "CyberCoders",
+  "DataAnnotation",
+  "David Joseph & Company",
+  "Delan Associates, Inc",
+  "Deloitte",
+  "Dice",
+  "Diverse Lynx",
+  "Dreams 2 Reality Recruitment",
+  "Govcio LLC",
+  "HCLTech",
+  "Huron Consulting Group Inc.",
+  "ICF",
+  "Impact Consulting Solutions, Inc.",
+  "Infosys",
+  "Insight Global",
+  "Jobot",
+  "Kforce",
+  "LTIMindtree",
+  "Lanthos LLC",
+  "Lensa",
+  "MGT Impact Solutions, LLC",
+  "Mapgenesys",
+  "Marathon TS",
+  "Marlabs",
+  "Matoffo",
+  "Mindlance",
+  "Motion Recruitment",
+  "Next Step Systems",
+  "Provectus",
+  "Randstad",
+  "Redapt",
+  "RevStar",
+  "Robert Half",
+  "TEKsystems",
+  "Talentify",
+  "Tata Consultancy Services",
+  "Technergetics",
+  "Wipro",
+]
+
+shortlist_threshold = 7
