@@ -1,6 +1,6 @@
 ---
 name: job
-description: The daily job routine in one command — scan tracked boards for new openings, score them against the search profile, build a tailored resume for each shortlisted role, fill its application form in the browser, and submit the ones the user approves. Use for "run the job routine", "scan and apply", "any new openings", "apply to these", or the morning job search. Sub-modes run scanning, resume building, or applying on their own. `/job setup` creates the career files on first use.
+description: Scan job boards for new openings, score them against the search profile, build a tailored resume for each shortlist, fill the application form, and submit what the user approves. Use for "run the job routine", "scan and apply", "any new openings", "apply to these", the morning job search, or a resume tailored to one posting. `/job setup` on first use.
 ---
 
 # Job routine
@@ -16,14 +16,16 @@ Nothing below overrides these.
    the user names, in that run. Silence is not approval, and an unapproved application stays staged
    rather than going out on a later run.
 2. **Never write an answer the profile does not support.** `NULL` is a hard stop: leave the field
-   empty and report it. Never infer a phone number, a salary, or a demographic answer.
+   empty and report it — `SELECT * FROM unanswered` lists every one that will block an application.
+   Never infer a phone number, a salary, or a demographic answer.
 3. **Answer to the truth, including when it costs the application.** A commitment in the profile is
    a ceiling, not an opening position.
 4. **`applied` requires a confirmation page you have seen.** Clicking the button is not evidence.
 5. **Essays and screening answers are drafted, never auto-accepted.**
 6. **Chat output is minimal.** Only two things belong in chat: the Phase 5 approval prompt, and
-   whatever blocks progress and needs the user. No progress narration, no phase transitions, no
-   summaries — the run entry is the record. A run with nothing to ask about produces no chat output.
+   whatever blocks progress and needs the user — named specifically, which role and which field. No
+   progress narration, no phase transitions, no summaries; the run entry is the record. A run with
+   nothing to ask about produces no chat output at all.
 
 ## Modes
 
@@ -72,9 +74,9 @@ The filesystem holds only what a database should not: built PDFs in `career/resu
 wants one. Both are output; deleting either loses nothing.
 
 **The user never opens a file and never writes SQL.** Reading their career history, correcting a
-fact, adding a job, changing what they want — conversation on their side, rows on yours.
-`references/profile.md` has the shape and the ETL rules. When they ask a question about their search
-— what they applied to, what went quiet, which companies reject fastest — **answer it with a query.**
+fact, changing what they want — conversation on their side, rows on yours (`references/profile.md`).
+When they ask about their search — what they applied to, what went quiet, which companies reject
+fastest — **answer with a query.**
 
 ## Phase 1 — Scan
 
@@ -178,11 +180,6 @@ $Q "UPDATE prospects SET status='applied', resume='career/resumes/submitted/<slu
 and move that resume's `.pdf` and `.json` into `career/resumes/submitted/`. The status change and the
 file move go together.
 
-## Phase 6 — Report
-
-Nothing needed from the user means no chat output. Otherwise say only what is needed and where —
-which role, which field, which file — without restating what went cleanly alongside it.
-
 ## Recording a rejection
 
 Only a reported rejection. Do nothing for a role that is merely quiet.
@@ -197,12 +194,3 @@ still says an application went out while the dead document is gone. Note the sha
 visible — days from submission, and whether any interview stage happened; a rejection three days out
 with no interview is a resume screen, and that is worth knowing across roles. **A synced folder can
 re-materialize a deleted file** — re-list the directory and delete again if it reappeared.
-
-## Failure modes
-
-| Symptom | Cause | Fix |
-| ------- | ----- | --- |
-| Same posting staged twice | It was never scored, so it re-entered as `new` | Score every prospect, including skips |
-| Every staged application `blocked` | Profile still has `NULL`s | `SELECT * FROM unanswered`, then fill them once |
-| Zero candidates from thousands of postings | Filters too tight | Read the per-filter drop counts; usually location |
-| Indeed returns 429 or 403 | The pass used `fetch()` | Navigate to each URL instead |
