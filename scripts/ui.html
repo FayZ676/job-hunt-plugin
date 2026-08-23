@@ -39,11 +39,6 @@ nav a.on { background: var(--accent); color: #fff; }
 }
 .run button:hover { filter: brightness(1.08); }
 .run button[disabled] { opacity: .55; cursor: default; filter: none; }
-.run .also {
-  display: block; width: 100%; margin-top: 6px; padding: 6px; font-size: 12px;
-  font-weight: 400; background: none; color: var(--dim); border: 1px solid var(--line);
-}
-.run .also:hover { background: var(--line); color: var(--ink); filter: none; }
 .run .said { margin: 8px 2px 0; font-size: 12px; color: var(--dim); }
 .run code {
   display: block; margin-top: 4px; font: 11px/1.5 var(--mono); color: var(--ink);
@@ -106,7 +101,7 @@ ul.tight li { margin-bottom: 3px; }
   nav h1 { margin-left: 2px; }
   nav a { display: inline-block; margin: 0 6px 6px 0; padding: 8px 12px; border: 1px solid var(--line); }
   .run { display: flex; flex-wrap: wrap; gap: 6px; }
-  .run button, .run .also { width: auto; flex: 1 1 46%; margin-top: 0; }
+  .run button { width: auto; flex: 1 1 auto; }
   .run .said { flex: 1 1 100%; }
   nav .where { margin: 10px 2px 0; }
   main { padding: 18px 14px 60px; }
@@ -126,7 +121,6 @@ ul.tight li { margin-bottom: 3px; }
   <h1>Job</h1>
   <div class="run">
     <button id="run">▶ Run /job</button>
-    <button class="also" id="runScan">scan only</button>
     <p class="said" id="said"></p>
   </div>
   <a href="#/jobs">Jobs</a>
@@ -330,7 +324,7 @@ async function viewSources() {
 const TOKEN = "__RUN_TOKEN__";
 const said = document.getElementById("said");
 
-async function run(mode, button) {
+async function run() {
   const buttons = document.querySelectorAll(".run button");
   buttons.forEach(b => b.disabled = true);
   said.textContent = "Opening a terminal…";
@@ -338,7 +332,7 @@ async function run(mode, button) {
     const response = await fetch("/run", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Job-Token": TOKEN },
-      body: JSON.stringify({ mode })
+      body: JSON.stringify({ mode: "" })
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "could not launch");
@@ -347,13 +341,12 @@ async function run(mode, button) {
     document.getElementById("again").onclick = event => { event.preventDefault(); route(); };
   } catch (error) {
     said.innerHTML = `Could not open a terminal — ${esc(error.message)}. Run this yourself:
-      <code>claude "${esc(mode ? "/job " + mode : "/job")}"</code>`;
+      <code>claude "/job"</code>`;
   }
   buttons.forEach(b => b.disabled = false);
 }
 
-document.getElementById("run").onclick = () => run("");
-document.getElementById("runScan").onclick = () => run("scan");
+document.getElementById("run").onclick = run;
 
 const routes = { jobs: viewJobs, profile: viewProfile, sources: viewSources };
 

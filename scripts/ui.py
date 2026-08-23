@@ -41,7 +41,7 @@ HTML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui.html")
 TOKEN = secrets.token_urlsafe(24)
 ACCESS = None
 LOOPBACK = ("127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1")
-MODES = {"": "/job", "scan": "/job scan", "indeed": "/job indeed"}
+MODES = {"": "/job"}
 
 LISTS = {
     "stats": "SELECT status, n FROM stats",
