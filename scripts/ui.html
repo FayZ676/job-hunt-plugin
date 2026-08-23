@@ -130,7 +130,6 @@ ul.tight li { margin-bottom: 3px; }
     <p class="said" id="said"></p>
   </div>
   <a href="#/jobs">Jobs</a>
-  <a href="#/review">Review</a>
   <a href="#/profile">Profile</a>
   <a href="#/sources">Sources</a>
   <div class="where" id="where"></div>
@@ -248,29 +247,6 @@ async function viewProspect(key) {
     ${p.description ? `<h3>Description</h3><div class="desc prose">${esc(p.description)}</div>` : ""}`);
 }
 
-async function viewReview() {
-  loading();
-  const data = await get("/api/review");
-  const byKey = new Map();
-  data.forEach(r => {
-    if (!byKey.has(r.key)) byKey.set(r.key, { ...r, flags: [] });
-    if (r.label) byKey.get(r.key).flags.push(r);
-  });
-  const cards = [...byKey.values()];
-  show(`<h2>Review</h2>
-    <p class="sub">${cards.length} staged, waiting on you. Nothing here is submitted until you say so in chat.</p>
-    ${cards.length ? cards.map(c => `<div class="card">
-      <h3 style="margin-top:0">${esc(c.company)} — ${esc(c.title)}</h3>
-      <p class="sub">${scoreCell(c.score)} · ${badge(c.staged_status)}
-        ${c.blocked_on ? `· <span class="null">${esc(c.blocked_on)}</span>` : ""}
-        · <a href="#/prospect/${encodeURIComponent(c.key)}">full application</a></p>
-      ${c.flags.length ? c.flags.map(f => `<h4>${esc(f.label)}</h4>
-        <div class="prose">${esc(f.value)}</div>
-        <div class="tags"><span class="tag">${esc(f.flag)}</span></div>`).join("")
-        : '<p class="empty" style="padding:0">No flagged fields.</p>'}
-    </div>`).join("") : '<p class="empty">Nothing staged.</p>'}`);
-}
-
 async function viewProfile() {
   loading();
   const [fields, blockers, career, criteria, notes, facts, education, accounts, limits] =
@@ -379,8 +355,7 @@ async function run(mode, button) {
 document.getElementById("run").onclick = () => run("");
 document.getElementById("runScan").onclick = () => run("scan");
 
-const routes = { jobs: viewJobs, review: viewReview,
-                 profile: viewProfile, sources: viewSources };
+const routes = { jobs: viewJobs, profile: viewProfile, sources: viewSources };
 
 function route() {
   const [, name, arg] = location.hash.split("/");

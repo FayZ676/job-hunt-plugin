@@ -46,7 +46,6 @@ MODES = {"": "/job", "scan": "/job scan", "indeed": "/job indeed"}
 LISTS = {
     "stats": "SELECT status, n FROM stats",
     "jobs": "SELECT * FROM triage",
-    "review": "SELECT * FROM needs_review",
     "profile": "SELECT field, value, section, notes FROM profile ORDER BY section, field",
     "unanswered": "SELECT field, section FROM unanswered",
     "education": "SELECT degree, institution, finished FROM education",

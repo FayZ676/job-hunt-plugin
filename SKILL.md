@@ -80,7 +80,7 @@ filter re-runs over what is already stored instead of going back to the network.
 Q='python3 "$HOME/.claude/skills/job/scripts/q.py"'
 $Q --schema                                        # the manual: tables, views, CHECKs, triggers
 $Q "SELECT * FROM triage WHERE status='new'"
-$Q --json "SELECT * FROM needs_review"
+$Q --json "SELECT * FROM staged"
 ```
 
 `$Q` is shorthand for that path throughout this skill and its references. Shell state does not
@@ -103,8 +103,8 @@ The filesystem holds only what a database should not: built PDFs in `$CAREER/res
 `submitted/` when an application goes out. That is output; deleting it loses nothing.
 
 **The dashboard is how the user sees any of this.** `/job ui` serves `127.0.0.1` on the first free
-port from 8765 — jobs, staged applications and their drafted essays, the whole profile with its
-`NULL`s called out, and the watchlist. It is
+port from 8765 — jobs, each opening on its full application with every drafted essay and flagged
+field in it, the whole profile with its `NULL`s called out, and the watchlist. It is
 **read-only, enforced by SQLite** (`mode=ro`), because the invariants that make a write safe live
 here, not in a web page. Point the user at it rather than reading rows aloud; keep answering
 questions with queries.
@@ -219,10 +219,10 @@ lost session and refilling from them is cheap.
 
 ## Phase 5 — Review and submit
 
-Present every staged application in one table — company, title, score, status, and any field flagged
-`needs-review` or `blocked` (`SELECT * FROM needs_review`). **Show every drafted essay in full**; an
-essay the user has not read is an essay they did not write. That table and its essays *are* the
-approval prompt. Then ask which to submit, accepting "all", a subset, or none.
+Present every staged application in one table — company, title, score, status, and whatever is
+named in `blocked_on` (`SELECT * FROM staged`). Keep it to that table: the user reads the
+applications themselves in the dashboard, where every field and its flag already renders. Then ask
+which to submit, accepting "all", a subset, or none.
 
 For each approved one: click submit, wait for the confirmation page, and **verify it**. A validation
 error means nothing was submitted — repair the named field and re-present it. Then:

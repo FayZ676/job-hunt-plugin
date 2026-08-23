@@ -108,8 +108,9 @@ Chat is how you change things; the dashboard is how you see them.
 /job ui
 ```
 
-That serves a local page on `127.0.0.1`: the jobs, staged applications with every drafted essay
-in full, your whole profile with its unanswered fields called out, and the watchlist. It is
+That serves a local page on `127.0.0.1`: the jobs, each one opening on its full application with
+every drafted essay and flagged field in it, your whole profile with its unanswered fields called
+out, and the watchlist. It is
 **read-only, enforced by SQLite** — every request opens the database `mode=ro`, so nothing the page
 itself can do will touch the record. `--lan` serves it to your phone too, gated by an access key
 printed with the link.

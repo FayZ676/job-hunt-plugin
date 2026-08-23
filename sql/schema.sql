@@ -184,14 +184,6 @@ CREATE VIEW IF NOT EXISTS manual_boards AS
   FROM companies WHERE active=1 AND ats='manual'
   ORDER BY CASE cadence WHEN 'Weekly' THEN 1 WHEN 'Monthly' THEN 2 ELSE 3 END, name;
 
-CREATE VIEW IF NOT EXISTS needs_review AS
-  SELECT p.key, p.company, p.title, p.score, s.status AS staged_status,
-         s.blocked_on, f.label, f.value, f.flag
-  FROM staged s
-  JOIN prospects p ON p.key = s.key
-  LEFT JOIN staged_fields f ON f.key = s.key AND f.flag IS NOT NULL
-  WHERE p.status = 'staged';
-
 -- ---------------------------------------------------------------------------
 -- The profile. The user's own data, and the only thing they own.
 --
