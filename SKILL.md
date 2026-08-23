@@ -103,8 +103,8 @@ The filesystem holds only what a database should not: built PDFs in `$CAREER/res
 `submitted/` when an application goes out. That is output; deleting it loses nothing.
 
 **The dashboard is how the user sees any of this.** `/job ui` serves `127.0.0.1` on the first free
-port from 8765 — pipeline, staged applications and their drafted essays, the whole profile with its
-`NULL`s called out, the watchlist, and the funnel from 14k postings down to a shortlist. It is
+port from 8765 — jobs, staged applications and their drafted essays, the whole profile with its
+`NULL`s called out, and the watchlist. It is
 **read-only, enforced by SQLite** (`mode=ro`), because the invariants that make a write safe live
 here, not in a web page. Point the user at it rather than reading rows aloud; keep answering
 questions with queries.

@@ -45,7 +45,7 @@ MODES = {"": "/job", "scan": "/job scan", "indeed": "/job indeed"}
 
 LISTS = {
     "stats": "SELECT status, n FROM stats",
-    "pipeline": "SELECT * FROM triage",
+    "jobs": "SELECT * FROM triage",
     "review": "SELECT * FROM needs_review",
     "profile": "SELECT field, value, section, notes FROM profile ORDER BY section, field",
     "unanswered": "SELECT field, section FROM unanswered",
@@ -205,12 +205,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return True
         return secrets.compare_digest(self.presented_key() or "", ACCESS)
 
-    def send(self, body, content_type="application/json; charset=utf-8", status=200, cookie=None):
+    def send(self, body, content_type="application/json; charset=utf-8", status=200,
+             cookie=None, fresh=False):
         if isinstance(body, str):
             body = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        if fresh:
+            self.send_header("Cache-Control", "no-store")
         if cookie:
             self.send_header("Set-Cookie", cookie)
         self.end_headers()
@@ -246,7 +249,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 cookie = None
                 if ACCESS is not None and not self.local():
                     cookie = f"job_key={urllib.parse.quote(ACCESS)}; Path=/; SameSite=Lax; Max-Age=604800"
-                return self.send(page, "text/html; charset=utf-8", cookie=cookie)
+                return self.send(page, "text/html; charset=utf-8", cookie=cookie, fresh=True)
 
             if route == "/api/where":
                 return self.send(json.dumps({

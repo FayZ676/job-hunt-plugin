@@ -129,7 +129,7 @@ ul.tight li { margin-bottom: 3px; }
     <button class="also" id="runScan">scan only</button>
     <p class="said" id="said"></p>
   </div>
-  <a href="#/pipeline">Pipeline</a>
+  <a href="#/jobs">Jobs</a>
   <a href="#/review">Review</a>
   <a href="#/profile">Profile</a>
   <a href="#/sources">Sources</a>
@@ -157,38 +157,38 @@ const table = (columns, data, rowAttrs) => data.length ? `<div class="scroll"><t
   <tbody>${data.map(r => `<tr ${rowAttrs ? rowAttrs(r) : ""}>${r.cells.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
 </table></div>` : '<p class="empty">Nothing here.</p>';
 
-let pipeline = { rows: [], status: "all", search: "" };
+let jobs = { rows: [], status: "all", search: "" };
 
-async function viewPipeline() {
+async function viewJobs() {
   loading();
-  const [data, stats] = await Promise.all([get("/api/pipeline"), get("/api/stats")]);
-  pipeline.rows = data;
+  const [data, stats] = await Promise.all([get("/api/jobs"), get("/api/stats")]);
+  jobs.rows = data;
   const counts = Object.fromEntries(stats.map(s => [s.status, s.n]));
   const order = ["shortlisted", "staged", "applied", "interviewing", "new", "scored",
                  "skipped", "rejected", "not_pursued", "closed"].filter(s => counts[s]);
-  show(`<h2>Pipeline</h2>
+  show(`<h2>Jobs</h2>
     <p class="sub">${data.length} prospects. Click a row for the full posting, its history and its resume.</p>
     <div class="chips" id="chips">
       <button class="chip" data-status="all">all<b>${data.length}</b></button>
       ${order.map(s => `<button class="chip" data-status="${s}">${s}<b>${counts[s]}</b></button>`).join("")}
     </div>
-    <input type="search" id="q" placeholder="company, title or location" value="${esc(pipeline.search)}">
+    <input type="search" id="q" placeholder="company, title or location" value="${esc(jobs.search)}">
     <div id="rows"></div>`);
   document.getElementById("chips").onclick = event => {
     const chip = event.target.closest(".chip");
-    if (chip) { pipeline.status = chip.dataset.status; drawPipeline(); }
+    if (chip) { jobs.status = chip.dataset.status; drawJobs(); }
   };
   const box = document.getElementById("q");
-  box.oninput = () => { pipeline.search = box.value; drawPipeline(); };
-  drawPipeline();
+  box.oninput = () => { jobs.search = box.value; drawJobs(); };
+  drawJobs();
 }
 
-function drawPipeline() {
+function drawJobs() {
   document.querySelectorAll("#chips .chip").forEach(c =>
-    c.classList.toggle("on", c.dataset.status === pipeline.status));
-  const needle = pipeline.search.trim().toLowerCase();
-  const shown = pipeline.rows.filter(r =>
-    (pipeline.status === "all" || r.status === pipeline.status) &&
+    c.classList.toggle("on", c.dataset.status === jobs.status));
+  const needle = jobs.search.trim().toLowerCase();
+  const shown = jobs.rows.filter(r =>
+    (jobs.status === "all" || r.status === jobs.status) &&
     (!needle || `${r.company} ${r.title} ${r.location || ""}`.toLowerCase().includes(needle)));
   document.getElementById("rows").innerHTML = table(
     ["Score", "Company", "Title", "Location", "Compensation", "Status", "Seen", "Resume"],
@@ -225,7 +225,7 @@ async function viewProspect(key) {
     }).join("")}
     ${p.staged.screenshot ? `<h4>Filled form</h4><img class="shot" src="/asset/screenshot/${encodeURIComponent(key)}" alt="">` : ""}`
     : "";
-  show(`<p><a href="#/pipeline">← Pipeline</a></p>
+  show(`<p><a href="#/jobs">← Jobs</a></p>
     <h2>${esc(p.company)} — ${esc(p.title)}</h2>
     <p class="sub">${scoreCell(p.score)} · ${badge(p.status)} · <span class="time">${esc(p.key)}</span></p>
     <div class="card"><dl class="grid">
@@ -379,7 +379,7 @@ async function run(mode, button) {
 document.getElementById("run").onclick = () => run("");
 document.getElementById("runScan").onclick = () => run("scan");
 
-const routes = { pipeline: viewPipeline, review: viewReview,
+const routes = { jobs: viewJobs, review: viewReview,
                  profile: viewProfile, sources: viewSources };
 
 function route() {
@@ -387,7 +387,7 @@ function route() {
   document.querySelectorAll("nav a").forEach(a =>
     a.classList.toggle("on", a.getAttribute("href") === `#/${name}`));
   if (name === "prospect") return viewProspect(decodeURIComponent(arg || ""));
-  (routes[name] || viewPipeline)();
+  (routes[name] || viewJobs)();
 }
 
 window.addEventListener("hashchange", route);

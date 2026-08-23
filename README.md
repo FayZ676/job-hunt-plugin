@@ -108,10 +108,11 @@ Chat is how you change things; the dashboard is how you see them.
 /job ui
 ```
 
-That serves a local page on `127.0.0.1`: the pipeline, staged applications with every drafted essay
-in full, your whole profile with its unanswered fields called out, the watchlist, and the funnel
-from raw postings down to a shortlist. It is **read-only, enforced by SQLite** — every request opens
-the database `mode=ro`, so nothing the page itself can do will touch the record.
+That serves a local page on `127.0.0.1`: the jobs, staged applications with every drafted essay
+in full, your whole profile with its unanswered fields called out, and the watchlist. It is
+**read-only, enforced by SQLite** — every request opens the database `mode=ro`, so nothing the page
+itself can do will touch the record. `--lan` serves it to your phone too, gated by an access key
+printed with the link.
 
 It has one button. **Run** opens your terminal — Terminal on macOS, Windows Terminal on Windows — on
 an interactive `claude "/job"`, so the phases that need your approval still get to ask for it. The
