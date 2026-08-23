@@ -38,7 +38,7 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the read-only dashboard — `scripts/ui.py` |
+| `/job ui` | Serve the read-only dashboard — `scripts/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
 | `/job help` | `cat help.txt` — the command list, and nothing else |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op.

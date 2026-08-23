@@ -12,6 +12,7 @@ commands:
   apply <key or URL>          build and stage one application, stopping before submit
   submit                      review what is staged and submit only what you name
   ui                          serve the read-only dashboard on 127.0.0.1
+  ui --lan                    also serve it to your phone on the same network
   help                        this message
 
 notes:
@@ -19,4 +20,5 @@ notes:
   nothing is submitted without your approval, named by you, in that run
   a field your profile does not answer is left empty and reported, never guessed
   everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)
+  `ui --lan` prints a link with an access key — that link is the password
   ask about your search in plain English — it is answered with a query

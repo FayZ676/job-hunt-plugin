@@ -8,6 +8,12 @@ where the invariants live: the skill.
   ui.py                 serve on the first free port from 8765
   ui.py --port 9000     pin the port
   ui.py --no-open       do not open a browser
+  ui.py --lan           also answer other devices on this network, key-gated
+  ui.py --host 0.0.0.0  pin the bind address
+
+Binding past the loopback mints an access key: every request from another
+device must carry it, as ?k= once and as a cookie thereafter. Loopback keeps
+its unauthenticated door, so nothing about the local dashboard changes.
 """
 
 import argparse
@@ -33,6 +39,8 @@ import jobkit
 HTML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui.html")
 
 TOKEN = secrets.token_urlsafe(24)
+ACCESS = None
+LOOPBACK = ("127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1")
 MODES = {"": "/job", "scan": "/job scan", "indeed": "/job indeed"}
 
 LISTS = {
@@ -146,6 +154,18 @@ def asset(kind, key):
     return resolved if os.path.isfile(resolved) else None
 
 
+def lan_ip():
+    """The address this machine answers to on its own network, if it has one."""
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        probe.connect(("192.0.2.1", 9))
+        return probe.getsockname()[0]
+    except OSError:
+        return None
+    finally:
+        probe.close()
+
+
 def claude_binary():
     return shutil.which("claude")
 
@@ -200,12 +220,33 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass
 
-    def send(self, body, content_type="application/json; charset=utf-8", status=200):
+    def local(self):
+        return self.client_address[0] in LOOPBACK
+
+    def presented_key(self):
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if query.get("k"):
+            return query["k"][0]
+        cookies = self.headers.get("Cookie") or ""
+        for crumb in cookies.split(";"):
+            name, _, value = crumb.strip().partition("=")
+            if name == "job_key":
+                return urllib.parse.unquote(value)
+        return None
+
+    def authorized(self):
+        if ACCESS is None or self.local():
+            return True
+        return secrets.compare_digest(self.presented_key() or "", ACCESS)
+
+    def send(self, body, content_type="application/json; charset=utf-8", status=200, cookie=None):
         if isinstance(body, str):
             body = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        if cookie:
+            self.send_header("Set-Cookie", cookie)
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
@@ -230,11 +271,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed.query)
         want = lambda name, fallback: int(query.get(name, [fallback])[0])
 
+        if not self.authorized():
+            return self.fail(403, "this dashboard needs its access key — open the ?k= link")
+
         try:
             if route in ("/", "/index.html"):
                 with open(HTML, encoding="utf-8") as handle:
                     page = handle.read().replace("__RUN_TOKEN__", TOKEN)
-                return self.send(page, "text/html; charset=utf-8")
+                cookie = None
+                if ACCESS is not None and not self.local():
+                    cookie = f"job_key={urllib.parse.quote(ACCESS)}; Path=/; SameSite=Lax; Max-Age=604800"
+                return self.send(page, "text/html; charset=utf-8", cookie=cookie)
 
             if route == "/api/where":
                 return self.send(json.dumps({
@@ -280,9 +327,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         if urllib.parse.urlparse(self.path).path != "/run":
             return self.fail(404, "no such route")
+        if not self.authorized():
+            return self.fail(403, "this dashboard needs its access key — open the ?k= link")
         if self.headers.get("X-Job-Token") != TOKEN:
             return self.fail(403, "bad token")
-        if (self.headers.get("Host") or "").split(":")[0] not in ("127.0.0.1", "localhost"):
+        if self.local() and (self.headers.get("Host") or "").split(":")[0] not in LOOPBACK:
             return self.fail(403, "bad host")
         length = int(self.headers.get("Content-Length") or 0)
         try:
@@ -298,10 +347,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return self.send(json.dumps({"terminal": where, "command": MODES[mode]}))
 
 
-def free_port(start):
+def free_port(start, host="127.0.0.1"):
+    probe_host = "127.0.0.1" if host in ("0.0.0.0", "") else host
     for port in range(start, start + 20):
         with socket.socket() as probe:
-            if probe.connect_ex(("127.0.0.1", port)) != 0:
+            if probe.connect_ex((probe_host, port)) != 0:
                 return port
     sys.exit(f"no free port in {start}-{start + 19}")
 
@@ -311,16 +361,34 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-open", action="store_true")
+    ap.add_argument("--lan", action="store_true",
+                    help="answer every device on this network, gated by an access key")
+    ap.add_argument("--host", help="bind address (implies --lan unless it is loopback)")
+    ap.add_argument("--key", help="reuse a fixed access key instead of minting one")
     args = ap.parse_args()
 
     if not os.path.exists(jobkit.DB):
         sys.exit(f"no database at {jobkit.DB} — run /job setup first")
     jobkit.connect().close()
 
-    port = free_port(args.port)
+    global ACCESS
+    host = args.host or ("0.0.0.0" if args.lan else "127.0.0.1")
+    exposed = host not in LOOPBACK
+    if exposed:
+        ACCESS = args.key or secrets.token_urlsafe(16)
+
+    port = free_port(args.port, host)
     url = f"http://127.0.0.1:{port}/"
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"job dashboard  {url}\nreading        {jobkit.DB}\nctrl-c to stop", flush=True)
+    server = http.server.ThreadingHTTPServer((host, port), Handler)
+    lines = [f"job dashboard  {url}", f"reading        {jobkit.DB}"]
+    if exposed:
+        address = lan_ip() if host == "0.0.0.0" else host
+        lines.append(f"on your phone  http://{address}:{port}/?k={ACCESS}" if address
+                     else "on your phone  no network address found for this machine")
+        lines.append("               that link is the password — anyone on this network who")
+        lines.append("               has it can read your career data")
+    lines.append("ctrl-c to stop")
+    print("\n".join(lines), flush=True)
     if not args.no_open:
         threading.Timer(0.4, webbrowser.open, (url,)).start()
     try:

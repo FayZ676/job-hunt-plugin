@@ -104,6 +104,28 @@ ul.tight li { margin-bottom: 3px; }
 .tag { font-size: 11px; font-family: var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--dim); }
 .empty { color: var(--dim); padding: 20px 0; }
 .time { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+@media (max-width: 720px) {
+  body { flex-direction: column; }
+  nav {
+    width: auto; min-height: 0; position: static; padding: 14px 14px 10px;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  nav h1 { margin-left: 2px; }
+  nav a { display: inline-block; margin: 0 6px 6px 0; padding: 8px 12px; border: 1px solid var(--line); }
+  .run { display: flex; flex-wrap: wrap; gap: 6px; }
+  .run button, .run .also { width: auto; flex: 1 1 46%; margin-top: 0; }
+  .run .said { flex: 1 1 100%; }
+  nav .where { margin: 10px 2px 0; }
+  main { padding: 18px 14px 60px; }
+  h2 { font-size: 19px; }
+  table { font-size: 12px; }
+  th, td { padding: 6px 8px; }
+  .grid { grid-template-columns: 1fr; gap: 1px 0; }
+  .grid dt { margin-top: 8px; }
+  input[type=search] { width: 100%; }
+  iframe { height: 65vh; }
+  .desc { max-height: 320px; }
+}
 </style>
 </head>
 <body>
