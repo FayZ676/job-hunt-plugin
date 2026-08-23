@@ -60,22 +60,7 @@ LISTS = {
                  " FROM companies ORDER BY ats, name",
     "manual_boards": "SELECT name, slug, cadence, last_checked, careers_url, why FROM manual_boards",
     "filters": "SELECT kind, pattern, note FROM filters ORDER BY kind, pattern",
-    "funnel": "SELECT COALESCE(disposition,'pending') AS disposition, COUNT(*) AS n"
-              " FROM postings GROUP BY disposition ORDER BY n DESC",
-    "sources": "SELECT source, COUNT(*) AS n, SUM(disposition='kept') AS kept"
-               " FROM postings GROUP BY source ORDER BY n DESC",
 }
-
-BROWSABLE = ("prospects", "postings", "companies", "filters", "events", "aliases",
-             "staged", "staged_fields", "profile", "employers", "projects",
-             "project_bullets", "project_technologies", "project_metrics",
-             "project_links", "education", "search_criteria", "search_notes",
-             "facts", "company_limits", "accounts", "settings")
-
-WIDE = {"postings": "key, source, ats, company, title, location, remote, compensation,"
-                    " posted_at, sponsored, expired, first_fetched, ingested_on, disposition",
-        "prospects": "key, company, title, location, remote, compensation, posted_at,"
-                     " first_seen, last_seen, source, ats, score, reason, resume, status"}
 
 
 def rows(sql, args=()):
@@ -120,25 +105,6 @@ def career():
     for employer in employers:
         employer["projects"] = [p for p in projects if p["employer_id"] == employer["id"]]
     return employers
-
-
-def dropped(disposition, limit, offset):
-    where = "disposition IS NULL" if disposition == "pending" else "disposition=?"
-    args = () if disposition == "pending" else (disposition,)
-    total = one(f"SELECT COUNT(*) AS n FROM postings WHERE {where}", args)["n"]
-    listing = rows(
-        f"SELECT key, source, company, title, location, compensation, posted_at, url"
-        f" FROM postings WHERE {where} ORDER BY last_fetched DESC, rowid DESC LIMIT ? OFFSET ?",
-        (*args, limit, offset))
-    return {"total": total, "rows": listing}
-
-
-def table(name, limit, offset):
-    if name not in BROWSABLE:
-        return None
-    total = one(f"SELECT COUNT(*) AS n FROM {name}")["n"]
-    listing = rows(f"SELECT {WIDE.get(name, '*')} FROM {name} LIMIT ? OFFSET ?", (limit, offset))
-    return {"total": total, "rows": listing, "columns": list(listing[0]) if listing else []}
 
 
 def asset(kind, key):
@@ -269,7 +235,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         route = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
-        want = lambda name, fallback: int(query.get(name, [fallback])[0])
 
         if not self.authorized():
             return self.fail(403, "this dashboard needs its access key — open the ?k= link")
@@ -286,8 +251,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if route == "/api/where":
                 return self.send(json.dumps({
                     "career": jobkit.CAREER, "db": jobkit.DB, "resumes": jobkit.RESUMES,
-                    "tables": list(BROWSABLE), "terminal": terminal(),
-                    "canRun": bool(claude_binary()), "modes": list(MODES)}))
+                    "terminal": terminal(), "canRun": bool(claude_binary()),
+                    "modes": list(MODES)}))
 
             if route == "/api/career":
                 return self.send(json.dumps(career(), ensure_ascii=False))
@@ -297,16 +262,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 found = prospect(key)
                 return self.send(json.dumps(found, ensure_ascii=False)) if found \
                     else self.fail(404, f"no prospect {key!r}")
-
-            if route == "/api/dropped":
-                return self.send(json.dumps(dropped(query.get("disposition", ["pending"])[0],
-                                                    want("limit", 50), want("offset", 0)),
-                                            ensure_ascii=False))
-
-            if route == "/api/table":
-                found = table(query.get("name", [""])[0], want("limit", 100), want("offset", 0))
-                return self.send(json.dumps(found, ensure_ascii=False)) if found \
-                    else self.fail(404, "not a browsable table")
 
             if route.startswith("/api/"):
                 sql = LISTS.get(route[5:])
