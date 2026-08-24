@@ -55,9 +55,9 @@ LISTS = {
     "accounts": "SELECT employer, system, portal_url, login_email, password_location, created"
                 " FROM accounts ORDER BY employer",
     "limits": "SELECT company, stated FROM company_limits ORDER BY company",
-    "companies": "SELECT slug, ats, name, active, source, careers_url, cadence, last_checked, why"
+    "companies": "SELECT slug, ats, name, active, source, careers_url, cadence, last_checked"
                  " FROM companies ORDER BY ats, name",
-    "manual_boards": "SELECT name, slug, cadence, last_checked, careers_url, why FROM manual_boards",
+    "manual_boards": "SELECT name, slug, cadence, last_checked, careers_url FROM manual_boards",
     "filters": "SELECT kind, pattern, note FROM filters ORDER BY kind, pattern",
 }
 

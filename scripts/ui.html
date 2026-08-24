@@ -52,12 +52,13 @@ h3 { font-size: 15px; margin: 26px 0 8px; }
 h4 { font-size: 13px; margin: 16px 0 6px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
 .sub { color: var(--dim); margin: 0 0 18px; }
 a { color: var(--accent); }
-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { color: var(--dim); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+table { border-collapse: collapse; width: auto; max-width: 100%; font-size: 12px; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
 tbody tr.click:hover { background: var(--panel); cursor: pointer; }
 .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
-.scroll table { font-size: 13px; white-space: nowrap; }
+.scroll table { font-size: 12px; white-space: nowrap; }
+.scroll th, .scroll td { padding: 5px 7px; }
 .card { border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; background: var(--panel); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .chip {
@@ -106,15 +107,12 @@ ul.tight li { margin-bottom: 3px; }
   nav .where { margin: 10px 2px 0; }
   main { padding: 18px 14px 60px; }
   h2 { font-size: 19px; }
-  table { font-size: 12px; }
-  th, td { padding: 6px 8px; }
   table.tbl { table-layout: fixed; width: 100%; }
   table.tbl td, table.tbl th { overflow: hidden; text-overflow: ellipsis; }
   table.tbl [data-label="Location"], table.tbl [data-label="Compensation"],
   table.tbl [data-label="Seen"], table.tbl [data-label="Resume"],
-  table.tbl [data-label="Why"], table.tbl [data-label="Slug"],
+  table.tbl [data-label="Slug"],
   table.tbl [data-label="Added via"], table.tbl [data-label="Note"] { display: none; }
-  .scroll th, .scroll td { padding: 7px 6px; }
   .scroll table:not(.tbl) td { white-space: normal; overflow-wrap: anywhere; }
   table.jobs [data-label="Score"] { width: 14%; }
   table.jobs [data-label="Company"] { width: 30%; }
@@ -309,29 +307,70 @@ async function viewProfile() {
     ${table(["Company", "Stated"], limits.map(l => ({ cells: [esc(l.company), esc(l.stated)] })))}`);
 }
 
+const dueDays = { Weekly: 7, Monthly: 30, Quarterly: 91 };
+const overdue = c => {
+  if (c.ats !== "manual") return "—";
+  if (!c.last_checked) return "never checked";
+  const days = Math.floor((Date.now() - Date.parse(c.last_checked)) / 86400000);
+  return days >= (dueDays[c.cadence] || 30) ? `${days}d — due` : `${days}d ago`;
+};
+
+let sources = { rows: [], ats: "all", active: "all", search: "" };
+
 async function viewSources() {
   loading();
-  const [companies, manual] = await Promise.all([get("/api/companies"), get("/api/manual_boards")]);
-  const due = { Weekly: 7, Monthly: 30, Quarterly: 91 };
-  const overdue = b => {
-    if (!b.last_checked) return "never checked";
-    const days = Math.floor((Date.now() - Date.parse(b.last_checked)) / 86400000);
-    return days >= (due[b.cadence] || 30) ? `${days}d — due` : `${days}d ago`;
-  };
-  const byAts = [...new Set(companies.map(c => c.ats))];
+  sources.rows = await get("/api/companies");
+  const atsCounts = {};
+  sources.rows.forEach(c => atsCounts[c.ats] = (atsCounts[c.ats] || 0) + 1);
+  const atsOrder = Object.keys(atsCounts).sort((a, b) => atsCounts[b] - atsCounts[a]);
+  const dueCount = sources.rows.filter(c => overdue(c).includes("due") || overdue(c) === "never checked").length;
   show(`<h2>Sources</h2>
-    <p class="sub">${companies.filter(c => c.active).length} active boards of ${companies.length} tracked.</p>
-    <h3>Checked by hand</h3>
-    ${table(["Company", "Cadence", "Last checked", "Careers", "Why"], manual.map(b => ({
-      cells: [esc(b.name), esc(b.cadence || "—"),
-              `<span class="${overdue(b).includes("due") || overdue(b) === "never checked" ? "null" : "time"}">${esc(overdue(b))}</span>`,
-              link(b.careers_url, "open"), esc(b.why || "")] })))}
-    ${byAts.filter(a => a !== "manual").map(ats => `<h3>${esc(ats)}</h3>
-      ${table(["Company", "Slug", "Active", "Added via", "Why"],
-        companies.filter(c => c.ats === ats).map(c => ({
-          cells: [esc(c.name), `<span class="time">${esc(c.slug)}</span>`,
-                  c.active ? "✓" : '<span class="null">off</span>',
-                  esc(c.source || "—"), esc(c.why || "")] })))}`).join("")}`);
+    <p class="sub">${sources.rows.filter(c => c.active).length} active boards of ${sources.rows.length} tracked.</p>
+    <div class="chips" id="atsChips">
+      <button class="chip" data-ats="all">all<b>${sources.rows.length}</b></button>
+      ${atsOrder.map(a => `<button class="chip" data-ats="${esc(a)}">${esc(a)}<b>${atsCounts[a]}</b></button>`).join("")}
+    </div>
+    <div class="chips" id="activeChips">
+      <button class="chip" data-active="all">all</button>
+      <button class="chip" data-active="due">due to check<b>${dueCount}</b></button>
+      <button class="chip" data-active="inactive">inactive<b>${sources.rows.filter(c => !c.active).length}</b></button>
+    </div>
+    <input type="search" id="q" placeholder="company" value="${esc(sources.search)}">
+    <div id="rows"></div>`);
+  document.getElementById("atsChips").onclick = event => {
+    const chip = event.target.closest(".chip");
+    if (chip) { sources.ats = chip.dataset.ats; drawSources(); }
+  };
+  document.getElementById("activeChips").onclick = event => {
+    const chip = event.target.closest(".chip");
+    if (chip) { sources.active = chip.dataset.active; drawSources(); }
+  };
+  const box = document.getElementById("q");
+  box.oninput = () => { sources.search = box.value; drawSources(); };
+  drawSources();
+}
+
+function drawSources() {
+  document.querySelectorAll("#atsChips .chip").forEach(c =>
+    c.classList.toggle("on", c.dataset.ats === sources.ats));
+  document.querySelectorAll("#activeChips .chip").forEach(c =>
+    c.classList.toggle("on", c.dataset.active === sources.active));
+  const needle = sources.search.trim().toLowerCase();
+  const shown = sources.rows.filter(c =>
+    (sources.ats === "all" || c.ats === sources.ats) &&
+    (sources.active === "all" || (sources.active === "inactive" ? !c.active :
+      overdue(c).includes("due") || overdue(c) === "never checked")) &&
+    (!needle || c.name.toLowerCase().includes(needle)));
+  document.getElementById("rows").innerHTML = table(
+    ["Source", "Company", "Cadence", "Last checked", "Active", "Careers"],
+    shown.map(c => {
+      const ov = overdue(c);
+      return { cells: [
+        `<span class="time">${esc(c.ats)}</span>`, esc(c.name), esc(c.cadence || "—"),
+        `<span class="${ov.includes("due") || ov === "never checked" ? "null" : (ov === "—" ? "time" : "")}">${esc(ov)}</span>`,
+        c.active ? "✓" : '<span class="null">off</span>',
+        link(c.careers_url, "open")] };
+    }));
 }
 
 const TOKEN = "__RUN_TOKEN__";

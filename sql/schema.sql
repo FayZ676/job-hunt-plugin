@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS companies (
   careers_url  TEXT,
   cadence      TEXT CHECK (cadence IS NULL OR cadence IN ('Weekly','Monthly','Quarterly')),
   last_checked TEXT,
-  why          TEXT,
   PRIMARY KEY (ats, slug)
 );
 
@@ -180,7 +179,7 @@ CREATE VIEW IF NOT EXISTS stats AS
   SELECT status, COUNT(*) AS n FROM prospects GROUP BY status ORDER BY n DESC;
 
 CREATE VIEW IF NOT EXISTS manual_boards AS
-  SELECT name, slug, cadence, last_checked, careers_url, why
+  SELECT name, slug, cadence, last_checked, careers_url
   FROM companies WHERE active=1 AND ats='manual'
   ORDER BY CASE cadence WHEN 'Weekly' THEN 1 WHEN 'Monthly' THEN 2 ELSE 3 END, name;
 

@@ -165,8 +165,8 @@ Attaches them to the rows ingest kept and warns about any prospect still without
 fetch them. They are rows in the same table with `ats='manual'` and a cadence:
 
 ```bash
-$Q "INSERT INTO companies(slug,ats,name,careers_url,cadence,why)
-    VALUES('galois','manual','Galois','https://galois.com/careers/','Weekly','formal methods; local')"
+$Q "INSERT INTO companies(slug,ats,name,careers_url,cadence)
+    VALUES('galois','manual','Galois','https://galois.com/careers/','Weekly')"
 $Q "SELECT * FROM manual_boards"                                  -- what is due, by cadence
 $Q "UPDATE companies SET last_checked=date('now') WHERE slug='galois'"
 ```
