@@ -46,7 +46,7 @@ nav a.on { background: var(--accent); color: #fff; }
   word-break: break-all;
 }
 nav .where { margin: 18px 8px 0; font: 11px/1.5 var(--mono); color: var(--dim); word-break: break-all; }
-main { flex: 1; padding: 26px 30px 70px; max-width: 1400px; min-width: 0; }
+main { flex: 1; padding: 26px 30px 70px; min-width: 0; }
 h2 { font-size: 21px; margin: 0 0 4px; }
 h3 { font-size: 15px; margin: 26px 0 8px; }
 h4 { font-size: 13px; margin: 16px 0 6px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
@@ -56,7 +56,7 @@ table { border-collapse: collapse; width: auto; max-width: 100%; font-size: 12px
 th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { color: var(--dim); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
 tbody tr.click:hover { background: var(--panel); cursor: pointer; }
-.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.scroll { display: inline-block; max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
 .scroll table { font-size: 12px; white-space: nowrap; }
 .scroll th, .scroll td { padding: 5px 7px; }
 .card { border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; background: var(--panel); }
@@ -67,6 +67,15 @@ tbody tr.click:hover { background: var(--panel); cursor: pointer; }
 }
 .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .chip b { font-weight: 600; opacity: .65; margin-left: 5px; }
+.chip-sep { width: 1px; background: var(--line); margin: 2px 2px; align-self: stretch; }
+.pager { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 10px 0 4px; }
+.pager button {
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer;
+  padding: 4px 12px; border-radius: 6px; font: inherit; font-size: 12px;
+}
+.pager button:hover:not(:disabled) { background: var(--panel); }
+.pager button:disabled { opacity: .4; cursor: default; }
+.pager span { color: var(--dim); font-size: 12px; }
 input[type=search] {
   width: 280px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 6px;
   background: var(--bg); color: var(--ink); font: inherit; margin-bottom: 14px;
@@ -130,8 +139,7 @@ ul.tight li { margin-bottom: 3px; }
 <nav>
   <h1>Job</h1>
   <div class="run">
-    <button id="run">▶ Run /job</button>
-    <p class="said" id="said"></p>
+    <button id="help">? Help</button>
   </div>
   <a href="#/jobs">Jobs</a>
   <a href="#/profile">Profile</a>
@@ -160,7 +168,27 @@ const table = (columns, data, rowAttrs, cls) => data.length ? `<div class="scrol
   <tbody>${data.map(r => `<tr ${rowAttrs ? rowAttrs(r) : ""}>${r.cells.map((c, i) => `<td data-label="${esc(columns[i])}">${c}</td>`).join("")}</tr>`).join("")}</tbody>
 </table></div>` : '<p class="empty">Nothing here.</p>';
 
-let jobs = { rows: [], status: "all", search: "" };
+const PAGE_SIZE = 15;
+function pageSlice(rows, state, id) {
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  state.page = Math.min(state.page || 0, pages - 1);
+  const start = state.page * PAGE_SIZE;
+  const pager = pages > 1 ? `<div class="pager" id="${id}">
+      <button data-dir="-1" ${state.page === 0 ? "disabled" : ""}>‹ Prev</button>
+      <span>Page ${state.page + 1} of ${pages} · ${rows.length} total</span>
+      <button data-dir="1" ${state.page === pages - 1 ? "disabled" : ""}>Next ›</button>
+    </div>` : "";
+  return { slice: rows.slice(start, start + PAGE_SIZE), pager };
+}
+function wirePager(id, state, redraw) {
+  const el = document.getElementById(id);
+  if (el) el.onclick = event => {
+    const btn = event.target.closest("button[data-dir]");
+    if (btn) { state.page = (state.page || 0) + Number(btn.dataset.dir); redraw(); }
+  };
+}
+
+let jobs = { rows: [], status: "all", search: "", page: 0 };
 
 async function viewJobs() {
   loading();
@@ -171,18 +199,18 @@ async function viewJobs() {
                  "skipped", "rejected", "not_pursued", "closed"].filter(s => counts[s]);
   show(`<h2>Jobs</h2>
     <p class="sub">${data.length} prospects. Click a row for the full posting, its history and its resume.</p>
+    <input type="search" id="q" placeholder="company, title or location" value="${esc(jobs.search)}">
     <div class="chips" id="chips">
       <button class="chip" data-status="all">all<b>${data.length}</b></button>
       ${order.map(s => `<button class="chip" data-status="${s}">${s}<b>${counts[s]}</b></button>`).join("")}
     </div>
-    <input type="search" id="q" placeholder="company, title or location" value="${esc(jobs.search)}">
     <div id="rows"></div>`);
   document.getElementById("chips").onclick = event => {
     const chip = event.target.closest(".chip");
-    if (chip) { jobs.status = chip.dataset.status; drawJobs(); }
+    if (chip) { jobs.status = chip.dataset.status; jobs.page = 0; drawJobs(); }
   };
   const box = document.getElementById("q");
-  box.oninput = () => { jobs.search = box.value; drawJobs(); };
+  box.oninput = () => { jobs.search = box.value; jobs.page = 0; drawJobs(); };
   drawJobs();
 }
 
@@ -193,15 +221,18 @@ function drawJobs() {
   const shown = jobs.rows.filter(r =>
     (jobs.status === "all" || r.status === jobs.status) &&
     (!needle || `${r.company} ${r.title} ${r.location || ""}`.toLowerCase().includes(needle)));
+  const { slice, pager } = pageSlice(shown, jobs, "jobsPager");
   document.getElementById("rows").innerHTML = table(
     ["Score", "Company", "Title", "Location", "Compensation", "Status", "Seen", "Resume"],
-    shown.map(r => ({ key: r.key, cells: [
+    slice.map(r => ({ key: r.key, cells: [
       scoreCell(r.score), esc(r.company), esc(r.title),
       esc(r.location || (r.remote ? "Remote" : "—")), esc(r.compensation || "—"),
       badge(r.status), `<span class="time">${esc(r.first_seen || "")}</span>`,
-      r.resume ? "✓" : ""] })),
+      r.resume ? `<a href="/asset/resume/${encodeURIComponent(r.key)}" target="_blank"
+        rel="noreferrer" onclick="event.stopPropagation()">open PDF</a>` : ""] })),
     r => `class="click" onclick="location.hash='#/prospect/${encodeURIComponent(r.key)}'"`,
-    "jobs");
+    "jobs") + pager;
+  wirePager("jobsPager", jobs, drawJobs);
 }
 
 async function viewProspect(key) {
@@ -315,7 +346,7 @@ const overdue = c => {
   return days >= (dueDays[c.cadence] || 30) ? `${days}d — due` : `${days}d ago`;
 };
 
-let sources = { rows: [], ats: "all", active: "all", search: "" };
+let sources = { rows: [], ats: "all", active: "all", search: "", page: 0 };
 
 async function viewSources() {
   loading();
@@ -326,81 +357,63 @@ async function viewSources() {
   const dueCount = sources.rows.filter(c => overdue(c).includes("due") || overdue(c) === "never checked").length;
   show(`<h2>Sources</h2>
     <p class="sub">${sources.rows.filter(c => c.active).length} active boards of ${sources.rows.length} tracked.</p>
-    <div class="chips" id="atsChips">
+    <input type="search" id="q" placeholder="company" value="${esc(sources.search)}">
+    <div class="chips" id="chips">
       <button class="chip" data-ats="all">all<b>${sources.rows.length}</b></button>
       ${atsOrder.map(a => `<button class="chip" data-ats="${esc(a)}">${esc(a)}<b>${atsCounts[a]}</b></button>`).join("")}
-    </div>
-    <div class="chips" id="activeChips">
-      <button class="chip" data-active="all">all</button>
+      <span class="chip-sep"></span>
       <button class="chip" data-active="due">due to check<b>${dueCount}</b></button>
       <button class="chip" data-active="inactive">inactive<b>${sources.rows.filter(c => !c.active).length}</b></button>
     </div>
-    <input type="search" id="q" placeholder="company" value="${esc(sources.search)}">
     <div id="rows"></div>`);
-  document.getElementById("atsChips").onclick = event => {
+  document.getElementById("chips").onclick = event => {
     const chip = event.target.closest(".chip");
-    if (chip) { sources.ats = chip.dataset.ats; drawSources(); }
-  };
-  document.getElementById("activeChips").onclick = event => {
-    const chip = event.target.closest(".chip");
-    if (chip) { sources.active = chip.dataset.active; drawSources(); }
+    if (!chip) return;
+    if (chip.dataset.ats) sources.ats = chip.dataset.ats;
+    else if (chip.dataset.active) sources.active = sources.active === chip.dataset.active ? "all" : chip.dataset.active;
+    sources.page = 0;
+    drawSources();
   };
   const box = document.getElementById("q");
-  box.oninput = () => { sources.search = box.value; drawSources(); };
+  box.oninput = () => { sources.search = box.value; sources.page = 0; drawSources(); };
   drawSources();
 }
 
 function drawSources() {
-  document.querySelectorAll("#atsChips .chip").forEach(c =>
-    c.classList.toggle("on", c.dataset.ats === sources.ats));
-  document.querySelectorAll("#activeChips .chip").forEach(c =>
-    c.classList.toggle("on", c.dataset.active === sources.active));
+  document.querySelectorAll("#chips .chip").forEach(c =>
+    c.classList.toggle("on", c.dataset.ats ? c.dataset.ats === sources.ats : c.dataset.active === sources.active));
   const needle = sources.search.trim().toLowerCase();
   const shown = sources.rows.filter(c =>
     (sources.ats === "all" || c.ats === sources.ats) &&
     (sources.active === "all" || (sources.active === "inactive" ? !c.active :
       overdue(c).includes("due") || overdue(c) === "never checked")) &&
     (!needle || c.name.toLowerCase().includes(needle)));
+  const { slice, pager } = pageSlice(shown, sources, "sourcesPager");
   document.getElementById("rows").innerHTML = table(
     ["Source", "Company", "Cadence", "Last checked", "Active", "Careers"],
-    shown.map(c => {
+    slice.map(c => {
       const ov = overdue(c);
       return { cells: [
         `<span class="time">${esc(c.ats)}</span>`, esc(c.name), esc(c.cadence || "—"),
         `<span class="${ov.includes("due") || ov === "never checked" ? "null" : (ov === "—" ? "time" : "")}">${esc(ov)}</span>`,
         c.active ? "✓" : '<span class="null">off</span>',
         link(c.careers_url, "open")] };
-    }));
+    })) + pager;
+  wirePager("sourcesPager", sources, drawSources);
 }
 
-const TOKEN = "__RUN_TOKEN__";
-const said = document.getElementById("said");
-
-async function run() {
-  const buttons = document.querySelectorAll(".run button");
-  buttons.forEach(b => b.disabled = true);
-  said.textContent = "Opening a terminal…";
-  try {
-    const response = await fetch("/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Job-Token": TOKEN },
-      body: JSON.stringify({ mode: "" })
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "could not launch");
-    said.innerHTML = `Running <b>${esc(result.command)}</b> in ${esc(result.terminal)}.
-      <a href="#" id="again">Reload</a> when it finishes.`;
-    document.getElementById("again").onclick = event => { event.preventDefault(); route(); };
-  } catch (error) {
-    said.innerHTML = `Could not open a terminal — ${esc(error.message)}. Run this yourself:
-      <code>claude "/job"</code>`;
-  }
-  buttons.forEach(b => b.disabled = false);
+async function viewHelp() {
+  loading();
+  const result = await get("/api/help");
+  if (result.error) return show(`<h2>Help</h2><p class="sub null">${esc(result.error)}</p>`);
+  show(`<h2>Job commands</h2>
+    <p class="sub">Everything here runs from a terminal, typed into Claude Code.</p>
+    <pre class="prose">${esc(result.text)}</pre>`);
 }
 
-document.getElementById("run").onclick = run;
+document.getElementById("help").onclick = () => { location.hash = "#/help"; };
 
-const routes = { jobs: viewJobs, profile: viewProfile, sources: viewSources };
+const routes = { jobs: viewJobs, profile: viewProfile, sources: viewSources, help: viewHelp };
 
 function route() {
   const [, name, arg] = location.hash.split("/");
@@ -411,13 +424,7 @@ function route() {
 }
 
 window.addEventListener("hashchange", route);
-get("/api/where").then(w => {
-  document.getElementById("where").textContent = w.db;
-  if (!w.canRun) {
-    document.querySelectorAll(".run button").forEach(b => b.disabled = true);
-    said.innerHTML = 'The <code>claude</code> CLI is not on PATH, so the dashboard cannot open a run.';
-  }
-});
+get("/api/where").then(w => { document.getElementById("where").textContent = w.db; });
 route();
 </script>
 </body>
