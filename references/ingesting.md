@@ -17,14 +17,19 @@ other value names the filter that dropped the row.
 
 ```bash
 python3 "$HOME/.claude/skills/job/scripts/ingest.py" --help      # every flag
-python3 "$HOME/.claude/skills/job/scripts/ingest.py" --filters   # the chain, in order
+python3 "$HOME/.claude/skills/job/scripts/ingest.py" --dispositions   # every verdict, in order
 ```
 
 ## The filters
 
-`ingest.py --filters` prints the chain in the order it runs, straight off the code that applies it —
-read it there rather than from a copy. The patterns each filter matches on are rows in the `filters`
-table (`SELECT kind, pattern, note FROM filters`), so tuning is SQL, not a code change.
+Two things share the word. `DISPOSITIONS` in `ingest.py` names the **verdicts** — one per branch of
+the chain, and the same values `postings.disposition` stores. The `filters` **table** holds the
+**patterns** those branches match on, keyed by `kind`. Only four verdicts read the table; the rest
+rule on columns, dates, ranks and prior state, so neither describes the other.
+
+`ingest.py --dispositions` prints the verdicts in the order the chain rules them, straight off the
+code that applies it — read it there rather than from a copy. The patterns live in
+`SELECT kind, pattern, note FROM filters`, so tuning is SQL, not a code change.
 
 ## Source precedence
 

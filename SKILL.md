@@ -61,7 +61,7 @@ Every detail lives one level down, read when the phase that needs it starts.
 
 ```bash
 $Q --schema                     # every table, view, CHECK and trigger
-ingest.py --filters | --help    # the filter chain, in order, and every flag
+ingest.py --dispositions        # every verdict the chain can rule, in order
 fetch.py sources                # each source's kind, rank, endpoint and quirk
 render.py --spec                # the resume spec, and every section type
 ```
@@ -141,7 +141,7 @@ python3 "$S/ingest.py"                                        # postings -> pros
 python3 "$S/ingest.py" --redo --no-location-filter            # re-rule stored rows, no network
 ```
 
-Flags and filters are `--help` and `--filters` away; do not guess them.
+Flags and verdicts are `--help` and `--dispositions` away; do not guess them.
 
 The Indeed harvest is the one source a browser has to collect. **Read `references/fetching.md`
 before running it.** Its descriptions arrive after ingest, for kept rows only:

@@ -1,7 +1,7 @@
 """Derive prospects from the raw layer. Fetches nothing.
 
   ingest.py                               rule on what is pending
-  ingest.py --filters                     the chain, in the order it runs
+  ingest.py --dispositions                every verdict, in the order ruled
   ingest.py --redo                        rule again on everything, no network
   ingest.py --redo --no-location-filter   what is the location rule costing?
 """
@@ -15,7 +15,7 @@ import sources
 from jobkit import age_days, compile_patterns, matches_any, norm, norm_company
 from models import Prospect, StoredPosting
 
-FILTERS = {
+DISPOSITIONS = {
     "sponsored": "paid placements -- almost entirely gig spam and unrelated listings",
     "expired":   "dead listings still in an index, including an unlisted Ashby posting",
     "agency":    "reposters and body shops, by `agency_blocklist` name or `agency_name_patterns`",
@@ -30,15 +30,16 @@ FILTERS = {
     "upgraded":  "NOT A DROP: a better-ranked source replaced the source on an existing prospect",
 }
 
-assert set(FILTERS) == set(models.get_args(models.Disposition)) - {"kept"}, (
-    "FILTERS and models.Disposition disagree: "
-    f"{sorted(set(FILTERS) ^ (set(models.get_args(models.Disposition)) - {'kept'}))}")
+assert set(DISPOSITIONS) == set(models.get_args(models.Disposition)) - {"kept"}, (
+    "DISPOSITIONS and models.Disposition disagree: "
+    f"{sorted(set(DISPOSITIONS) ^ (set(models.get_args(models.Disposition)) - {'kept'}))}")
 
 
-def print_filters():
-    print("The filter chain, in the order it runs. Each applies to every source.\n")
-    width = max(len(name) for name in FILTERS)
-    for name, note in FILTERS.items():
+def print_dispositions():
+    print("Every verdict a posting can get, in the order the chain rules.\n"
+          "Each filter applies to every source.\n")
+    width = max(len(name) for name in DISPOSITIONS)
+    for name, note in DISPOSITIONS.items():
         print(f"  {name:<{width}}  {note}")
     print("\n  kept" + " " * (width - 4) + "  NOT A DROP: promoted to prospects")
     print("\nEvery posting keeps its ruling in `postings.disposition`, so what a filter cost")
@@ -160,13 +161,13 @@ def main():
                         help="override the stored age limit for one run")
     parser.add_argument("--comp-floor", type=int, default=None,
                         help="override the stored compensation floor for one run")
-    parser.add_argument("--filters", action="store_true",
-                        help="print the filter chain, in order, and exit")
+    parser.add_argument("--dispositions", action="store_true",
+                        help="print every verdict, in the order the chain rules, and exit")
     parser.add_argument("--db", default=None)
     args = parser.parse_args()
 
-    if args.filters:
-        print_filters()
+    if args.dispositions:
+        print_dispositions()
         return 0
 
     con = jobkit.connect(args.db)
@@ -193,7 +194,7 @@ def main():
                con.execute("SELECT name, ats FROM companies WHERE active=1").fetchall()
                if r["ats"] in sources.REGISTRY}
 
-    counts = {name: 0 for name in FILTERS}
+    counts = {name: 0 for name in DISPOSITIONS}
     survivors, dispositions, upgrades, aliases = [], [], [], []
     for row in sorted(rows, key=lambda r: sources.rank(r.source)):
         ruling, target = verdict(row, config, args, seen_keys, held, covered)
