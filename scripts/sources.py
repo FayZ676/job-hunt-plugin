@@ -1,22 +1,3 @@
-#!/usr/bin/env python3
-"""Where postings come from.
-
-A source obtains raw postings and normalizes them. It judges nothing: no
-filtering, no database, no scoring. Every source returns the same shape, so
-`ingest.py` never learns where a row came from and every filter applies to
-every source.
-
-Adding a mechanism means adding a function here and one line in REGISTRY.
-Nothing downstream changes.
-
-`rank` is source precedence, not quality: 0 sources are authoritative for a
-company (the employer's own board), 1 sources are discovery (an aggregator that
-may re-list what a rank-0 source already covers). Ingest resolves overlaps with
-it instead of naming any source in a condition.
-
-Every source returns `models.Posting`, so a payload that changes shape fails
-here, naming the field, rather than somewhere downstream.
-"""
 
 import html
 import json
@@ -50,7 +31,6 @@ def http_get_json(url, timeout=25, attempts=3):
 
 
 def html_to_text(raw):
-    """Greenhouse ships HTML-escaped HTML, so this unescapes on both sides of the strip."""
     if not raw:
         return ""
     text = html.unescape(str(raw))
@@ -65,11 +45,27 @@ def html_to_text(raw):
     return BLANKS_RE.sub("\n\n", text).strip()
 
 
-# --- Employer boards: public JSON APIs, one request per board ---------------
+ENDPOINT = {
+    "greenhouse": "https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true",
+    "lever":      "https://api.lever.co/v0/postings/{slug}?mode=json",
+    "ashby":      "https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true",
+    "indeed":     "browser harvest, loaded from a file -- no endpoint",
+}
+
+QUIRK = {
+    "greenhouse": "`content` is HTML-escaped HTML, unescaped twice here. Without ?content=true "
+                  "there are no descriptions to score on",
+    "lever":      "returns a BARE ARRAY; createdAt is epoch ms; a posting splits across "
+                  "descriptionPlain, `lists` and `additional`. A live board with no postings "
+                  "returns [] at 200, a wrong slug 404s",
+    "ashby":      "best payload: descriptionPlain needs no HTML handling, isRemote is a real "
+                  "boolean, compensation bands come back. isListed:false normalizes to expired",
+    "indeed":     "navigate, never fetch() -- see references/fetching.md for the harvest",
+}
 
 def greenhouse(company):
     slug = company["slug"]
-    payload = http_get_json(f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true")
+    payload = http_get_json(ENDPOINT["greenhouse"].format(slug=slug))
     out = []
     for job in payload.get("jobs", []):
         location = ((job.get("location") or {}).get("name") or "").strip()
@@ -85,8 +81,6 @@ def greenhouse(company):
 
 
 def _lever_description(job):
-    """Lever splits a posting across descriptionPlain, the `lists` sections and
-    `additional`. Requirements usually live in `lists`, so all three matter."""
     parts = [job.get("descriptionPlain") or html_to_text(job.get("description"))]
     for section in job.get("lists") or []:
         heading = (section.get("text") or "").strip()
@@ -101,7 +95,7 @@ def _lever_description(job):
 
 def lever(company):
     slug = company["slug"]
-    payload = http_get_json(f"https://api.lever.co/v0/postings/{slug}?mode=json")
+    payload = http_get_json(ENDPOINT["lever"].format(slug=slug))
     if not isinstance(payload, list):
         raise ValueError("lever board returned no posting list")
     out = []
@@ -130,8 +124,7 @@ def lever(company):
 
 def ashby(company):
     slug = company["slug"]
-    payload = http_get_json(
-        f"https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true")
+    payload = http_get_json(ENDPOINT["ashby"].format(slug=slug))
     out = []
     for job in payload.get("jobs", []):
         secondary = job.get("secondaryLocations") or []
@@ -154,12 +147,7 @@ def ashby(company):
     return out
 
 
-# --- Aggregators: a browser fetches, this reads what it saved ---------------
-
 def indeed(harvest_path):
-    """Indeed serves navigation without complaint and throttles fetch()/XHR
-    against the same URLs, so a browser does the fetching and this only parses
-    the harvest it saved. Descriptions are fetched later, for kept rows only."""
     with open(harvest_path, "r", encoding="utf-8") as handle:
         payload = json.load(handle)
     if isinstance(payload, dict):
@@ -199,8 +187,6 @@ def indeed(harvest_path):
     return out
 
 
-# --- The registry. Adding a mechanism is one line. -------------------------
-
 REGISTRY = {
     "greenhouse": {"fetch": greenhouse, "kind": "board", "rank": 0},
     "lever":      {"fetch": lever,      "kind": "board", "rank": 0},
@@ -208,5 +194,19 @@ REGISTRY = {
     "indeed":     {"fetch": indeed,     "kind": "harvest", "rank": 1},
 }
 
+assert set(REGISTRY) == set(ENDPOINT) == set(QUIRK), "a source is missing an endpoint or a quirk"
+
+
+def describe():
+    for name, entry in sorted(REGISTRY.items(), key=lambda kv: (kv[1]["rank"], kv[0])):
+        print(f"{name}  [{entry['kind']}, rank {entry['rank']}]")
+        print(f"  {ENDPOINT[name]}")
+        print(f"  {QUIRK[name]}\n")
+    return 0
+
 BOARDS = {name: s["fetch"] for name, s in REGISTRY.items() if s["kind"] == "board"}
 RANK = {name: s["rank"] for name, s in REGISTRY.items()}
+
+
+def rank(source):
+    return RANK.get(source, 99)

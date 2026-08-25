@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Run SQL against the job database.
 
 A thin runner, not an API: the schema carries the rules (CHECK constraints for
@@ -19,6 +18,8 @@ import sqlite3
 import sys
 
 import jobkit
+
+READS = {"SELECT", "WITH", "PRAGMA", "EXPLAIN", "VALUES"}
 
 
 def main():
@@ -50,8 +51,11 @@ def main():
             return 0
         if not args.sql:
             ap.error("give SQL, or -f FILE, or --schema")
-        cur = con.execute(args.sql) if args.sql.lstrip()[:6].upper() in ("SELECT", "WITH  ", "PRAGMA") \
-            else con.executescript(args.sql) or con.execute("SELECT changes() AS rows_changed")
+        if args.sql.lstrip().split(None, 1)[0].upper() in READS:
+            cur = con.execute(args.sql)
+        else:
+            con.executescript(args.sql)
+            cur = con.execute("SELECT changes() AS rows_changed")
     except sqlite3.Error as error:
         sys.exit(f"SQL error: {error}")
     con.commit()

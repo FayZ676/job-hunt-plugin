@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Serve the local dashboard: a read-only window onto the job database.
 
 Read-only is enforced by SQLite, not by discipline -- every request opens the
@@ -101,10 +100,10 @@ def career():
 
 
 def asset(kind, key):
-    column = {"resume": "prospects", "screenshot": "staged"}.get(kind)
-    if not column:
+    table = {"resume": "prospects", "screenshot": "staged"}.get(kind)
+    if not table:
         return None
-    path = one(f"SELECT {kind} AS p FROM {column} WHERE key=?", (key,))
+    path = one(f"SELECT {kind} AS p FROM {table} WHERE key=?", (key,))
     if not path or not path["p"]:
         return None
     resolved = os.path.realpath(os.path.expanduser(path["p"]))
@@ -114,7 +113,6 @@ def asset(kind, key):
 
 
 def lan_ip():
-    """The address this machine answers to on its own network, if it has one."""
     probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         probe.connect(("192.0.2.1", 9))
@@ -123,11 +121,6 @@ def lan_ip():
         return None
     finally:
         probe.close()
-
-
-def help_text():
-    with open(HELP, encoding="utf-8") as handle:
-        return handle.read()
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -156,7 +149,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return secrets.compare_digest(self.presented_key() or "", ACCESS)
 
     def send(self, body, content_type="application/json; charset=utf-8", status=200,
-             cookie=None, fresh=False):
+             headers=(), fresh=False):
         if isinstance(body, str):
             body = body.encode("utf-8")
         self.send_response(status)
@@ -164,22 +157,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         if fresh:
             self.send_header("Cache-Control", "no-store")
-        if cookie:
-            self.send_header("Set-Cookie", cookie)
+        for name, value in headers:
+            self.send_header(name, value)
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
 
     def send_file(self, path):
-        kind = mimetypes.guess_type(path)[0] or "application/octet-stream"
         with open(path, "rb") as handle:
             body = handle.read()
-        self.send_response(200)
-        self.send_header("Content-Type", kind)
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Content-Disposition", f'inline; filename="{os.path.basename(path)}"')
-        self.end_headers()
-        self.wfile.write(body)
+        self.send(body, mimetypes.guess_type(path)[0] or "application/octet-stream",
+                  headers=[("Content-Disposition", f'inline; filename="{os.path.basename(path)}"')])
 
     def fail(self, status, message):
         self.send(json.dumps({"error": message}), status=status)
@@ -196,17 +184,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if route in ("/", "/index.html"):
                 with open(HTML, encoding="utf-8") as handle:
                     page = handle.read()
-                cookie = None
+                headers = []
                 if ACCESS is not None and not self.local():
-                    cookie = f"job_key={urllib.parse.quote(ACCESS)}; Path=/; SameSite=Lax; Max-Age=604800"
-                return self.send(page, "text/html; charset=utf-8", cookie=cookie, fresh=True)
+                    headers.append(("Set-Cookie", f"job_key={urllib.parse.quote(ACCESS)};"
+                                                  " Path=/; SameSite=Lax; Max-Age=604800"))
+                return self.send(page, "text/html; charset=utf-8", headers=headers, fresh=True)
 
             if route == "/api/where":
                 return self.send(json.dumps({
                     "career": jobkit.CAREER, "db": jobkit.DB, "resumes": jobkit.RESUMES}))
 
             if route == "/api/help":
-                return self.send(json.dumps({"text": help_text()}))
+                return self.send(json.dumps({"text": open(HELP, encoding="utf-8").read()}))
 
             if route == "/api/career":
                 return self.send(json.dumps(career(), ensure_ascii=False))

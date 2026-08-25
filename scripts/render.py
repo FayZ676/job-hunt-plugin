@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""Resume spec (JSON) -> PDF, via Typst.
-
-Replaces the build.js + LibreOffice pair: one runtime, one small binary, no
-intermediate .docx. Pass --keep-typ to inspect the generated markup.
-"""
 
 import argparse
 import json
@@ -26,17 +20,27 @@ DENSITY = {
                "rule_gap": 2.5, "role_gap": 7.0, "bullet_gap": 0.50},
 }
 DEFAULT_MARGINS = {"top": 0.5, "bottom": 0.5, "left": 0.7, "right": 0.7}
+
+SECTION_TYPES = {
+    "paragraph":  ('"text": "…"',
+                   "one flowing paragraph"),
+    "bullets":    ('"items": ["…", "…"]',
+                   "a bare bulleted list, no sub-heading"),
+    "labeled":    ('"items": [{"label": "…", "text": "…"}]',
+                   "**Label:** text, one per line"),
+    "entries":    ('"items": [{"primary": "…", "secondary": "…"}]',
+                   "**Primary** — Secondary, one per line"),
+    "experience": ('"roles": [{"title", "company", "dates", "bullets": ["…"]}]',
+                   "**Title, Company** — Dates, then a bulleted list"),
+}
 INLINE = re.compile(r"\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)|(https?://\S+)")
 
 
 def s(text):
-    """A Typst string literal. Passing text as an argument means Typst never
-    parses it as markup, so ~, --, ..., #, * and friends survive verbatim."""
     return '"' + str(text or "").replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
 def inline(text):
-    """**bold**, [label](url), and bare URLs -> Typst calls; all else literal."""
     out, last = [], 0
     for m in INLINE.finditer(text or ""):
         if m.start() > last:
@@ -54,7 +58,6 @@ def inline(text):
 
 
 def rich(value):
-    """A contact entry: plain string, {text, link}, or a list of them."""
     if isinstance(value, str):
         return inline(value)
     if isinstance(value, list):
@@ -125,17 +128,55 @@ def build(spec, density):
                 for b in role.get("bullets") or []:
                     L.append(f'- {inline(b)}')
         else:
-            raise SystemExit(f'unknown section type "{kind}" in {sec_.get("heading")!r}')
+            raise SystemExit(f'unknown section type "{kind}" in {sec_.get("heading")!r}; '
+                             f'valid: {", ".join(SECTION_TYPES)}')
     return "\n".join(L) + "\n"
+
+
+SPEC_HELP = """A resume spec is content only -- render.py owns every formatting decision.
+
+{{
+  "name": "Ada Lovelace",
+  "contact": ["Denver, CO 80202", "ada@example.com",
+              {{"text": "linkedin.com/in/ada", "link": "https://linkedin.com/in/ada"}}],
+  "sections": [{{"heading": "Summary", "type": "paragraph", "text": "…"}}]
+}}
+
+Optional top-level keys: "font" (default Calibri), "margins" ({margins}, inches).
+Contact entries are joined with " | "; a plain string renders as text, {{text, link}}
+as a hyperlink. Every section is {{heading, type, …}}; the heading renders uppercase,
+bold, with a full-width rule.
+
+Inside any text or bullet string: **bold**, [label](url) and bare https://… become
+links. Nothing else is parsed -- no italics, no literal bullet chars, no \\n (split
+those into separate items).
+
+Section types:
+{types}"""
+
+
+def print_spec():
+    width = max(len(k) for k in SECTION_TYPES)
+    types = "\n".join(f"  {k:<{width}}  {payload}\n  {'':<{width}}  renders as {shape}"
+                       for k, (payload, shape) in SECTION_TYPES.items())
+    print(SPEC_HELP.format(margins=json.dumps(DEFAULT_MARGINS), types=types))
 
 
 def main():
     ap = argparse.ArgumentParser(description="Render a resume spec to PDF with Typst.")
-    ap.add_argument("spec")
+    ap.add_argument("spec", nargs="?")
     ap.add_argument("out", nargs="?", help="default: <spec>.pdf")
     ap.add_argument("--density", default="normal", choices=sorted(DENSITY))
     ap.add_argument("--keep-typ", action="store_true", help="write the .typ alongside the PDF")
+    ap.add_argument("--spec", dest="spec_only", action="store_true",
+                    help="print the spec contract and every section type, then exit")
     args = ap.parse_args()
+
+    if args.spec_only:
+        print_spec()
+        return 0
+    if not args.spec:
+        ap.error("a spec path is required (or pass --spec to print the contract)")
 
     if not shutil.which("typst"):
         sys.exit("typst not found: brew install typst")

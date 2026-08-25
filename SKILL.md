@@ -1,6 +1,7 @@
 ---
 name: job
-description: Scan job boards for new openings, score them against the search profile, build a tailored resume for each shortlist, fill the application form, and submit what the user approves. Use for "run the job routine", "scan and apply", "any new openings", "apply to these", the morning job search, or a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
+description: Scans job boards for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "scan and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
+argument-hint: [setup|scan|indeed|resume <JD|url|key>|apply <key|url>|submit|ui|help]
 ---
 
 # Job routine
@@ -39,42 +40,52 @@ Nothing below overrides these.
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
 | `/job ui` | Serve the read-only dashboard — `scripts/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
-| `/job help` | `cat help.txt` — the command list, and nothing else |
+| `/job help` | `cat "$HOME/.claude/skills/job/help.txt"` and nothing else — no run, no queries, no commentary |
 
-**If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op.
+**If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
+means adding it to the table above and to `help.txt`.
 
-### `/job help`
+## Reference files
 
-The one mode whose whole job is chat output. Print `help.txt` and nothing else — no run, no
-queries, no commentary around it.
+Every detail lives one level down, read when the phase that needs it starts.
+
+| File | Read before |
+| ---- | ----------- |
+| `references/setup.md` | First run — building `$CAREER`, the profile interview, tuning the watchlist |
+| `references/fetching.md` | Phase 1 — adding a company, the Indeed harvest, manual boards |
+| `references/ingesting.md` | Phase 1 — the filter chain, source precedence, dedupe, tuning |
+| `references/resume.md` | Phase 3 — everything about building one: rules, checks, spec, build |
+| `references/applying.md` | Phases 4–5 — reaching each ATS's form, filling it, the traps, submitting |
+
+**The code is the manual for anything it already decides**, so nothing above restates it:
 
 ```bash
-cat "$HOME/.claude/skills/job/help.txt"
+$Q --schema                     # every table, view, CHECK and trigger
+ingest.py --filters | --help    # the filter chain, in order, and every flag
+fetch.py sources                # each source's kind, rank, endpoint and quirk
+render.py --spec                # the resume spec, and every section type
 ```
-
-Adding a mode means adding it to the table above and to `help.txt`.
 
 ## Storage
 
-One convention: `$CAREER/job.db`. Postings, prospects, companies, filters, staged
-applications, history, and the user's whole profile — identity, experience, search criteria — are
-rows in it.
+One convention: `$CAREER/job.db` — postings, prospects, companies, filters, staged applications,
+history, and the user's whole profile are rows in it.
 
-**`$CAREER` is a fixed absolute directory, so `/job` runs identically from anywhere.** Nothing
-resolves against the working directory. Ask the skill where it is rather than assuming:
+**`$CAREER` is a fixed absolute directory, so `/job` runs identically from anywhere.** Ask the skill
+where it is rather than resolving against the working directory:
 
 ```bash
 CAREER=$(python3 "$HOME/.claude/skills/job/scripts/jobkit.py" career)
 ```
 
-`jobkit.py` also answers `db`, `resumes` and `submitted`. The default is `~/data/job`, and
-`JOB_CAREER_DIR` overrides it. **Paths stored in the database are absolute** — a `resume` column
-written relative to a working directory breaks the next run started somewhere else.
+`jobkit.py` also answers `db`, `resumes` and `submitted`. Default `~/data/job`; `JOB_CAREER_DIR`
+overrides it. **Paths stored in the database are absolute** — a relative one breaks the next run
+started somewhere else.
 
 **Two layers, one direction.** `postings` is everything a fetch returned, unjudged. `prospects` is
 what ingest kept, and the only table the later phases touch. Every posting carries a `disposition`
 naming the filter that ruled on it, so "what did that filter cost me" is a query, and a changed
-filter re-runs over what is already stored instead of going back to the network.
+filter re-rules what is stored instead of going back to the network.
 
 ```bash
 Q='python3 "$HOME/.claude/skills/job/scripts/q.py"'
@@ -84,106 +95,87 @@ $Q --json "SELECT * FROM staged"
 ```
 
 `$Q` is shorthand for that path throughout this skill and its references. Shell state does not
-survive between tool calls, so put the assignment on the same command line as the query, or write
-the path out.
+survive between tool calls, so keep the assignment on the same command line as the query.
 
-**Read `--schema` before writing SQL.** It carries the rules — `CHECK`s reject a bad status or an
-out-of-range score, so there is no way to write an invalid row. Three behaviors it encodes and you
-must not fight:
+**Read `--schema` before writing SQL** — it documents every table, and its `CHECK`s make an invalid
+row impossible to write. Three behaviors it encodes and you must not fight:
 
 - **Triggers write `events`** on insert and on every status change. Never insert there yourself,
   except to add a `note` the transition alone does not say.
-- **Setting `score` sets `status`** against `shortlist_threshold`, so a score and a shortlist
-  decision cannot disagree.
-- **`triage` omits `description` on purpose.** A day's descriptions run to tens of thousands of
-  tokens and most belong to roles triage already ruled out. Pull them one at a time, for survivors
-  only. `SELECT * FROM prospects` is almost always a mistake, and `SELECT * FROM postings` more so.
+- **Setting `score` sets `status`** against `shortlist_threshold`, so the two cannot disagree.
+- **`triage` omits `description` on purpose.** Pull descriptions one at a time, for survivors only:
+  `SELECT * FROM prospects` is almost always a mistake, and `SELECT * FROM postings` more so.
 
-The filesystem holds only what a database should not: built PDFs in `$CAREER/resumes/`, moved to
-`submitted/` when an application goes out. That is output; deleting it loses nothing.
+The filesystem holds only built PDFs: `$CAREER/resumes/`, moved to `submitted/` when an application
+goes out.
 
-**The dashboard is how the user sees any of this.** `/job ui` serves `127.0.0.1` on the first free
-port from 8765 — jobs, each opening on its full application with every drafted essay and flagged
-field in it, the whole profile with its `NULL`s called out, and the watchlist. It is
-**read-only, enforced by SQLite** (`mode=ro`), because the invariants that make a write safe live
-here, not in a web page. Point the user at it rather than reading rows aloud; keep answering
-questions with queries.
+**Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves `127.0.0.1` on
+the first free port from 8765 — every job opening on its full application with each drafted essay and
+flagged field, the whole profile with its `NULL`s called out, and the watchlist. It is **read-only,
+enforced by SQLite** (`mode=ro`), because the invariants that make a write safe live here, not in a
+web page. Its one action is a **Run** button, which opens the platform's terminal on `claude "/job"`,
+so the phases that need a person still get one.
 
-Its one action is a **Run** button, which opens the platform's terminal on `claude "/job"` — a real
-interactive session, so the phases that need a person still have one. The page writes no SQL either
-way; it starts the skill, and the skill does the writing under the invariants above.
+**Never write run notes or daily summaries to disk.** The database is the record, and a question
+about the search — what went quiet, which companies reject fastest — is **answered with a query**, in
+the conversation.
 
-**Never write run notes or daily summaries to disk.** The database is the record. Reporting is a
-query answered in the conversation — see `references/scoring.md`.
-
-**The user never opens a file and never writes SQL.** Reading their career history, correcting a
-fact, changing what they want — conversation on their side, rows on yours (`references/profile.md`).
-When they ask about their search — what they applied to, what went quiet, which companies reject
-fastest — **answer with a query.**
+**The user never opens a file and never writes SQL.** Their career history, a corrected fact, a
+changed goal: they talk, you write rows. Read before writing — you are merging, not replacing — and
+ask about anything genuinely ambiguous: dates, whether work was solo, whether a number was measured
+or estimated, since an invented number here becomes a lie on a resume. **Never invent experience**; a
+project belongs in `projects` only if the user said it happened. **Add to `search_notes` and `facts`,
+never rewrite them** — they carry judgement that took real conversation to establish. A row that does
+not exist means "none", not "never asked". `$Q --export` hands them the whole thing as portable SQL.
 
 ## Phase 1 — Fetch, then ingest
 
-Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothing.
+Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothing. Both are free to
+re-run, and every source normalizes into the same columns, so one filter chain rules on all of them.
 
 ```bash
 S="$HOME/.claude/skills/job/scripts"
 python3 "$S/fetch.py" boards                                  # every watched board, in parallel
 python3 "$S/fetch.py" harvest --source indeed --file <harvest.json>
 python3 "$S/ingest.py"                                        # postings -> prospects
+python3 "$S/ingest.py" --redo --no-location-filter            # re-rule stored rows, no network
 ```
 
-**Every source is the same after fetching.** A source normalizes its payload into `postings` and
-ingest rules on all of them with one chain of filters — no filter knows which source a row came
-from. Adding a mechanism is a line in `sources.REGISTRY`; nothing downstream changes.
+Flags and filters are `--help` and `--filters` away; do not guess them.
 
-The Indeed harvest is the one source a browser has to collect, because Indeed throttles `fetch()`
-but not navigation. **Read `references/fetching.md` before running it.** Its descriptions arrive
-after ingest, for kept rows only: `fetch.py descriptions --file <descs.json>`.
-
-Re-running either step is free. Ingest re-rules without re-fetching:
-
-```bash
-python3 "$S/ingest.py" --redo --no-location-filter   # what is the location rule costing?
-```
+The Indeed harvest is the one source a browser has to collect. **Read `references/fetching.md`
+before running it.** Its descriptions arrive after ingest, for kept rows only:
+`fetch.py descriptions --file <descs.json>`.
 
 Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a cadence; `manual_boards`
 lists what is due. Check those, `INSERT` finds into `prospects` directly, and set `last_checked`.
 When a find resolves to a supported ATS, `INSERT` it into `companies` — found by hand once, fetched
 every morning after.
 
-Sources, slugs and the harvest: `references/fetching.md`. Filters, precedence and tuning:
-`references/ingesting.md`.
-
 ## Phase 2 — Score
 
 ```bash
-$Q "SELECT * FROM triage WHERE status='new'"
-```
-
-Triage that list against `search_criteria` (the rubric) and `search_notes` (the judgement the schema
-cannot hold), pull descriptions for the plausible ones, then score:
-
-```bash
+$Q "SELECT * FROM triage WHERE status='new'"                         # no descriptions, on purpose
+$Q "SELECT key, description FROM prospects WHERE key IN ('…','…')"   # only what survives triage
 $Q "UPDATE prospects SET score=9, reason='the JD language that drove it, quoted' WHERE key='…'"
 ```
 
+Triage against `search_criteria` (the rubric) and `search_notes` (the judgement the schema cannot
+hold), pull descriptions for the plausible ones, then score, citing the JD language that drove it.
+
 **Anything you score must have had its description read** — scoring off a title is the failure this
-phase exists to prevent. **Every prospect gets scored**, including the ones you skip; an unscored row
-stays `new` and comes back tomorrow. Dealbreakers are a hard zero regardless of how well the rest
-reads. Full method: `references/scoring.md`.
+phase exists to prevent; a "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer"
+req that is really data plumbing. **Apply dealbreakers first**, a hard zero regardless of how well the
+rest reads. **Score every prospect, including the ones you skip** — an unscored row stays `new` and
+comes back tomorrow. Where a score turns on something still `NULL`, score on a stated assumption and
+say so in `reason`.
 
 ## Phase 3 — Resume
 
-For each shortlisted role, build a tailored one-page PDF. `references/resume.md` carries the
-selection method, the writing rules, the one-pass test, and the facts that must never be misreported.
-
-```bash
-python3 "$HOME/.claude/skills/job/scripts/render.py" "$CAREER/resumes/<slug>.json" "$CAREER/resumes/<slug>.pdf" --density tight
-pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
-```
-
-**Read the rendered image before moving on.** A resume that never got looked at is not ready to
-attach. Then `UPDATE prospects SET resume='<absolute path to the pdf>'`.
+For each shortlisted role, build a tailored one-page PDF. **Read `references/resume.md`** — the
+selection method, the writing rules, the one-pass test, the spec, and the build. **Read the rendered
+page before moving on**; a resume that never got looked at is not ready to attach. Then
+`UPDATE prospects SET resume='<absolute path to the pdf>'`.
 
 ## Phase 4 — Stage
 
@@ -219,10 +211,9 @@ lost session and refilling from them is cheap.
 
 ## Phase 5 — Review and submit
 
-Present every staged application in one table — company, title, score, status, and whatever is
-named in `blocked_on` (`SELECT * FROM staged`). Keep it to that table: the user reads the
-applications themselves in the dashboard, where every field and its flag already renders. Then ask
-which to submit, accepting "all", a subset, or none.
+Present every staged application in one table — company, title, score, status, and whatever is named
+in `blocked_on` (`SELECT * FROM staged`). Keep it to that table; the user reads the applications
+themselves in the dashboard. Then ask which to submit, accepting "all", a subset, or none.
 
 For each approved one: click submit, wait for the confirmation page, and **verify it**. A validation
 error means nothing was submitted — repair the named field and re-present it. Then:
@@ -243,8 +234,7 @@ $Q "UPDATE prospects SET status='rejected', resume=NULL WHERE key='…';
     INSERT INTO events(key,status,note) VALUES('…','rejected','3 days, no interview — resume screen')"
 ```
 
-Then **delete that resume's `.pdf` and `.json` from `$CAREER/resumes/submitted/`**, so the record
-still says an application went out while the dead document is gone. Note the shape when it is
-visible — days from submission, and whether any interview stage happened; a rejection three days out
-with no interview is a resume screen, and that is worth knowing across roles. **A synced folder can
-re-materialize a deleted file** — re-list the directory and delete again if it reappeared.
+Then **delete that resume's `.pdf` and `.json` from `$CAREER/resumes/submitted/`** — the record still
+says an application went out, and the dead document is gone. **A synced folder can re-materialize a
+deleted file**: re-list the directory and delete again if it reappeared. Note the shape where it is
+visible — days from submission, and whether any interview stage happened.

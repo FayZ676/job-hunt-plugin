@@ -7,48 +7,29 @@ already stored, rules on every row, and promotes the survivors.
 python3 "$HOME/.claude/skills/job/scripts/ingest.py"
 ```
 
-**One chain serves every source.** No filter names a source: each source normalizes its payload into
-the same columns, and a source that cannot state a fact leaves the default, so the filter reading it
-simply never trips. A new mechanism inherits every filter for free.
+**One chain serves every source.** No filter names a source: each normalizes into the same columns,
+and one that cannot state a fact leaves the default, so the filter reading it never trips. A new
+mechanism inherits every filter for free.
 
-Every row it touches gets a `disposition`, so what a filter costs stays answerable after the run
-instead of being a number that scrolled past. Two of them are not drops: `kept` became a prospect,
-and `upgraded` replaced a lower-ranked source on a prospect that already existed. Every other value
-names the filter that dropped the row.
+Every row gets a `disposition`, so what a filter cost stays answerable after the run. Two are not
+drops — `kept` became a prospect, `upgraded` replaced a lower-ranked source on an existing one. Every
+other value names the filter that dropped the row.
 
-| Flag | Use |
-| ---- | --- |
-| `--redo` | rule again on everything, including rows already decided, without re-fetching |
-| `--source indeed` | limit to one source |
-| `--include-seen` | ignore what is already in `prospects` |
-| `--keep-covered` | keep rows whose company a better-ranked source already covers |
-| `--no-location-filter` | see what the location rule is costing |
-| `--max-age-days 7` | tighten to the last week |
-| `--comp-floor N` | override the stored floor for one run |
+```bash
+python3 "$HOME/.claude/skills/job/scripts/ingest.py" --help      # every flag
+python3 "$HOME/.claude/skills/job/scripts/ingest.py" --filters   # the chain, in order
+```
 
 ## The filters
 
-In the order they run. Each applies to every source.
-
-| Filter | Drops |
-| ------ | ----- |
-| `sponsored` | paid placements — almost entirely gig spam and unrelated listings |
-| `expired` | dead listings still in an index, including an unlisted Ashby posting |
-| `agency` | reposters, body shops and consultancies, by `agency_blocklist` name or `agency_name_patterns` (`staffing` / `recruiting` / `consulting group` / `outsourcing` / `federal`) |
-| `noise` | `title_noise` — "AI Trainer", annotation, tutoring, freelance-gig phrasing |
-| `lowball` | a **stated yearly** band topping out below `comp_floor`; catches "Senior AI Engineer" at $31K–47K. A band stated per hour, or not stated at all, is not judged |
-| `title` | fails `title_include`, or matches `title_exclude` |
-| `location` | fails `location_include`, or matches `location_exclude` without a US anchor. Remote postings skip the include test |
-| `stale` | older than `max_age_days` |
-| `covered` | a better-ranked source already covers this company — see precedence |
-| `seen` | already in `prospects` or `aliases`, by key or by normalized company + title |
-| `duplicate` | one role listed in several places, collapsed into the row that was kept |
+`ingest.py --filters` prints the chain in the order it runs, straight off the code that applies it —
+read it there rather than from a copy. The patterns each filter matches on are rows in the `filters`
+table (`SELECT kind, pattern, note FROM filters`), so tuning is SQL, not a code change.
 
 ## Source precedence
 
-Every source carries a rank: an employer's own board is authoritative (`0`), an aggregator is
-discovery (`1`). Precedence is a number in `sources.REGISTRY`, which is why ingest resolves overlaps
-without any condition naming a source.
+Every source carries a rank in `sources.REGISTRY`: an employer's own board is authoritative (`0`), an
+aggregator is discovery (`1`). That number is how ingest resolves overlaps without naming a source.
 
 - **A lower-ranked copy of a covered company is dropped** as `covered`. Without this, every harvest
   re-proposes roles the boards covered hours earlier.
@@ -56,9 +37,9 @@ without any condition naming a source.
   key, its score and its history, and gains the real description and apply URL. The harvested key
   becomes an alias.
 
-That is the compounding win: a company is discovered once by the aggregator, and fetched properly
-from its own board every morning after. It only happens before any application work has started; a
-`staged` or `applied` row is never disturbed.
+So a company is discovered once by the aggregator and fetched from its own board every morning after.
+An upgrade only happens before application work starts; a `staged` or `applied` row is never
+disturbed.
 
 ## Dedupe
 
@@ -80,7 +61,7 @@ $Q "SELECT company,title,location FROM postings WHERE disposition='location' LIM
 ```
 
 The second query is the one that matters: **read what a filter actually dropped** rather than
-guessing from a count. Then change the rule and re-rule the same postings — no network:
+guessing from a count. Then change the rule and re-rule the same postings, with no network:
 
 ```bash
 $Q "SELECT kind, pattern, note FROM filters"
@@ -97,10 +78,9 @@ python3 "$HOME/.claude/skills/job/scripts/ingest.py" --redo
 | Shortlist fills with staffing firms | `agency_blocklist` is stale — add the names; they repeat daily |
 | Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |
 
-**Tune the blocklist as you go.** When a run surfaces a reposter, add it — that is a permanent
-improvement, and the list is the main thing between an aggregator and a shortlist full of staffing
-firms. A blocklist entry is not a judgment about the employer, only about whether their listings are
-worth reading; a company that starts posting directly should come off it.
+**Tune the blocklist as you go.** When a run surfaces a reposter, add it — the list is the main thing
+between an aggregator and a shortlist full of staffing firms. An entry judges the listings, not the
+employer; a company that starts posting directly comes off it.
 
 ## Traps
 

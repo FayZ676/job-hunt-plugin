@@ -1,36 +1,31 @@
 # First-run setup
 
-Run when `$CAREER` is missing, or when the user asks for setup. It exists so a new user is running
-real scans the same day they install the skill.
+Run when `$CAREER` is missing, or when the user asks for setup.
 
-**1. Create the database.** `$CAREER` is a fixed absolute directory, so this runs the same from
-anywhere — ask the skill where it is rather than writing a path relative to the working directory:
+**1. Create the database.**
 
 ```bash
 CAREER=$(python3 "$HOME/.claude/skills/job/scripts/jobkit.py" career)
 mkdir -p "$CAREER/resumes/submitted"
-python3 "$HOME/.claude/skills/job/scripts/q.py" \
-  -f "$HOME/.claude/skills/job/sql/seed.sql"
+python3 "$HOME/.claude/skills/job/scripts/q.py" -f "$HOME/.claude/skills/job/sql/seed.sql"
 ```
 
-That creates `$CAREER/job.db` — the schema applies on connect — and seeds it with companies on
-Greenhouse, Lever and Ashby plus a starting set of filters. `$CAREER/resumes/` holds output only.
+That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
+Lever and Ashby plus a starting set of filters.
 
 **2. Fill the profile by interviewing them.** They talk; you write the rows. Never hand them a form
-or a file to edit — chat is the whole interface. `references/profile.md` has the shape and the rules.
-Cover:
+or a file to edit — chat is the whole interface. `$Q --schema` documents every table. Cover:
 
 - **Identity and contact**, work authorization, availability, compensation floor. Demographics are
   optional, and `"Decline to self-identify"` is a complete answer — offer it rather than pressing.
 - **What they're looking for** — titles that fit and don't, level, years of experience, hard
-  dealbreakers, home metro. This becomes `search_criteria`; whatever reasoning they give that a
-  schema cannot hold goes in `search_notes`.
+  dealbreakers, home metro. This becomes `search_criteria`; the reasoning a schema cannot hold goes
+  in `search_notes`.
 - **Their experience.** The longest part and the one that matters most: `employers` → `projects` is
   **the only source a resume may draw from**, so a thin profile produces thin resumes. Offer to read
   a resume, CV, or LinkedIn export and draft it for them to correct.
 
-A `NULL` left in the profile is not a failure — it is a hard stop later, surfaced honestly. Tell them
-which ones will block an application.
+A `NULL` is not a failure — it is a hard stop later. Tell them which ones will block an application.
 
 **3. Tune the watchlist.** The seeded companies and title filters are AI- and ML-flavored. If they
 are hiring into a different field, rewrite both:
@@ -41,19 +36,15 @@ INSERT INTO companies(slug,ats,name,source) VALUES('slug','greenhouse','Name','m
 UPDATE companies SET active=0 WHERE slug='…';
 ```
 
-**4. Check the tooling.**
+**4. Check the tooling.** `pydantic` is what every source parses its payload into, so fetching needs
+it; Typst and Poppler are only for the resume build.
 
 ```bash
-python3 -c "import pydantic" 2>/dev/null || echo "python3 -m pip install pydantic"   # fetching
-command -v typst    || echo "brew install typst"                                     # resume build
-command -v pdftoppm || echo "brew install poppler"                                   # resume build
+python3 -c "import pydantic" 2>/dev/null || echo "python3 -m pip install pydantic"
+command -v typst    || echo "brew install typst"
+command -v pdftoppm || echo "brew install poppler"
 ```
 
-`pydantic` is what every source parses its payload into, so fetching needs it; it is the only
-entry in `requirements.txt`. Typst and Poppler are
-only for the resume build; scoring and applying need neither.
-
-**5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. A first run that returns sensible
-companies means the filters are tuned; nothing, or thousands, means another pass — the drop counts
-say which one, and `ingest.py --redo` re-rules the same postings after each adjustment without
-fetching again — `references/ingesting.md`.
+**5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. Sensible companies means the
+filters are tuned; nothing, or thousands, means another pass — the drop counts say which rule, and
+`ingest.py --redo` re-rules the same postings after each adjustment without fetching again.

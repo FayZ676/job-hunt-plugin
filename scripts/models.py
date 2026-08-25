@@ -1,19 +1,9 @@
-#!/usr/bin/env python3
-"""The structured types every source produces and the raw layer stores.
-
-Vendor payloads are the messiest input in the system: four sources, no two
-agreeing on a field name, a date format, or whether a missing value arrives as
-null, "" or an absent key. Parsing them into one validated type at the boundary
-is what lets everything downstream read a posting without defensive checks --
-and turns a source that starts returning nonsense into an error naming the
-field, rather than an SQL failure several steps later.
-"""
 
 import re
 import sys
 from typing import Literal, get_args
 
-__all__ = ["Posting", "StoredPosting", "Prospect", "Status", "Disposition", "Tier",
+__all__ = ["Row", "Posting", "StoredPosting", "Prospect", "Status", "Disposition", "Tier",
            "get_args", "verify_against_schema"]
 
 try:
@@ -25,12 +15,6 @@ except ModuleNotFoundError:
 
 import jobkit
 
-SOURCE_KINDS = ("board", "harvest")
-
-# The controlled vocabularies. The database enforces these with CHECK
-# constraints and the models enforce them here; `verify_against_schema` fails
-# loudly if the two ever disagree, so there is one vocabulary, not two copies
-# that drift.
 Status = Literal["new", "scored", "shortlisted", "skipped", "staged", "applied",
                  "interviewing", "rejected", "not_pursued", "closed"]
 
@@ -41,17 +25,23 @@ Disposition = Literal["kept", "upgraded", "title", "location", "stale", "seen",
 Tier = Literal["identity", "policy", "judgment"]
 
 
-class Posting(BaseModel):
-    """One posting as a source found it, normalized but unjudged.
-
-    Sources fill in what their payload states and leave the rest at the
-    default. A default means "this source does not say", never "no" -- ingest
-    treats an unstated fact as unremarkable, which is what keeps every filter
-    applicable to every source.
-    """
-
+class Row(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    @field_validator("remote", "sponsored", "expired", mode="before", check_fields=False)
+    @classmethod
+    def _flag(cls, value):
+        return False if value is None else value
+
+    def row(self) -> dict:
+        data = self.model_dump()
+        for name, field in type(self).model_fields.items():
+            if field.annotation is bool:
+                data[name] = int(data[name])
+        return data
+
+
+class Posting(Row):
     key: str
     source: str
     company: str
@@ -76,8 +66,6 @@ class Posting(BaseModel):
     @field_validator("key")
     @classmethod
     def _namespaced(cls, value: str) -> str:
-        """Keys are `<source>:<id>` so two sources can never collide, and the
-        prefix tells the applying phase which ATS it is about to drive."""
         if ":" not in value or value.endswith(":"):
             raise ValueError(f"key must be '<source>:<id>', got {value!r}")
         return value
@@ -94,22 +82,8 @@ class Posting(BaseModel):
     def _period(cls, value: str | None) -> str | None:
         return value.upper() if value else None
 
-    def row(self) -> dict:
-        """The shape `postings` stores. Booleans become the integers SQLite keeps."""
-        data = self.model_dump()
-        for flag in ("remote", "sponsored", "expired"):
-            data[flag] = int(data[flag])
-        return data
-
 
 class StoredPosting(Posting):
-    """A row of `postings`: what a source produced, plus what ingest ruled.
-
-    Reading through this rather than a bare sqlite3.Row means a column that
-    changes type, or a disposition the vocabulary does not contain, fails at
-    the read instead of quietly flowing into a filter.
-    """
-
     first_fetched: str | None = None
     last_fetched: str | None = None
     ingested_on: str | None = None
@@ -120,12 +94,7 @@ class StoredPosting(Posting):
         return cls(**{k: row[k] for k in row.keys()})
 
 
-class Prospect(BaseModel):
-    """A row of `prospects`: a posting ingest kept, and everything scoring and
-    applying add to it afterwards."""
-
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
+class Prospect(Row):
     key: str
     company: str
     title: str
@@ -154,18 +123,11 @@ class Prospect(BaseModel):
 
     @classmethod
     def from_posting(cls, posting: "StoredPosting") -> "Prospect":
-        """Promotion is a projection: the columns both tables share, nothing invented."""
         shared = set(cls.model_fields) & set(posting.model_fields)
         return cls(**{name: getattr(posting, name) for name in shared})
 
-    def row(self) -> dict:
-        data = self.model_dump()
-        data["remote"] = int(data["remote"])
-        return data
-
 
 def _schema_vocabulary(table: str, column: str) -> set[str]:
-    """Pull the CHECK ... IN (...) list for one column out of schema.sql."""
     sql = open(jobkit.SCHEMA_SQL, encoding="utf-8").read()
     body = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\);", sql, re.S)
     if not body:
@@ -177,7 +139,6 @@ def _schema_vocabulary(table: str, column: str) -> set[str]:
 
 
 def verify_against_schema() -> None:
-    """Fail if a model's vocabulary has drifted from the database's."""
     for table, column, literal in (("prospects", "status", Status),
                                    ("postings", "disposition", Disposition),
                                    ("staged_fields", "tier", Tier)):

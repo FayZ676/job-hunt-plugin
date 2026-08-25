@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Fetch postings into the raw layer. Judges nothing.
 
 Every source lands in `postings` normalized but unfiltered: no scoring, no rows
@@ -23,15 +22,12 @@ import sys
 import jobkit
 import sources
 from jobkit import MAX_DESCRIPTION_CHARS
+from models import Posting
 
-COLUMNS = ("key", "source", "ats", "company", "title", "url", "apply_url", "location",
-           "remote", "compensation", "posted_at", "description", "sponsored", "expired",
-           "comp_min", "comp_max", "comp_period", "raw")
+COLUMNS = tuple(Posting.model_fields)
 
 
 def store(con, postings):
-    """Upsert into the raw layer. A re-fetch refreshes the volatile fields and
-    bumps last_fetched, but never disturbs a disposition ingest already set."""
     known = {r["key"] for r in con.execute("SELECT key FROM postings").fetchall()}
     fresh = 0
     for posting in postings:
@@ -105,8 +101,6 @@ def cmd_harvest(args):
 
 
 def cmd_descriptions(args):
-    """Some sources carry no description worth scoring on, so descriptions are
-    fetched separately for rows ingest already kept. Write them to both layers."""
     con = jobkit.connect(args.db)
     with open(args.file, "r", encoding="utf-8") as handle:
         payload = json.load(handle)
@@ -143,6 +137,9 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
+
+    src = sub.add_parser("sources", help="print the source registry: kind, rank, endpoint, quirks")
+    src.set_defaults(func=lambda _args: sources.describe())
 
     b = sub.add_parser("boards", help="fetch every active board source over HTTP")
     b.add_argument("--company", action="append", help="limit to these company names or slugs")
