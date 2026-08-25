@@ -1,11 +1,6 @@
 """Run SQL against the job database.
 
-A thin runner, not an API: the schema carries the rules (CHECK constraints for
-valid values, triggers for history, views for the read surface), so there is
-nothing for a Python layer to add. Uses the stdlib sqlite3 module, so it works
-without the `sqlite3` command-line tool installed.
-
-  q.py "SELECT * FROM triage WHERE status='new'"
+  q.py "SELECT * FROM triage WHERE status=\'new\'"
   q.py --json "SELECT * FROM triage LIMIT 5"
   q.py -f some.sql          run a file
   q.py --schema             print the schema

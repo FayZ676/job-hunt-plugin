@@ -1,17 +1,10 @@
 """Fetch postings into the raw layer. Judges nothing.
 
-Every source lands in `postings` normalized but unfiltered: no scoring, no rows
-in `prospects`. That separation is what lets `ingest.py` re-run a changed filter
-over this morning's fetch without going back to the network.
-
+  fetch.py sources                         the registry: kind, rank, endpoint
   fetch.py boards                          every active board, in parallel
   fetch.py boards --company Anthropic      one board, for testing a new slug
   fetch.py harvest --source indeed --file harvest.json
-  fetch.py descriptions --file descs.json  descriptions fetched for kept rows
-
-Subcommands follow the mechanism, not the site: `boards` covers every source
-that answers an HTTP request, `harvest` every source a browser had to collect.
-Adding either kind is one line in `sources.REGISTRY`.
+  fetch.py descriptions --file descs.json  descriptions for rows ingest kept
 """
 
 import argparse

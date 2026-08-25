@@ -1,18 +1,13 @@
 """Serve the local dashboard: a read-only window onto the job database.
 
-Read-only is enforced by SQLite, not by discipline -- every request opens the
-database with mode=ro, so a bug here cannot corrupt the record. Writes stay
-where the invariants live: the skill.
-
   ui.py                 serve on the first free port from 8765
   ui.py --port 9000     pin the port
   ui.py --no-open       do not open a browser
   ui.py --lan           also answer other devices on this network, key-gated
   ui.py --host 0.0.0.0  pin the bind address
 
-Binding past the loopback mints an access key: every request from another
-device must carry it, as ?k= once and as a cookie thereafter. Loopback keeps
-its unauthenticated door, so nothing about the local dashboard changes.
+Binding past the loopback mints an access key: another device must carry it,
+as ?k= once and as a cookie thereafter.
 """
 
 import argparse

@@ -1,21 +1,9 @@
 """Derive prospects from the raw layer. Fetches nothing.
 
-Reads `postings`, rules on every row, and promotes survivors into `prospects`
-as `new`. Every row gets a disposition -- 'kept', or the name of the filter
-that dropped it -- so what a filter costs is a query rather than a number that
-scrolled past:
-  SELECT disposition, COUNT(*) FROM postings
-  WHERE ingested_on=date('now') GROUP BY disposition;
-
-Judgment is separate from fetching, so a changed filter re-runs over what is
-already on disk:
+  ingest.py                               rule on what is pending
+  ingest.py --filters                     the chain, in the order it runs
   ingest.py --redo                        rule again on everything, no network
   ingest.py --redo --no-location-filter   what is the location rule costing?
-
-**No filter names a source.** Sources normalize into the same columns, so one
-chain serves all of them and a new mechanism inherits every filter for free. A
-source that cannot state a fact leaves the default, and the filter reading it
-simply never trips.
 """
 
 import argparse
