@@ -8,15 +8,13 @@ anywhere — ask the skill where it is rather than writing a path relative to th
 
 ```bash
 CAREER=$(python3 "$HOME/.claude/skills/job/scripts/jobkit.py" career)
-mkdir -p "$CAREER"
-cp -R "$HOME/.claude/skills/job/templates/career/." "$CAREER/"
+mkdir -p "$CAREER/resumes/submitted"
 python3 "$HOME/.claude/skills/job/scripts/q.py" \
   -f "$HOME/.claude/skills/job/sql/seed.sql"
 ```
 
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds it with companies on
-Greenhouse, Lever and Ashby plus a starting set of filters. `$CAREER/resumes/` comes from the
-template and holds output only.
+Greenhouse, Lever and Ashby plus a starting set of filters. `$CAREER/resumes/` holds output only.
 
 **2. Fill the profile by interviewing them.** They talk; you write the rows. Never hand them a form
 or a file to edit — chat is the whole interface. `references/profile.md` has the shape and the rules.
