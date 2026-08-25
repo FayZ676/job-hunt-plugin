@@ -8,7 +8,6 @@
 """
 
 import argparse
-import json
 import sqlite3
 import sys
 
@@ -56,18 +55,7 @@ def main():
     con.commit()
 
     rows = [dict(r) for r in cur.fetchall()] if cur and cur.description else []
-    if args.json:
-        print(json.dumps(rows, ensure_ascii=False, indent=2))
-        return 0
-    if not rows:
-        print("(no rows)")
-        return 0
-    cols = list(rows[0])
-    w = {c: min(max(len(c), *(len(str(r.get(c) or "")) for r in rows)), 48) for c in cols}
-    print("  ".join(c.ljust(w[c]) for c in cols))
-    for r in rows:
-        print("  ".join(str(r.get(c) if r.get(c) is not None else "")[:w[c]].ljust(w[c]) for c in cols))
-    return 0
+    return jobkit.print_rows(rows, args.json)
 
 
 if __name__ == "__main__":

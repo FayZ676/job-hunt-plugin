@@ -4,7 +4,7 @@ Deriving `prospects` from the raw layer. **Ingest fetches nothing** — it reads
 already stored, rules on every row, and promotes the survivors.
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/ingest.py"
+python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest
 ```
 
 **One chain serves every source.** No filter names a source: each normalizes into the same columns,
@@ -16,18 +16,18 @@ drops — `kept` became a prospect, `upgraded` replaced a lower-ranked source on
 other value names the filter that dropped the row.
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/ingest.py" --help      # every flag
-python3 "$HOME/.claude/skills/job/scripts/ingest.py" --dispositions   # every verdict, in order
+python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest --help      # every flag
+python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" dispositions   # every verdict, in order
 ```
 
 ## The filters
 
-Two things share the word. `DISPOSITIONS` in `ingest.py` names the **verdicts** — one per branch of
+Two things share the word. `DISPOSITIONS` in `scan.py` names the **verdicts** — one per branch of
 the chain, and the same values `postings.disposition` stores. The `filters` **table** holds the
 **patterns** those branches match on, keyed by `kind`. Only four verdicts read the table; the rest
 rule on columns, dates, ranks and prior state, so neither describes the other.
 
-`ingest.py --dispositions` prints the verdicts in the order the chain rules them, straight off the
+`scan.py dispositions` prints the verdicts in the order the chain rules them, straight off the
 code that applies it — read it there rather than from a copy. The patterns live in
 `SELECT kind, pattern, note FROM filters`, so tuning is SQL, not a code change.
 
@@ -71,7 +71,7 @@ guessing from a count. Then change the rule and re-rule the same postings, with 
 ```bash
 $Q "SELECT kind, pattern, note FROM filters"
 $Q "INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)contract','no contract roles')"
-python3 "$HOME/.claude/skills/job/scripts/ingest.py" --redo
+python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest --redo
 ```
 
 | Symptom | Fix |

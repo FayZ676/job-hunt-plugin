@@ -1,4 +1,4 @@
--- Seed data, applied with `q.py -f sql/seed.sql` against a fresh database.
+-- Seed data, applied with `lib/q.py -f sql/seed.sql` against a fresh database.
 -- Companies on Greenhouse, Lever and Ashby, plus the mechanical filters and settings.
 -- Edit freely, or ignore it entirely and INSERT into `companies` by hand.
 

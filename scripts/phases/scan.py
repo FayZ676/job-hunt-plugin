@@ -1,19 +1,137 @@
-"""Derive prospects from the raw layer. Fetches nothing.
+"""Phase 1 — fetch postings, then rule on them. Two steps, and they stay separate.
 
-  ingest.py                               rule on what is pending
-  ingest.py --dispositions                every verdict, in the order ruled
-  ingest.py --redo                        rule again on everything, no network
-  ingest.py --redo --no-location-filter   what is the location rule costing?
+  scan.py sources                          the registry: kind, rank, endpoint
+  scan.py boards                           every active board, in parallel
+  scan.py boards --company Anthropic       one board, for testing a new slug
+  scan.py harvest --source indeed --file harvest.json
+  scan.py descriptions --file descs.json   descriptions for rows ingest kept
+  scan.py ingest                           postings -> prospects, no network
+  scan.py ingest --redo --no-location-filter
+  scan.py dispositions                     every verdict, in the order ruled
 """
 
 import argparse
+import concurrent.futures
+import json
+import os
 import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 
 import jobkit
 import models
 import sources
-from jobkit import age_days, compile_patterns, matches_any, norm, norm_company
-from models import Prospect, StoredPosting
+from jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, norm, norm_company
+from models import Posting, Prospect, StoredPosting
+
+POSTING_COLUMNS = tuple(Posting.model_fields)
+
+
+def store(con, postings):
+    known = {r["key"] for r in con.execute("SELECT key FROM postings").fetchall()}
+    fresh = 0
+    for posting in postings:
+        row = posting.row()
+        if row["key"] not in known:
+            fresh += 1
+        con.execute(
+            f"INSERT INTO postings({','.join(POSTING_COLUMNS)},first_fetched,last_fetched) "
+            f"VALUES({','.join('?' * len(POSTING_COLUMNS))},date('now'),date('now')) "
+            "ON CONFLICT(key) DO UPDATE SET "
+            "  last_fetched=date('now'),"
+            "  title=excluded.title, location=excluded.location, remote=excluded.remote,"
+            "  sponsored=excluded.sponsored, expired=excluded.expired,"
+            "  compensation=COALESCE(excluded.compensation, postings.compensation),"
+            "  description=COALESCE(excluded.description, postings.description),"
+            "  raw=COALESCE(excluded.raw, postings.raw)",
+            tuple(row[c] for c in POSTING_COLUMNS))
+    con.commit()
+    return fresh
+
+
+def _next_step(con):
+    pending = con.execute("SELECT COUNT(*) n FROM postings WHERE disposition IS NULL").fetchone()["n"]
+    print(f"\nnothing filtered yet — {pending} postings pending; run scan.py ingest to derive prospects")
+
+
+def cmd_boards(args):
+    con = jobkit.connect(args.db)
+    companies = [dict(r) for r in con.execute(
+        "SELECT name, ats, slug FROM companies WHERE active=1 ORDER BY name").fetchall()
+        if r["ats"] in sources.BOARDS]
+    if args.company:
+        wanted = {w.lower() for w in args.company}
+        companies = [c for c in companies if c["name"].lower() in wanted or c["slug"].lower() in wanted]
+    if not companies:
+        print("No active companies matched. Seed the database or add companies to it.", file=sys.stderr)
+        return 1
+
+    fetched, failures = [], []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
+        futures = {pool.submit(sources.BOARDS[c["ats"]], c): c for c in companies}
+        for future in concurrent.futures.as_completed(futures):
+            company = futures[future]
+            try:
+                fetched.extend(future.result())
+            except Exception as error:
+                failures.append((company["name"], f"{type(error).__name__}: {error}"))
+
+    new = store(con, fetched)
+    print(f"FETCHED {len(fetched)} postings from {len(companies)} boards ({new} new)")
+    if failures:
+        print("\nboards that failed (likely a wrong slug or a board that moved ATS):")
+        for name, err in failures:
+            print(f"  - {name}: {err}")
+    _next_step(con)
+    return 0
+
+
+def cmd_harvest(args):
+    source = sources.REGISTRY.get(args.source)
+    if not source or source["kind"] != "harvest":
+        harvests = [n for n, s in sources.REGISTRY.items() if s["kind"] == "harvest"]
+        print(f"unknown harvest source '{args.source}'. known: {', '.join(harvests)}", file=sys.stderr)
+        return 1
+    con = jobkit.connect(args.db)
+    postings = source["fetch"](args.file)
+    new = store(con, postings)
+    print(f"FETCHED {len(postings)} {args.source} postings ({new} new)")
+    _next_step(con)
+    return 0
+
+
+def cmd_descriptions(args):
+    con = jobkit.connect(args.db)
+    with open(args.file, "r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    items = payload if isinstance(payload, list) else payload.get("descriptions", [])
+
+    filled = missing = 0
+    for item in items:
+        key = item.get("key") or item.get("jobkey")
+        if not key:
+            continue
+        if ":" not in str(key):
+            key = f"{args.source}:{key}"
+        text = (item.get("description") or "")[:MAX_DESCRIPTION_CHARS]
+        if not text:
+            missing += 1
+            continue
+        con.execute("UPDATE postings SET description=? WHERE key=?", (text, key))
+        filled += con.execute(
+            "UPDATE prospects SET description=?, last_seen=date('now') WHERE key=?",
+            (text, key)).rowcount
+    con.commit()
+
+    empty = con.execute(
+        "SELECT COUNT(*) n FROM prospects WHERE description IS NULL OR description=''").fetchone()["n"]
+    print(f"attached {filled} descriptions")
+    if missing:
+        print(f"{missing} entries carried no description text")
+    if empty:
+        print(f"warning: {empty} prospects still have none")
+    return 0
+
 
 DISPOSITIONS = {
     "sponsored": "paid placements -- almost entirely gig spam and unrelated listings",
@@ -35,7 +153,7 @@ assert set(DISPOSITIONS) == set(models.get_args(models.Disposition)) - {"kept"},
     f"{sorted(set(DISPOSITIONS) ^ (set(models.get_args(models.Disposition)) - {'kept'}))}")
 
 
-def print_dispositions():
+def cmd_dispositions(_args):
     print("Every verdict a posting can get, in the order the chain rules.\n"
           "Each filter applies to every source.\n")
     width = max(len(name) for name in DISPOSITIONS)
@@ -44,6 +162,7 @@ def print_dispositions():
     print("\n  kept" + " " * (width - 4) + "  NOT A DROP: promoted to prospects")
     print("\nEvery posting keeps its ruling in `postings.disposition`, so what a filter cost")
     print("stays queryable after the run. Patterns live in the `filters` table.")
+    return 0
 
 
 PATTERN_KINDS = ("title_include", "title_exclude", "location_include", "location_exclude",
@@ -145,31 +264,7 @@ def collapse(rows):
     return kept, dupes
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--redo", action="store_true",
-                        help="rule again on postings already dispositioned, without re-fetching")
-    parser.add_argument("--source", action="append", help="limit to these sources")
-    parser.add_argument("--include-seen", action="store_true",
-                        help="ignore what is already in prospects")
-    parser.add_argument("--keep-covered", action="store_true",
-                        help="keep postings whose company a higher-precedence source already covers")
-    parser.add_argument("--no-location-filter", action="store_true",
-                        help="see what the location rule is costing")
-    parser.add_argument("--max-age-days", type=int, default=None,
-                        help="override the stored age limit for one run")
-    parser.add_argument("--comp-floor", type=int, default=None,
-                        help="override the stored compensation floor for one run")
-    parser.add_argument("--dispositions", action="store_true",
-                        help="print every verdict, in the order the chain rules, and exit")
-    parser.add_argument("--db", default=None)
-    args = parser.parse_args()
-
-    if args.dispositions:
-        print_dispositions()
-        return 0
-
+def cmd_ingest(args):
     con = jobkit.connect(args.db)
     config = load_config(con, args)
 
@@ -263,6 +358,56 @@ def main():
     if pending:
         print(f"\n{pending} postings still pending")
     return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    src = sub.add_parser("sources", help="print the source registry: kind, rank, endpoint, quirks")
+    src.set_defaults(func=lambda _args: sources.describe())
+
+    b = sub.add_parser("boards", help="fetch every active board source over HTTP")
+    b.add_argument("--company", action="append", help="limit to these company names or slugs")
+    b.add_argument("--workers", type=int, default=8)
+    b.add_argument("--db", default=None)
+    b.set_defaults(func=cmd_boards)
+
+    h = sub.add_parser("harvest", help="load a browser harvest into the raw layer")
+    h.add_argument("--source", required=True)
+    h.add_argument("--file", required=True)
+    h.add_argument("--db", default=None)
+    h.set_defaults(func=cmd_harvest)
+
+    d = sub.add_parser("descriptions", help="attach descriptions fetched for kept postings")
+    d.add_argument("--file", required=True)
+    d.add_argument("--source", default="indeed", help="prefix for bare ids in the file")
+    d.add_argument("--db", default=None)
+    d.set_defaults(func=cmd_descriptions)
+
+    i = sub.add_parser("ingest", help="derive prospects from the raw layer; fetches nothing")
+    i.add_argument("--redo", action="store_true",
+                   help="rule again on postings already dispositioned, without re-fetching")
+    i.add_argument("--source", action="append", help="limit to these sources")
+    i.add_argument("--include-seen", action="store_true",
+                   help="ignore what is already in prospects")
+    i.add_argument("--keep-covered", action="store_true",
+                   help="keep postings whose company a higher-precedence source already covers")
+    i.add_argument("--no-location-filter", action="store_true",
+                   help="see what the location rule is costing")
+    i.add_argument("--max-age-days", type=int, default=None,
+                   help="override the stored age limit for one run")
+    i.add_argument("--comp-floor", type=int, default=None,
+                   help="override the stored compensation floor for one run")
+    i.add_argument("--db", default=None)
+    i.set_defaults(func=cmd_ingest)
+
+    v = sub.add_parser("dispositions", help="every verdict, in the order the chain rules")
+    v.set_defaults(func=cmd_dispositions)
+
+    args = parser.parse_args()
+    return args.func(args)
 
 
 if __name__ == "__main__":

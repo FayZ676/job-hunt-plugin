@@ -2,7 +2,7 @@
 
 Phase 3 in detail: turning the profile tables into a one-page PDF targeted at one job description.
 This file is the whole guide — what may go on a resume, how it is written, what to check before it
-ships, and the spec `render.py` builds from.
+ships, and the spec `resume.py` builds from.
 
 **The deliverable is the `.pdf`.** Never hand back a markdown resume; the `.json` spec written along
 the way is a build input, kept next to the PDF so a later tweak is an edit and a rebuild.
@@ -15,8 +15,8 @@ the way is a build input, kept next to the PDF so a later tweak is an edit and a
 - Check on every build — the list every defect that shipped turned into
 - The shape to start from — the structure of the strongest build so far
 - What the market asks for — measured across 112 real JDs
-- Build — `render.py`, and reading the rendered page
-- The spec — what belongs in each section (`render.py --spec` owns the format)
+- Build — `resume.py build`, and reading the rendered page
+- The spec — what belongs in each section (`resume.py spec` owns the format)
 
 ## Sources and restrictions
 
@@ -169,12 +169,12 @@ evidence than any listicle, and reproducible against `prospects` at any time.
 ## Build
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/render.py" "$CAREER/resumes/<slug>.json" "$CAREER/resumes/<slug>.pdf" --density tight
+python3 "$HOME/.claude/skills/job/scripts/phases/resume.py" build "$CAREER/resumes/<slug>.json" --key <key> --density tight
 pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
 ```
 
-`render.py` owns all formatting and requires Typst and Poppler. If the layout needs to change, change
-`render.py` so every future resume inherits it. It parses `**bold**` and `[label](url)` only —
+`resume.py` owns all formatting and requires Typst and Poppler. If the layout needs to change, change
+`resume.py` so every future resume inherits it. It parses `**bold**` and `[label](url)` only —
 backticks render literally.
 
 **Always read the rendered image, and aim for one *full* page.** Page count alone misses an orphaned
@@ -187,14 +187,15 @@ To fit, in order: `--density tight` (`normal` and `roomy` exist for shorter cont
 relevant bullets; tighten wording so bullets stop before wrapping one word onto a new line; margins
 in the spec, never below 0.4in.
 
-Then record the path (`UPDATE prospects SET resume=…`) and give the gap report. Phase 5 moves the
-files into `submitted/`, so `$CAREER/resumes/` stays a worklist of resumes that have not gone out.
+`--key` records the absolute path on the prospect as part of the build; without it the PDF is written
+and nothing is recorded. Then give the gap report. Phase 5 moves the files into `submitted/`, so
+`$CAREER/resumes/` stays a worklist of resumes that have not gone out.
 Offer, without doing: a matching cover letter, and writing anything newly surfaced back into the
 profile tables.
 
 ## The spec
 
-**`render.py --spec` prints the contract** — top-level keys, contact entries, the inline markup, and
+**`resume.py spec` prints the contract** — top-level keys, contact entries, the inline markup, and
 every section type with its payload. Read it there; this file covers only what belongs in each
 section. Write the spec to `$CAREER/resumes/<company>-<role-slug>.json`.
 

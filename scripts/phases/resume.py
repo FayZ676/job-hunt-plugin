@@ -1,3 +1,13 @@
+"""Phase 3 — build the tailored one-page PDF, and record it on the prospect.
+
+  resume.py spec                            the spec contract, and every section type
+  resume.py build spec.json                 render to spec.pdf
+  resume.py build spec.json --key KEY       render, then record the absolute path
+  resume.py build spec.json out.pdf --density tight --keep-typ
+
+Recording stores an absolute path, because a relative one breaks the next run
+started somewhere else.
+"""
 
 import argparse
 import json
@@ -7,6 +17,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+
+import jobkit
 
 DENSITY = {
     "tight":  {"body": 9.5, "name": 17.0, "section": 10.5, "leading": 0.58,
@@ -133,7 +147,7 @@ def build(spec, density):
     return "\n".join(L) + "\n"
 
 
-SPEC_HELP = """A resume spec is content only -- render.py owns every formatting decision.
+SPEC_HELP = """A resume spec is content only -- resume.py owns every formatting decision.
 
 {{
   "name": "Ada Lovelace",
@@ -162,27 +176,31 @@ def print_spec():
     print(SPEC_HELP.format(margins=json.dumps(DEFAULT_MARGINS), types=types))
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Render a resume spec to PDF with Typst.")
-    ap.add_argument("spec", nargs="?")
-    ap.add_argument("out", nargs="?", help="default: <spec>.pdf")
-    ap.add_argument("--density", default="normal", choices=sorted(DENSITY))
-    ap.add_argument("--keep-typ", action="store_true", help="write the .typ alongside the PDF")
-    ap.add_argument("--spec", dest="spec_only", action="store_true",
-                    help="print the spec contract and every section type, then exit")
-    args = ap.parse_args()
 
-    if args.spec_only:
-        print_spec()
-        return 0
-    if not args.spec:
-        ap.error("a spec path is required (or pass --spec to print the contract)")
+def cmd_spec(_args):
+    width = max(len(k) for k in SECTION_TYPES)
+    types = "\n".join(f"  {k:<{width}}  {payload}\n  {'':<{width}}  renders as {shape}"
+                       for k, (payload, shape) in SECTION_TYPES.items())
+    print(SPEC_HELP.format(margins=json.dumps(DEFAULT_MARGINS), types=types))
+    return 0
 
+
+def record(args, pdf):
+    con = jobkit.connect(args.db)
+    row = con.execute("SELECT key, status FROM prospects WHERE key=?", (args.key,)).fetchone()
+    if not row:
+        sys.exit(f"no prospect {args.key!r} — the PDF is at {pdf}, unrecorded")
+    con.execute("UPDATE prospects SET resume=? WHERE key=?", (pdf, args.key))
+    con.commit()
+    print(f"recorded on {args.key} ({row['status']})")
+
+
+def cmd_build(args):
     if not shutil.which("typst"):
         sys.exit("typst not found: brew install typst")
 
     spec = json.load(open(args.spec, encoding="utf-8"))
-    out = args.out or os.path.splitext(args.spec)[0] + ".pdf"
+    out = os.path.abspath(args.out or os.path.splitext(args.spec)[0] + ".pdf")
     markup = build(spec, args.density)
 
     typ_path = os.path.splitext(out)[0] + ".typ" if args.keep_typ else None
@@ -196,14 +214,41 @@ def main():
         cleanup = source
 
     try:
-        r = subprocess.run(["typst", "compile", source, out], capture_output=True, text=True)
-        if r.returncode:
-            sys.exit(f"typst failed:\n{r.stderr}")
+        result = subprocess.run(["typst", "compile", source, out], capture_output=True, text=True)
+        if result.returncode:
+            sys.exit(f"typst failed:\n{result.stderr}")
     finally:
         if cleanup:
             os.unlink(cleanup)
+    if not os.path.isfile(out):
+        sys.exit(f"typst reported success but {out} is not there")
     print(f"wrote {out} (density: {args.density})")
+
+    if args.key:
+        record(args, out)
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    s = sub.add_parser("spec", help="print the spec contract and every section type")
+    s.set_defaults(func=cmd_spec)
+
+    b = sub.add_parser("build", help="render a spec to PDF with Typst")
+    b.add_argument("spec")
+    b.add_argument("out", nargs="?", help="default: <spec>.pdf")
+    b.add_argument("--key", help="record the PDF on this prospect")
+    b.add_argument("--density", default="normal", choices=sorted(DENSITY))
+    b.add_argument("--keep-typ", action="store_true", help="write the .typ alongside the PDF")
+    b.add_argument("--db", default=None)
+    b.set_defaults(func=cmd_build)
+
+    args = parser.parse_args()
+    return args.func(args)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

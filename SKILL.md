@@ -39,11 +39,37 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the read-only dashboard — `scripts/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
+| `/job ui` | Serve the read-only dashboard — `scripts/lib/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
 | `/job help` | `cat "$HOME/.claude/skills/job/help.txt"` and nothing else — no run, no queries, no commentary |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
 means adding it to the table above and to `help.txt`.
+
+## Modules
+
+**One module per phase, under `scripts/phases/`.** Each runs on its own, so any step can be redone
+without the ones before it, and `--help` on any of them lists its subcommands.
+
+| Phase | Module | Subcommands |
+| ----- | ------ | ----------- |
+| 1 — Fetch, then ingest | `phases/scan.py` | `sources` `boards` `harvest` `descriptions` `ingest` `dispositions` |
+| 2 — Score | `phases/score.py` | `triage` `rubric` `show` `set` `pending` |
+| 3 — Resume | `phases/resume.py` | `spec` `build` |
+| 4 — Stage | `phases/stage.py` | `answers` `missing` `add` `show` `list` `drop` |
+| 5 — Review and submit | `phases/submit.py` | `review` `record` `rejected` |
+
+`scripts/lib/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`,
+and the two tools you run directly, `q.py` and `ui.py`.
+
+```bash
+P="$HOME/.claude/skills/job/scripts/phases"
+```
+
+**The phase modules refuse what the invariants forbid**, so the rule is enforced rather than
+remembered: `score.py set` will not score a prospect whose description is empty, `stage.py add`
+will not stage one with no built resume and derives `blocked` from any field left empty, and
+`submit.py record` will not mark `applied` without the confirmation text or move the resume
+separately from the status change.
 
 ## Reference files
 
@@ -61,9 +87,9 @@ Every detail lives one level down, read when the phase that needs it starts.
 
 ```bash
 $Q --schema                     # every table, view, CHECK and trigger
-ingest.py --dispositions        # every verdict the chain can rule, in order
-fetch.py sources                # each source's kind, rank, endpoint and quirk
-render.py --spec                # the resume spec, and every section type
+scan.py dispositions            # every verdict the chain can rule, in order
+scan.py sources                 # each source's kind, rank, endpoint and quirk
+resume.py spec                  # the resume spec, and every section type
 ```
 
 ## Storage
@@ -75,7 +101,7 @@ history, and the user's whole profile are rows in it.
 where it is rather than resolving against the working directory:
 
 ```bash
-CAREER=$(python3 "$HOME/.claude/skills/job/scripts/jobkit.py" career)
+CAREER=$(python3 "$HOME/.claude/skills/job/scripts/lib/jobkit.py" career)
 ```
 
 `jobkit.py` also answers `db`, `resumes` and `submitted`. Default `~/data/job`; `JOB_CAREER_DIR`
@@ -88,7 +114,7 @@ naming the filter that ruled on it, so "what did that filter cost me" is a query
 filter re-rules what is stored instead of going back to the network.
 
 ```bash
-Q='python3 "$HOME/.claude/skills/job/scripts/q.py"'
+Q='python3 "$HOME/.claude/skills/job/scripts/lib/q.py"'
 $Q --schema                                        # the manual: tables, views, CHECKs, triggers
 $Q "SELECT * FROM triage WHERE status='new'"
 $Q --json "SELECT * FROM staged"
@@ -134,18 +160,18 @@ Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothi
 re-run, and every source normalizes into the same columns, so one filter chain rules on all of them.
 
 ```bash
-S="$HOME/.claude/skills/job/scripts"
-python3 "$S/fetch.py" boards                                  # every watched board, in parallel
-python3 "$S/fetch.py" harvest --source indeed --file <harvest.json>
-python3 "$S/ingest.py"                                        # postings -> prospects
-python3 "$S/ingest.py" --redo --no-location-filter            # re-rule stored rows, no network
+P="$HOME/.claude/skills/job/scripts/phases"
+python3 "$P/scan.py" boards                                   # every watched board, in parallel
+python3 "$P/scan.py" harvest --source indeed --file <harvest.json>
+python3 "$P/scan.py" ingest                                   # postings -> prospects
+python3 "$P/scan.py" ingest --redo --no-location-filter       # re-rule stored rows, no network
 ```
 
-Flags and verdicts are `--help` and `--dispositions` away; do not guess them.
+Flags and verdicts are `--help` and `scan.py dispositions` away; do not guess them.
 
 The Indeed harvest is the one source a browser has to collect. **Read `references/fetching.md`
 before running it.** Its descriptions arrive after ingest, for kept rows only:
-`fetch.py descriptions --file <descs.json>`.
+`scan.py descriptions --file <descs.json>`.
 
 Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a cadence; `manual_boards`
 lists what is due. Check those, `INSERT` finds into `prospects` directly, and set `last_checked`.
@@ -155,9 +181,11 @@ every morning after.
 ## Phase 2 — Score
 
 ```bash
-$Q "SELECT * FROM triage WHERE status='new'"                         # no descriptions, on purpose
-$Q "SELECT key, description FROM prospects WHERE key IN ('…','…')"   # only what survives triage
-$Q "UPDATE prospects SET score=9, reason='the JD language that drove it, quoted' WHERE key='…'"
+python3 "$P/score.py" triage --status new          # no descriptions, on purpose
+python3 "$P/score.py" rubric                       # search_criteria and search_notes
+python3 "$P/score.py" show <key> <key>             # only what survives triage
+python3 "$P/score.py" set <key> --score 9 --reason "the JD language that drove it, quoted"
+python3 "$P/score.py" pending                      # what is still unscored
 ```
 
 Triage against `search_criteria` (the rubric) and `search_notes` (the judgement the schema cannot
@@ -166,16 +194,22 @@ hold), pull descriptions for the plausible ones, then score, citing the JD langu
 **Anything you score must have had its description read** — scoring off a title is the failure this
 phase exists to prevent; a "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer"
 req that is really data plumbing. **Apply dealbreakers first**, a hard zero regardless of how well the
-rest reads. **Score every prospect, including the ones you skip** — an unscored row stays `new` and
-comes back tomorrow. Where a score turns on something still `NULL`, score on a stated assumption and
+rest reads. **Score every prospect, including the ones you skip** — `score.py pending` is what is left, and
+an unscored row stays `new` and comes back tomorrow. Where a score turns on something still `NULL`, score on a stated assumption and
 say so in `reason`.
 
 ## Phase 3 — Resume
 
 For each shortlisted role, build a tailored one-page PDF. **Read `references/resume.md`** — the
 selection method, the writing rules, the one-pass test, the spec, and the build. **Read the rendered
-page before moving on**; a resume that never got looked at is not ready to attach. Then
-`UPDATE prospects SET resume='<absolute path to the pdf>'`.
+page before moving on**; a resume that never got looked at is not ready to attach.
+
+```bash
+python3 "$P/resume.py" spec                                   # the contract, and every section type
+python3 "$P/resume.py" build <spec.json> --key <key>          # renders, then records the path
+```
+
+`--key` records the absolute path on the prospect, so building and recording cannot drift apart.
 
 ## Phase 4 — Stage
 
@@ -198,43 +232,45 @@ not in `projects` is a flag, not an inference.
 Attach the PDF, screenshot the completed form, then record it:
 
 ```bash
-$Q "INSERT INTO staged(key,url,ats,screenshot,status) VALUES('…','<apply-url>','ashby','<png>','ready');
-    INSERT INTO staged_fields(key,label,value,tier,flag) VALUES
-      ('…','Do you have the legal right to work without sponsorship?','Yes','policy',NULL),
-      ('…','Tell us about an AI product you built…','…','judgment','needs-review');
-    UPDATE prospects SET status='staged' WHERE key='…'"
+python3 "$P/stage.py" answers                     # what the profile answers
+python3 "$P/stage.py" missing                     # every NULL, each one a hard stop
+python3 "$P/stage.py" add <key> --url <apply-url> --ats ashby --screenshot <png> \
+  --field 'Do you have the legal right to work without sponsorship?|Yes|policy' \
+  --field 'Tell us about an AI product you built…|…|judgment|needs-review'
 ```
 
 `ready` means every field is filled; `blocked` means a `NULL` in the profile or a question nothing
-answers — name what is missing in `blocked_on`. Keep the browser tab open; the staged rows survive a
-lost session and refilling from them is cheap.
+answers. **You do not assert which** — a field staged with no value derives `blocked` and names
+itself in `blocked_on`; `--blocked-on` covers a block no empty field shows. Keep the browser tab
+open; the staged rows survive a lost session and refilling from them is cheap.
 
 ## Phase 5 — Review and submit
 
 Present every staged application in one table — company, title, score, status, and whatever is named
-in `blocked_on` (`SELECT * FROM staged`). Keep it to that table; the user reads the applications
+in `blocked_on` (`python3 "$P/submit.py" review`). Keep it to that table; the user reads the applications
 themselves in the dashboard. Then ask which to submit, accepting "all", a subset, or none.
 
 For each approved one: click submit, wait for the confirmation page, and **verify it**. A validation
 error means nothing was submitted — repair the named field and re-present it. Then:
 
 ```bash
-$Q "UPDATE prospects SET status='applied', resume='$CAREER/resumes/submitted/<slug>.pdf' WHERE key='…'"
+python3 "$P/submit.py" record <key> --confirmation "what the confirmation page said"
 ```
 
-and move that resume's `.pdf` and `.json` into `$CAREER/resumes/submitted/`. The status change and the
-file move go together.
+That sets `applied` and moves the resume's `.pdf` and `.json` into `$CAREER/resumes/submitted/` in one
+step, because the status change and the file move go together. It refuses a `blocked` application and
+refuses an empty `--confirmation`.
 
 ## Recording a rejection
 
 Only a reported rejection. Do nothing for a role that is merely quiet.
 
 ```bash
-$Q "UPDATE prospects SET status='rejected', resume=NULL WHERE key='…';
-    INSERT INTO events(key,status,note) VALUES('…','rejected','3 days, no interview — resume screen')"
+python3 "$P/submit.py" rejected <key> --note "3 days, no interview — resume screen"
 ```
 
-Then **delete that resume's `.pdf` and `.json` from `$CAREER/resumes/submitted/`** — the record still
-says an application went out, and the dead document is gone. **A synced folder can re-materialize a
-deleted file**: re-list the directory and delete again if it reappeared. Note the shape where it is
-visible — days from submission, and whether any interview stage happened.
+That records the rejection and **deletes that resume's `.pdf` and `.json` from
+`$CAREER/resumes/submitted/`** — the record still says an application went out, and the dead document
+is gone. It re-checks each file afterwards, because **a synced folder can re-materialize a deleted
+file**, and names any that survived. Note the shape in `--note` — days from submission, and whether
+any interview stage happened.

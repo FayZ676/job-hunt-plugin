@@ -5,9 +5,9 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 **1. Create the database.**
 
 ```bash
-CAREER=$(python3 "$HOME/.claude/skills/job/scripts/jobkit.py" career)
+CAREER=$(python3 "$HOME/.claude/skills/job/scripts/lib/jobkit.py" career)
 mkdir -p "$CAREER/resumes/submitted"
-python3 "$HOME/.claude/skills/job/scripts/q.py" -f "$HOME/.claude/skills/job/sql/seed.sql"
+python3 "$HOME/.claude/skills/job/scripts/lib/q.py" -f "$HOME/.claude/skills/job/sql/seed.sql"
 ```
 
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
@@ -47,4 +47,4 @@ command -v pdftoppm || echo "brew install poppler"
 
 **5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. Sensible companies means the
 filters are tuned; nothing, or thousands, means another pass — the drop counts say which rule, and
-`ingest.py --redo` re-rules the same postings after each adjustment without fetching again.
+`scan.py ingest --redo` re-rules the same postings after each adjustment without fetching again.

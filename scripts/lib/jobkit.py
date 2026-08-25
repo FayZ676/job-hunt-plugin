@@ -1,4 +1,5 @@
 
+import json
 import os
 import re
 import sqlite3
@@ -18,7 +19,7 @@ RESUMES = f"{CAREER}/resumes"
 SUBMITTED = f"{RESUMES}/submitted"
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-SCHEMA_SQL = os.path.join(_HERE, "..", "sql", "schema.sql")
+SCHEMA_SQL = os.path.join(_HERE, "..", "..", "sql", "schema.sql")
 
 
 def connect(path=None):
@@ -83,6 +84,23 @@ def age_days(posted_at):
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
     return (datetime.now(timezone.utc) - moment).days
+
+
+def print_rows(rows, as_json=False):
+    if as_json:
+        print(json.dumps(rows, ensure_ascii=False, indent=2))
+        return 0
+    if not rows:
+        print("(no rows)")
+        return 0
+    columns = list(rows[0])
+    width = {c: min(max(len(c), *(len(str(r.get(c) or "")) for r in rows)), 48) for c in columns}
+    print("  ".join(c.ljust(width[c]) for c in columns))
+    for row in rows:
+        print("  ".join(
+            str(row.get(c) if row.get(c) is not None else "")[:width[c]].ljust(width[c])
+            for c in columns))
+    return 0
 
 
 PATHS = {"career": CAREER, "db": DB,

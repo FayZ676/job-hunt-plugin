@@ -97,6 +97,19 @@ uncommitted typeahead, a radio group that looks answered because one option is v
 input that never received the upload.
 
 Screenshot the completed form into `$CAREER/resumes/`; that screenshot is what the user reviews.
+Then record the application, one `--field` per answer:
+
+```bash
+python3 "$HOME/.claude/skills/job/scripts/phases/stage.py" add <key> \
+  --url <apply-url> --ats ashby --screenshot <png> \
+  --field 'Work authorization|Yes|policy' \
+  --field 'Why this company?|…|judgment|needs-review'
+```
+
+`stage.py add` refuses a prospect with no built resume, refuses a screenshot that is not on disk,
+and derives `ready` or `blocked` from the fields — a value left empty blocks the application and
+names itself in `blocked_on`. `stage.py answers` and `stage.py missing` are where the identity and
+policy answers come from, and which of them are still `NULL`.
 
 **Then stop.** Do not click Submit, Apply, Continue, or Next in Phase 4. On a multi-page form, stop
 at the end of the first page and record the page count.
@@ -153,7 +166,15 @@ browser_snapshot
 A confirmation reads like "Thank you for applying" or "Application received", usually with the page
 replaced. **Validation errors mean nothing was submitted** — repair the named fields and re-present
 the application for approval; never resubmit silently. Set `applied` only against a confirmation you
-have seen in a snapshot.
+have seen in a snapshot:
+
+```bash
+python3 "$HOME/.claude/skills/job/scripts/phases/submit.py" record <key> \
+  --confirmation "Thank you for applying — confirmation #A12"
+```
+
+That is the one step that sets `applied`; it moves the resume into `submitted/` with it, and refuses
+an application still `blocked`.
 
 ## Traps
 

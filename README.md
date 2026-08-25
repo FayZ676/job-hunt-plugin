@@ -25,6 +25,13 @@ Five phases, in order.
 
 **The submit click is never unattended.** Everything before it is.
 
+Each phase is one module under `scripts/phases/` — `scan.py`, `score.py`, `resume.py`, `stage.py`,
+`submit.py` — so any step can be run or redone on its own, and `--help` on any of them lists what it
+does. `scripts/lib/` holds what they share, plus the two tools you run directly: `q.py` for SQL and
+`ui.py` for the dashboard. The rules above are enforced in those modules, not just described: the
+scorer refuses a posting whose description was never read, staging refuses an application with no
+built resume, and nothing is marked applied without the confirmation text you saw.
+
 ## Install
 
 Clone it into your skills directory, where Claude Code picks it up as `/job`:
@@ -45,8 +52,8 @@ export, hand it over and it drafts the whole thing for you to correct.
 
 That's the whole install. `/job scan` works as soon as setup finishes.
 
-Adding a new place to look for jobs is one entry in `sources.REGISTRY` — a function that returns
-`Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
+Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`scripts/lib/sources.py`) —
+a function that returns `Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
 no step below fetching knows which source a row came from.
 
 ## Your files
