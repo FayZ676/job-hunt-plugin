@@ -3,7 +3,7 @@ import re
 import sys
 from typing import Literal, get_args
 
-__all__ = ["Row", "Posting", "Prospect", "Status", "Disposition", "Tier",
+__all__ = ["Row", "Listing", "Posting", "Prospect", "Status", "Disposition", "Tier",
            "get_args", "verify_against_schema"]
 
 try:
@@ -41,9 +41,9 @@ class Row(BaseModel):
         return data
 
 
-class Posting(Row):
+class Listing(Row):
     key: str
-    source: str
+    source: str | None = None
     company: str
     title: str
     ats: str | None = None
@@ -51,17 +51,9 @@ class Posting(Row):
     apply_url: str | None = None
     location: str = ""
     remote: bool = False
-    description: str | None = None
-    posted_at: str | None = None
-
     compensation: str | None = None
-    comp_min: float | None = None
-    comp_max: float | None = None
-    comp_period: str | None = None
-
-    sponsored: bool = False
-    expired: bool = False
-    raw: str | None = None
+    posted_at: str | None = None
+    description: str | None = None
 
     @field_validator("key")
     @classmethod
@@ -77,27 +69,27 @@ class Posting(Row):
             raise ValueError("company and title cannot be blank")
         return value
 
+
+class Posting(Listing):
+    source: str
+
+    comp_min: float | None = None
+    comp_max: float | None = None
+    comp_period: str | None = None
+
+    sponsored: bool = False
+    expired: bool = False
+    raw: str | None = None
+
     @field_validator("comp_period")
     @classmethod
     def _period(cls, value: str | None) -> str | None:
         return value.upper() if value else None
 
 
-class Prospect(Row):
-    key: str
-    company: str
-    title: str
-    url: str | None = None
-    apply_url: str | None = None
-    location: str = ""
-    remote: bool = False
-    compensation: str | None = None
-    posted_at: str | None = None
+class Prospect(Listing):
     first_seen: str | None = None
     last_seen: str | None = None
-    source: str | None = None
-    ats: str | None = None
-    description: str | None = None
     score: int | None = None
     reason: str | None = None
     resume: str | None = None
@@ -111,9 +103,8 @@ class Prospect(Row):
         return value
 
     @classmethod
-    def from_posting(cls, posting: "Posting") -> "Prospect":
-        shared = set(cls.model_fields) & set(posting.model_fields)
-        return cls(**{name: getattr(posting, name) for name in shared})
+    def from_posting(cls, posting: Posting) -> "Prospect":
+        return cls(**posting.model_dump(include=set(Listing.model_fields)))
 
 
 def _schema_vocabulary(table: str, column: str) -> set[str]:
