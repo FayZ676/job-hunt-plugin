@@ -39,7 +39,7 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the read-only dashboard — `jobhunt/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
+| `/job ui` | Serve the read-only dashboard — `job-ui`; `--lan` also serves it, key-gated, to other devices on the network |
 | `/job help` | `cat "$HOME/.claude/skills/job/jobhunt/help.txt"` and nothing else — no run, no queries, no commentary |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
@@ -58,8 +58,8 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 | 4 — Stage | `phases/stage.py` | `answers` `missing` `add` `show` `list` `drop` |
 | 5 — Review and submit | `phases/submit.py` | `review` `record` `rejected` |
 
-`jobhunt/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`,
-and the two tools you run directly, `q.py` and `ui.py`.
+`jobhunt/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`
+and `q.py`. The dashboard is its own package, `jobhunt/ui/` — `server.py` and the `index.html` it serves.
 
 `pip install "$HOME/.claude/skills/job"` is the install: it brings in the dependencies and puts every
 phase on `PATH` as `job-scan`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`,

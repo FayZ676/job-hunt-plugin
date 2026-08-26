@@ -24,7 +24,7 @@ Homepage = "https://github.com/FayZ676/job-hunt-plugin"
 [project.scripts]
 job-paths = "jobhunt.jobkit:main"
 job-q = "jobhunt.q:cli"
-job-ui = "jobhunt.ui:cli"
+job-ui = "jobhunt.ui.server:cli"
 job-scan = "jobhunt.phases.scan:app"
 job-score = "jobhunt.phases.score:app"
 job-resume = "jobhunt.phases.resume:app"

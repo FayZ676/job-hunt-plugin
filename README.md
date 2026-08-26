@@ -29,7 +29,7 @@ it keeps are the prospects. |
 Everything is one Python package, `jobhunt`. Each phase is one module under `jobhunt/phases/` —
 `scan.py`, `score.py`, `resume.py`, `stage.py`, `submit.py` — so any step can be run or redone on its
 own, and `--help` on any of them lists what it does. `jobhunt/` holds what they share, plus the two
-tools you run directly: `q.py` for SQL and `ui.py` for the dashboard, and the schema the database is
+tools you run directly: `q.py` for SQL and `jobhunt/ui/` for the dashboard, and the schema the database is
 built from (`jobhunt/sql/`). The rules above are enforced in those modules, not just described: the
 scorer refuses a posting whose description was never read, staging refuses an application with no
 built resume, and nothing is marked applied without the confirmation text you saw.
