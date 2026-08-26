@@ -1,7 +1,15 @@
 # Ingesting
 
-Deriving `prospects` from the raw layer. **Ingest fetches nothing** — it reads what `references/fetching.md`
+Deriving `prospects` from the raw layer. **Ingest fetches nothing** — it reads what the fetch
 already stored, rules on every row, and promotes the survivors.
+
+## Contents
+
+- The filters — the verdicts in `scan.py` versus the patterns in the `filters` table
+- Source precedence — the rank that resolves an overlap without naming a source
+- Dedupe — the three checks, and where the collapsed siblings go
+- Tuning — reading the drop counts, and querying what a verdict cost
+- Traps — a role appearing twice, "Remote" defeating the location filter, `--redo`
 
 ```bash
 job-scan ingest

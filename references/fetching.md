@@ -2,7 +2,7 @@
 
 Getting postings into `postings`, the raw layer. **Fetching judges nothing**: no filtering, no
 scoring, no `prospects` row. Everything a source returned is stored as it arrived, normalized into
-shared columns, and `job-scan ingest` rules on it afterwards — `references/ingesting.md`.
+shared columns, and `job-scan ingest` rules on it afterwards.
 
 Two mechanisms, four sources, one destination. **`job-scan sources` prints the registry** — each
 source's kind, rank, endpoint and the quirk that bites when it goes quiet:
