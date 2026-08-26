@@ -78,7 +78,7 @@ def cmd_set(args):
         sys.exit(f"{args.key} has no description — scoring off a title is what this phase "
                  "exists to prevent. Attach one first: scan.py descriptions --file <descs.json>")
 
-    con.execute("UPDATE prospects SET score=?, reason=? WHERE key=?",
+    con.execute("UPDATE postings SET score=?, reason=? WHERE key=?",
                 (args.score, args.reason.strip(), args.key))
     con.commit()
     after = con.execute("SELECT score, status FROM prospects WHERE key=?", (args.key,)).fetchone()

@@ -1,5 +1,4 @@
 -- The job database. Applied on every connect; every statement is idempotent.
---
 -- Constraints and triggers carry the rules that used to live in Python:
 -- CHECK rejects an invalid status at the storage layer, and the triggers below
 -- log history without any caller having to remember to.
@@ -36,18 +35,6 @@ CREATE TABLE IF NOT EXISTS filters (
   PRIMARY KEY (kind, pattern)
 );
 
--- Everything a fetch returned, before any judgment. Fetching writes here and
--- nothing else; ingest reads here and derives prospects. Keeping the raw layer
--- is what makes a filter re-runnable without going back to the network, and
--- what turns "what did that filter cost me" into a query.
---
--- Sources normalize into these columns so that every filter applies to every
--- source. A source that cannot know a fact leaves the default, which reads as
--- "unremarkable" rather than "no" -- that is what keeps ingest free of any
--- condition naming a particular source.
---
--- disposition is NULL until ingest has ruled on the row: 'kept' means it was
--- promoted to prospects, anything else names the filter that dropped it.
 CREATE TABLE IF NOT EXISTS postings (
   key           TEXT PRIMARY KEY,
   source        TEXT NOT NULL,
@@ -69,55 +56,44 @@ CREATE TABLE IF NOT EXISTS postings (
   raw           TEXT,
   first_fetched TEXT NOT NULL DEFAULT (date('now')),
   last_fetched  TEXT NOT NULL DEFAULT (date('now')),
+
   ingested_on   TEXT,
   disposition   TEXT CHECK (disposition IS NULL OR disposition IN (
                   'kept','upgraded','title','location','stale','seen','duplicate',
-                  'sponsored','expired','agency','noise','lowball','covered'))
+                  'sponsored','expired','agency','noise','lowball','covered')),
+  canonical_key TEXT REFERENCES postings(key) ON DELETE SET NULL,
+
+  first_seen    TEXT,
+  last_seen     TEXT,
+  score         INTEGER CHECK (score IS NULL OR score BETWEEN 0 AND 10),
+  reason        TEXT,
+  resume        TEXT,
+  status        TEXT CHECK (status IS NULL OR status IN (
+                  'new','scored','shortlisted','skipped','staged',
+                  'applied','interviewing','rejected','not_pursued','closed')),
+
+  CHECK (disposition IS NOT 'kept' OR canonical_key IS NULL),
+  CHECK (canonical_key IS NULL OR canonical_key <> key),
+  CHECK (disposition IS 'kept' OR (status IS NULL AND score IS NULL AND reason IS NULL
+                                   AND resume IS NULL AND first_seen IS NULL))
 );
 
-CREATE INDEX IF NOT EXISTS idx_postings_pending ON postings(disposition, last_fetched);
-
-CREATE TABLE IF NOT EXISTS prospects (
-  key          TEXT PRIMARY KEY,
-  company      TEXT NOT NULL,
-  title        TEXT NOT NULL,
-  url          TEXT,
-  apply_url    TEXT,
-  location     TEXT,
-  remote       INTEGER,
-  compensation TEXT,
-  posted_at    TEXT,
-  first_seen   TEXT NOT NULL DEFAULT (date('now')),
-  last_seen    TEXT DEFAULT (date('now')),
-  source       TEXT,
-  ats          TEXT,
-  description  TEXT,
-  score        INTEGER CHECK (score IS NULL OR score BETWEEN 0 AND 10),
-  reason       TEXT,
-  resume       TEXT,
-  status       TEXT NOT NULL DEFAULT 'new' CHECK (status IN (
-                 'new','scored','shortlisted','skipped','staged',
-                 'applied','interviewing','rejected','not_pursued','closed'))
-);
-
--- Multi-location postings for one role collapse to a single prospect; the
--- sibling ids live here so they never resurface as new.
-CREATE TABLE IF NOT EXISTS aliases (
-  alias_key TEXT PRIMARY KEY,
-  key       TEXT NOT NULL REFERENCES prospects(key) ON DELETE CASCADE
-);
+CREATE INDEX IF NOT EXISTS idx_postings_pending   ON postings(disposition, last_fetched);
+CREATE INDEX IF NOT EXISTS idx_postings_status    ON postings(status);
+CREATE INDEX IF NOT EXISTS idx_postings_seen      ON postings(first_seen);
+CREATE INDEX IF NOT EXISTS idx_postings_canonical ON postings(canonical_key);
 
 -- History. Written by the triggers below, never by hand.
 CREATE TABLE IF NOT EXISTS events (
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
-  key    TEXT NOT NULL REFERENCES prospects(key) ON DELETE CASCADE,
+  key    TEXT NOT NULL REFERENCES postings(key) ON DELETE CASCADE,
   at     TEXT NOT NULL DEFAULT (datetime('now')),
   status TEXT,
   note   TEXT
 );
 
 CREATE TABLE IF NOT EXISTS staged (
-  key        TEXT PRIMARY KEY REFERENCES prospects(key) ON DELETE CASCADE,
+  key        TEXT PRIMARY KEY REFERENCES postings(key) ON DELETE CASCADE,
   url        TEXT,
   ats        TEXT,
   screenshot TEXT,
@@ -126,38 +102,63 @@ CREATE TABLE IF NOT EXISTS staged (
 );
 
 CREATE TABLE IF NOT EXISTS staged_fields (
-  key   TEXT NOT NULL REFERENCES prospects(key) ON DELETE CASCADE,
+  key   TEXT NOT NULL REFERENCES postings(key) ON DELETE CASCADE,
   label TEXT NOT NULL,
   value TEXT,
   tier  TEXT CHECK (tier IN ('identity','policy','judgment')),
   flag  TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_prospects_status ON prospects(status);
-CREATE INDEX IF NOT EXISTS idx_prospects_seen   ON prospects(first_seen);
-CREATE INDEX IF NOT EXISTS idx_events_key       ON events(key);
+CREATE INDEX IF NOT EXISTS idx_events_key ON events(key);
 
 -- ---------------------------------------------------------------------------
--- History writes itself.
 -- ---------------------------------------------------------------------------
 
-CREATE TRIGGER IF NOT EXISTS on_prospect_new AFTER INSERT ON prospects
+DROP TRIGGER IF EXISTS on_prospect_new;
+
+CREATE TRIGGER IF NOT EXISTS on_kept AFTER UPDATE OF disposition ON postings
+WHEN new.disposition = 'kept' AND old.disposition IS NOT 'kept'
 BEGIN
-  INSERT INTO events(key,status,note) VALUES(new.key, new.status, 'first seen');
+  UPDATE postings SET status = COALESCE(status, 'new'),
+                      first_seen = COALESCE(first_seen, date('now')),
+                      last_seen = date('now')
+  WHERE key = new.key;
+  INSERT INTO events(key,status,note)
+    SELECT new.key, COALESCE(new.status, 'new'), 'first seen'
+    WHERE new.first_seen IS NULL;
 END;
 
-CREATE TRIGGER IF NOT EXISTS on_status_change AFTER UPDATE OF status ON prospects
-WHEN new.status IS NOT old.status
+DROP TRIGGER IF EXISTS on_kept_insert;
+
+CREATE TRIGGER IF NOT EXISTS on_kept_insert AFTER INSERT ON postings
+WHEN new.disposition = 'kept'
+BEGIN
+  UPDATE postings SET status = COALESCE(status, 'new'),
+                      first_seen = COALESCE(first_seen, date('now')),
+                      last_seen = date('now')
+  WHERE key = new.key;
+  INSERT INTO events(key,status,note)
+    SELECT new.key, COALESCE(new.status, 'new'), 'first seen'
+    WHERE new.first_seen IS NULL;
+END;
+
+DROP TRIGGER IF EXISTS on_status_change;
+
+CREATE TRIGGER IF NOT EXISTS on_status_change AFTER UPDATE OF status ON postings
+WHEN new.status IS NOT old.status AND new.status IS NOT NULL
+     AND old.status IS NOT NULL
 BEGIN
   INSERT INTO events(key,status) VALUES(new.key, new.status);
 END;
 
 -- Scoring sets the status by the threshold in settings, so a score and a
 -- shortlist decision can never disagree.
-CREATE TRIGGER IF NOT EXISTS on_score AFTER UPDATE OF score ON prospects
-WHEN new.score IS NOT NULL AND new.score IS NOT old.score
+DROP TRIGGER IF EXISTS on_score;
+
+CREATE TRIGGER IF NOT EXISTS on_score AFTER UPDATE OF score ON postings
+WHEN new.disposition = 'kept' AND new.score IS NOT NULL AND new.score IS NOT old.score
 BEGIN
-  UPDATE prospects SET status = CASE
+  UPDATE postings SET status = CASE
     WHEN new.score >= COALESCE((SELECT CAST(value AS INTEGER) FROM settings
                                 WHERE key='shortlist_threshold'), 7)
     THEN 'shortlisted' ELSE 'skipped' END
@@ -165,27 +166,38 @@ BEGIN
 END;
 
 -- ---------------------------------------------------------------------------
--- Views. `triage` is the one the model reads every run: it cannot leak a
--- description, because the column is not in it.
 -- ---------------------------------------------------------------------------
+DROP VIEW IF EXISTS prospects;
 
-CREATE VIEW IF NOT EXISTS triage AS
+CREATE VIEW prospects AS
+  SELECT key, company, title, url, apply_url, location, remote, compensation,
+         posted_at, first_seen, last_seen, source, ats, description,
+         score, reason, resume, status
+  FROM postings WHERE disposition = 'kept';
+
+DROP VIEW IF EXISTS triage;
+
+CREATE VIEW triage AS
   SELECT key, company, title, location, remote, compensation, posted_at,
          first_seen, source, score, status, resume, url
-  FROM prospects
+  FROM postings WHERE disposition = 'kept'
   ORDER BY COALESCE(score,-1) DESC, first_seen DESC;
 
-CREATE VIEW IF NOT EXISTS stats AS
-  SELECT status, COUNT(*) AS n FROM prospects GROUP BY status ORDER BY n DESC;
+DROP VIEW IF EXISTS stats;
 
-CREATE VIEW IF NOT EXISTS manual_boards AS
+CREATE VIEW stats AS
+  SELECT status, COUNT(*) AS n FROM postings
+  WHERE disposition = 'kept' GROUP BY status ORDER BY n DESC;
+
+DROP VIEW IF EXISTS manual_boards;
+
+CREATE VIEW manual_boards AS
   SELECT name, slug, cadence, last_checked, careers_url
   FROM companies WHERE active=1 AND ats='manual'
   ORDER BY CASE cadence WHEN 'Weekly' THEN 1 WHEN 'Monthly' THEN 2 ELSE 3 END, name;
 
 -- ---------------------------------------------------------------------------
 -- The profile. The user's own data, and the only thing they own.
---
 -- They never write SQL for it: they talk, paste a resume, or upload a CV, and
 -- the model writes these rows. A NULL value means "not answered yet" and is a
 -- hard stop when a form asks for it -- absence is typed, not a TODO string.

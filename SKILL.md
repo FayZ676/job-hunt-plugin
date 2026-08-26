@@ -115,10 +115,12 @@ CAREER=$(PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.jobkit career)
 overrides it. **Paths stored in the database are absolute** — a relative one breaks the next run
 started somewhere else.
 
-**Two layers, one direction.** `postings` is everything a fetch returned, unjudged. `prospects` is
-what ingest kept, and the only table the later phases touch. Every posting carries a `disposition`
-naming the filter that ruled on it, so "what did that filter cost me" is a query, and a changed
-filter re-rules what is stored instead of going back to the network.
+**One table, three writers.** `postings` holds every job ever fetched. A fetch owns the columns the
+source filled, ingest owns `disposition`, and the later phases own `status` and what follows it —
+disjoint columns on one row, so the raw record and the role being pursued cannot drift. `disposition`
+names the filter that ruled on each row, so "what did that filter cost me" is a query, and a changed
+filter re-rules what is stored instead of going back to the network. `prospects` is the view over the
+rows ingest kept (`disposition='kept'`); it is what the later phases read.
 
 ```bash
 export PYTHONPATH="$HOME/.claude/skills/job"
@@ -181,7 +183,8 @@ before running it.** Its descriptions arrive after ingest, for kept rows only:
 `scan.py descriptions --file <descs.json>`.
 
 Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a cadence; `manual_boards`
-lists what is due. Check those, `INSERT` finds into `prospects` directly, and set `last_checked`.
+lists what is due. Check those, `INSERT` finds into `postings` with `disposition='kept'` — a hand
+check has already done the filtering ingest would do — and set `last_checked`.
 When a find resolves to a supported ATS, `INSERT` it into `companies` — found by hand once, fetched
 every morning after.
 

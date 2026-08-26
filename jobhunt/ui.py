@@ -71,7 +71,7 @@ def prospect(key):
     found["events"] = rows("SELECT at, status, note FROM events WHERE key=? ORDER BY id", (key,))
     found["staged"] = one("SELECT url, ats, screenshot, status, blocked_on FROM staged WHERE key=?", (key,))
     found["fields"] = rows("SELECT label, value, tier, flag FROM staged_fields WHERE key=? ORDER BY rowid", (key,))
-    found["aliases"] = [r["alias_key"] for r in rows("SELECT alias_key FROM aliases WHERE key=?", (key,))]
+    found["aliases"] = [r["key"] for r in rows("SELECT key FROM postings WHERE canonical_key=?", (key,))]
     return found
 
 
@@ -95,7 +95,7 @@ def career():
 
 
 def asset(kind, key):
-    table = {"resume": "prospects", "screenshot": "staged"}.get(kind)
+    table = {"resume": "postings", "screenshot": "staged"}.get(kind)
     if not table:
         return None
     path = one(f"SELECT {kind} AS p FROM {table} WHERE key=?", (key,))

@@ -38,9 +38,9 @@ aggregator is discovery (`1`). That number is how ingest resolves overlaps witho
 
 - **A lower-ranked copy of a covered company is dropped** as `covered`. Without this, every harvest
   re-proposes roles the boards covered hours earlier.
-- **A better-ranked copy that arrives later upgrades the prospect in place** — the same row keeps its
-  key, its score and its history, and gains the real description and apply URL. The harvested key
-  becomes an alias.
+- **A better-ranked copy that arrives later takes the role over** — the score, the history and the
+  staged work move onto the better-ranked row, which becomes the prospect. The row it replaced is
+  ruled `upgraded` and points at it through `canonical_key`.
 
 So a company is discovered once by the aggregator and fetched from its own board every morning after.
 An upgrade only happens before application work starts; a `staged` or `applied` row is never
@@ -50,11 +50,12 @@ disturbed.
 
 Three checks, applied to all sources alike:
 
-1. **The key**, against `prospects` and `aliases`.
+1. **The key**, against every row already kept or already pointing at one through `canonical_key`.
 2. **Source precedence**, as above.
 3. **Normalized company + title**, with names normalized past `Inc`/`LLC`/`Technologies`. Same-run
-   collisions collapse into one prospect that keeps the better-ranked source and lists every
-   location; the siblings become aliases so they never resurface as new.
+   collisions collapse onto the better-ranked row; the siblings are ruled `duplicate` and point at it
+   through `canonical_key`, so they never resurface as new. Every location the role was listed under
+   stays queryable: `SELECT location FROM postings WHERE canonical_key='<key>'`.
 
 ## Tuning
 

@@ -66,7 +66,7 @@ def cmd_record(args):
             shutil.move(path, target)
             moved.append((path, target))
         resume = os.path.join(jobkit.SUBMITTED, os.path.basename(source))
-        con.execute("UPDATE prospects SET status='applied', resume=? WHERE key=?",
+        con.execute("UPDATE postings SET status='applied', resume=? WHERE key=?",
                     (resume, args.key))
         con.execute("INSERT INTO events(key,status,note) VALUES(?,'applied',?)",
                     (args.key, args.confirmation.strip()))
@@ -92,7 +92,7 @@ def cmd_rejected(args):
     if not args.note.strip():
         sys.exit("--note cannot be empty: record the shape — days elapsed, and any interview stage")
 
-    con.execute("UPDATE prospects SET status='rejected', resume=NULL WHERE key=?", (args.key,))
+    con.execute("UPDATE postings SET status='rejected', resume=NULL WHERE key=?", (args.key,))
     con.execute("INSERT INTO events(key,status,note) VALUES(?,'rejected',?)",
                 (args.key, args.note.strip()))
     con.commit()

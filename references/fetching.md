@@ -155,8 +155,9 @@ $Q "SELECT * FROM manual_boards"                                  -- what is due
 $Q "UPDATE companies SET last_checked=date('now') WHERE slug='galois'"
 ```
 
-Check what is due, then `INSERT` finds straight into `prospects` keyed
-`manual:<slug>:<role>-<year>-<month>` — a hand check has already done the filtering ingest would do.
+Check what is due, then `INSERT` finds straight into `postings` with `disposition='kept'`, keyed
+`manual:<slug>:<role>-<year>-<month>` — a hand check has already done the filtering ingest would do,
+and `kept` is what makes the row a prospect.
 **A company that migrates onto a supported ATS should change `ats`** and start being fetched
 automatically.
 

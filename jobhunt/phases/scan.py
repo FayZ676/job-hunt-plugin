@@ -17,7 +17,7 @@ import sys
 
 from jobhunt import jobkit, models, sources
 from jobhunt.jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, norm, norm_company
-from jobhunt.models import Posting, Prospect
+from jobhunt.models import Posting
 
 POSTING_COLUMNS = tuple(Posting.model_fields)
 
@@ -112,14 +112,15 @@ def cmd_descriptions(args):
         if not text:
             missing += 1
             continue
-        con.execute("UPDATE postings SET description=? WHERE key=?", (text, key))
         filled += con.execute(
-            "UPDATE prospects SET description=?, last_seen=date('now') WHERE key=?",
-            (text, key)).rowcount
+            "UPDATE postings SET description=?,"
+            "  last_seen=CASE WHEN disposition='kept' THEN date('now') ELSE last_seen END"
+            " WHERE key=?", (text, key)).rowcount
     con.commit()
 
     empty = con.execute(
-        "SELECT COUNT(*) n FROM prospects WHERE description IS NULL OR description=''").fetchone()["n"]
+        "SELECT COUNT(*) n FROM postings WHERE disposition='kept'"
+        " AND (description IS NULL OR description='')").fetchone()["n"]
     print(f"attached {filled} descriptions")
     if missing:
         print(f"{missing} entries carried no description text")
@@ -138,7 +139,7 @@ DISPOSITIONS = {
     "location":  "fails `location_include`, or matches `location_exclude` with no US anchor; remote skips the include test",
     "stale":     "older than `max_age_days`",
     "covered":   "a better-ranked source already covers this company",
-    "seen":      "already in prospects or aliases, by key or by normalized company + title",
+    "seen":      "already kept, or already collapsed into a kept row, by key or company + title",
     "duplicate": "one role listed in several places, collapsed into the row that was kept",
     "upgraded":  "NOT A DROP: a better-ranked source replaced the source on an existing prospect",
 }
@@ -236,7 +237,7 @@ def verdict(row, config, args, seen_keys, held, covered):
     return None, None
 
 
-def collapse(rows):
+def collapse(rows, pinned):
     grouped = {}
     for row in rows:
         group = (norm_company(row.company), norm(row.title))
@@ -244,26 +245,43 @@ def collapse(rows):
 
     kept, dupes = [], []
     for group in grouped.values():
-        group.sort(key=lambda r: (sources.rank(r.source), not r.remote, r.key))
-        primary = group[0]
-        siblings = []
-        if len(group) > 1:
-            locations = list(dict.fromkeys(
-                (row.location or "").strip() for row in group if (row.location or "").strip()))
-            primary = primary.model_copy(update={
-                "location": "; ".join(locations),
-                "remote": any(r.remote for r in group)})
-            siblings = [r.key for r in group[1:]]
-            dupes.extend(group[1:])
+        group.sort(key=lambda r: (r.key not in pinned, sources.rank(r.source),
+                                  not r.remote, r.key))
+        primary, siblings = group[0], [r.key for r in group[1:]]
+        dupes.extend(group[1:])
         kept.append((primary, siblings))
     return kept, dupes
+
+
+def promote(con, old_key, new_key):
+    con.execute(
+        "UPDATE postings SET disposition='kept', canonical_key=NULL, ingested_on=date('now'),"
+        "  first_seen=(SELECT o.first_seen FROM postings o WHERE o.key=?),"
+        "  last_seen=date('now'),"
+        "  score=(SELECT o.score FROM postings o WHERE o.key=?),"
+        "  reason=(SELECT o.reason FROM postings o WHERE o.key=?),"
+        "  resume=(SELECT o.resume FROM postings o WHERE o.key=?),"
+        "  status=(SELECT o.status FROM postings o WHERE o.key=?),"
+        "  description=COALESCE(description, (SELECT o.description FROM postings o WHERE o.key=?)),"
+        "  compensation=COALESCE(compensation, (SELECT o.compensation FROM postings o WHERE o.key=?))"
+        " WHERE key=?",
+        (old_key,) * 7 + (new_key,))
+
+    con.execute(
+        "UPDATE postings SET disposition='upgraded', canonical_key=?, ingested_on=date('now'),"
+        "  first_seen=NULL, last_seen=NULL, score=NULL, reason=NULL, resume=NULL, status=NULL"
+        " WHERE key=?", (new_key, old_key))
+
+    for table in ("events", "staged", "staged_fields"):
+        con.execute(f"UPDATE {table} SET key=? WHERE key=?", (new_key, old_key))
+    con.execute("UPDATE postings SET canonical_key=? WHERE canonical_key=?", (new_key, old_key))
 
 
 def cmd_ingest(args):
     con = jobkit.connect(args.db)
     config = load_config(con, args)
 
-    where = "" if args.redo else "WHERE disposition IS NULL"
+    where = "WHERE disposition IS NOT 'kept'" if args.redo else "WHERE disposition IS NULL"
     rows = [Posting(**{c: r[c] for c in POSTING_COLUMNS})
             for r in con.execute(f"SELECT {','.join(POSTING_COLUMNS)} FROM postings {where}").fetchall()]
     if args.source:
@@ -273,66 +291,51 @@ def cmd_ingest(args):
         print("nothing pending in postings — fetch first, or pass --redo")
         return 0
 
-    seen_keys = set() if args.include_seen else {
+    live = con.execute(
+        "SELECT key, company, title, source, status FROM postings WHERE disposition='kept'").fetchall()
+    pinned = {r["key"] for r in live}
+    seen_keys = set() if args.include_seen else pinned | {
         r["key"] for r in con.execute(
-            "SELECT key FROM prospects UNION SELECT alias_key AS key FROM aliases").fetchall()}
+            "SELECT key FROM postings WHERE canonical_key IS NOT NULL").fetchall()}
     held = {} if args.include_seen else {
         (norm_company(r["company"]), norm(r["title"])): {
-            "key": r["key"], "status": r["status"],
-            "rank": sources.rank(r["source"])}
-        for r in con.execute("SELECT key,company,title,source,status FROM prospects").fetchall()}
+            "key": r["key"], "status": r["status"], "rank": sources.rank(r["source"])}
+        for r in live}
     covered = {norm_company(r["name"]): sources.rank(r["ats"]) for r in
                con.execute("SELECT name, ats FROM companies WHERE active=1").fetchall()
                if r["ats"] in sources.REGISTRY}
 
     counts = {name: 0 for name in DISPOSITIONS}
-    survivors, dispositions, upgrades, aliases = [], [], [], []
+    survivors, dispositions, upgrades = [], [], []
     for row in sorted(rows, key=lambda r: sources.rank(r.source)):
         ruling, target = verdict(row, config, args, seen_keys, held, covered)
         pair = (norm_company(row.company), norm(row.title))
         if ruling == "upgraded":
             upgrades.append((row, target))
             counts["upgraded"] += 1
-            dispositions.append((ruling, row.key))
-            held[pair] = {"key": target, "status": "new",
+            held[pair] = {"key": row.key, "status": "new",
                           "rank": sources.rank(row.source)}
         elif ruling:
             counts[ruling] += 1
-            dispositions.append((ruling, row.key))
-            if ruling == "seen" and target and target != row.key:
-                aliases.append((row.key, target))
+            dispositions.append((ruling, target if target != row.key else None, row.key))
         else:
             survivors.append(row)
 
-    survivors, dupes = collapse(survivors)
+    survivors, dupes = collapse(survivors, pinned)
     counts["duplicate"] += len(dupes)
-    dispositions.extend(("duplicate", row.key) for row in dupes)
 
-    columns = tuple(n for n in Prospect.model_fields
-                    if n not in ("first_seen", "last_seen", "score", "reason", "resume"))
     for row, siblings in survivors:
-        prospect = Prospect.from_posting(row).row()
-        con.execute(
-            f"INSERT OR IGNORE INTO prospects({','.join(columns)},first_seen,last_seen) "
-            f"VALUES({','.join('?' * len(columns))},date('now'),date('now'))",
-            tuple(prospect[c] for c in columns))
-        for alias in siblings:
-            con.execute("INSERT OR IGNORE INTO aliases(alias_key,key) VALUES(?,?)", (alias, row.key))
-        dispositions.append(("kept", row.key))
-
-    con.executemany("INSERT OR IGNORE INTO aliases(alias_key,key) VALUES(?,?)", aliases)
-
-    for row, target in upgrades:
-        con.execute(
-            "UPDATE prospects SET url=?, apply_url=?, source=?, ats=?, last_seen=date('now'),"
-            "  description=COALESCE(?, description),"
-            "  compensation=COALESCE(?, compensation) WHERE key=?",
-            (row.url, row.apply_url, row.source, row.ats,
-             row.description, row.compensation, target))
-        con.execute("INSERT OR IGNORE INTO aliases(alias_key,key) VALUES(?,?)", (row.key, target))
+        dispositions.append(("kept", None, row.key))
+        dispositions.extend(("duplicate", row.key, alias) for alias in siblings)
 
     con.executemany(
-        "UPDATE postings SET disposition=?, ingested_on=date('now') WHERE key=?", dispositions)
+        "UPDATE postings SET disposition=?, canonical_key=COALESCE(?, canonical_key),"
+        "  ingested_on=date('now') WHERE key=?",
+        dispositions)
+
+    for row, target in upgrades:
+        promote(con, target, row.key)
+
     con.commit()
 
     print(f"NEW PROSPECTS: {len(survivors)}   (from {len(rows)} postings)")

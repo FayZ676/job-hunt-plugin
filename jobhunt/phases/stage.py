@@ -89,7 +89,7 @@ def cmd_add(args):
     con.executemany(
         "INSERT INTO staged_fields(key,label,value,tier,flag) VALUES(?,?,?,?,?)",
         [(args.key, label, value or None, tier, flag) for label, value, tier, flag in fields])
-    con.execute("UPDATE prospects SET status='staged' WHERE key=?", (args.key,))
+    con.execute("UPDATE postings SET status='staged' WHERE key=?", (args.key,))
     con.commit()
 
     flagged = [label for label, _, _, flag in fields if flag]
@@ -136,7 +136,7 @@ def cmd_drop(args):
         sys.exit(f"nothing staged for {args.key!r}")
     con.execute("DELETE FROM staged_fields WHERE key=?", (args.key,))
     con.execute("DELETE FROM staged WHERE key=?", (args.key,))
-    con.execute("UPDATE prospects SET status='shortlisted' WHERE key=? AND status='staged'",
+    con.execute("UPDATE postings SET status='shortlisted' WHERE key=? AND status='staged'",
                 (args.key,))
     con.commit()
     print(f"{args.key} unstaged")

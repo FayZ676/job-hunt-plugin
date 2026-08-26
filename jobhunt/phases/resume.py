@@ -188,7 +188,7 @@ def record(args, pdf):
     row = con.execute("SELECT key, status FROM prospects WHERE key=?", (args.key,)).fetchone()
     if not row:
         sys.exit(f"no prospect {args.key!r} — the PDF is at {pdf}, unrecorded")
-    con.execute("UPDATE prospects SET resume=? WHERE key=?", (pdf, args.key))
+    con.execute("UPDATE postings SET resume=? WHERE key=?", (pdf, args.key))
     con.commit()
     print(f"recorded on {args.key} ({row['status']})")
 

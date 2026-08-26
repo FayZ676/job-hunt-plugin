@@ -17,7 +17,8 @@ Five phases, in order.
 
 | Phase | What happens |
 |---|---|
-| **Scan** | Hits the Greenhouse, Lever, and Ashby APIs for every company you watch, plus an Indeed pass for employers nobody put on a list. Ships with a 137-company starter watchlist. Fetching and filtering are separate steps: everything a source returned lands in `postings` untouched, and one pass derives `prospects` from it. |
+| **Scan** | Hits the Greenhouse, Lever, and Ashby APIs for every company you watch, plus an Indeed pass for employers nobody put on a list. Ships with a 137-company starter watchlist. Fetching and filtering are separate steps: everything a source returned lands in `postings` untouched, and one pass rules on each row; the ones
+it keeps are the prospects. |
 | **Score** | Triages on a cheap list with no descriptions, pulls full text only for the plausible ones, then scores 0–10 against your profile — citing the JD language that drove it. Everything is recorded, shortlisted or not, so nothing is reviewed twice. |
 | **Resume** | Builds a role-specific resume straight to PDF, selecting the bullets in your profile that match this posting. It never invents a number your profile doesn't have. |
 | **Stage** | Opens the application form and fills every field your profile answers. An unanswered field is a hard stop, not a guess. Screening questions and essays get drafted and flagged, never auto-accepted. Stops with a finger over the submit button. |

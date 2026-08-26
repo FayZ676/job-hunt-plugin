@@ -3,7 +3,7 @@ import re
 import sys
 from typing import Literal, get_args
 
-__all__ = ["Row", "Listing", "Posting", "Prospect", "Status", "Disposition", "Tier",
+__all__ = ["Row", "Posting", "Status", "Disposition", "Tier",
            "get_args", "verify_against_schema"]
 
 try:
@@ -41,9 +41,9 @@ class Row(BaseModel):
         return data
 
 
-class Listing(Row):
+class Posting(Row):
     key: str
-    source: str | None = None
+    source: str
     company: str
     title: str
     ats: str | None = None
@@ -54,6 +54,14 @@ class Listing(Row):
     compensation: str | None = None
     posted_at: str | None = None
     description: str | None = None
+
+    comp_min: float | None = None
+    comp_max: float | None = None
+    comp_period: str | None = None
+
+    sponsored: bool = False
+    expired: bool = False
+    raw: str | None = None
 
     @field_validator("key")
     @classmethod
@@ -69,42 +77,10 @@ class Listing(Row):
             raise ValueError("company and title cannot be blank")
         return value
 
-
-class Posting(Listing):
-    source: str
-
-    comp_min: float | None = None
-    comp_max: float | None = None
-    comp_period: str | None = None
-
-    sponsored: bool = False
-    expired: bool = False
-    raw: str | None = None
-
     @field_validator("comp_period")
     @classmethod
     def _period(cls, value: str | None) -> str | None:
         return value.upper() if value else None
-
-
-class Prospect(Listing):
-    first_seen: str | None = None
-    last_seen: str | None = None
-    score: int | None = None
-    reason: str | None = None
-    resume: str | None = None
-    status: Status = "new"
-
-    @field_validator("score")
-    @classmethod
-    def _in_range(cls, value: int | None) -> int | None:
-        if value is not None and not 0 <= value <= 10:
-            raise ValueError(f"score must be 0-10, got {value}")
-        return value
-
-    @classmethod
-    def from_posting(cls, posting: Posting) -> "Prospect":
-        return cls(**posting.model_dump(include=set(Listing.model_fields)))
 
 
 def _schema_vocabulary(table: str, column: str) -> set[str]:
@@ -119,7 +95,7 @@ def _schema_vocabulary(table: str, column: str) -> set[str]:
 
 
 def verify_against_schema() -> None:
-    for table, column, literal in (("prospects", "status", Status),
+    for table, column, literal in (("postings", "status", Status),
                                    ("postings", "disposition", Disposition),
                                    ("staged_fields", "tier", Tier)):
         in_schema = _schema_vocabulary(table, column)
