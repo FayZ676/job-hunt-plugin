@@ -3,7 +3,7 @@ import re
 import sys
 from typing import Literal, get_args
 
-__all__ = ["Row", "Posting", "StoredPosting", "Prospect", "Status", "Disposition", "Tier",
+__all__ = ["Row", "Posting", "Prospect", "Status", "Disposition", "Tier",
            "get_args", "verify_against_schema"]
 
 try:
@@ -83,17 +83,6 @@ class Posting(Row):
         return value.upper() if value else None
 
 
-class StoredPosting(Posting):
-    first_fetched: str | None = None
-    last_fetched: str | None = None
-    ingested_on: str | None = None
-    disposition: Disposition | None = None
-
-    @classmethod
-    def from_row(cls, row) -> "StoredPosting":
-        return cls(**{k: row[k] for k in row.keys()})
-
-
 class Prospect(Row):
     key: str
     company: str
@@ -122,7 +111,7 @@ class Prospect(Row):
         return value
 
     @classmethod
-    def from_posting(cls, posting: "StoredPosting") -> "Prospect":
+    def from_posting(cls, posting: "Posting") -> "Prospect":
         shared = set(cls.model_fields) & set(posting.model_fields)
         return cls(**{name: getattr(posting, name) for name in shared})
 

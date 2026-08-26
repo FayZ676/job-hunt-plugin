@@ -17,7 +17,7 @@ import sys
 
 from jobhunt import jobkit, models, sources
 from jobhunt.jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, norm, norm_company
-from jobhunt.models import Posting, Prospect, StoredPosting
+from jobhunt.models import Posting, Prospect
 
 POSTING_COLUMNS = tuple(Posting.model_fields)
 
@@ -182,7 +182,7 @@ def load_config(con, args):
     }
 
 
-def below_comp_floor(row: StoredPosting, floor) -> bool:
+def below_comp_floor(row: Posting, floor) -> bool:
     if not floor or row.comp_period != "YEARLY":
         return False
     top = row.comp_max or row.comp_min
@@ -264,7 +264,8 @@ def cmd_ingest(args):
     config = load_config(con, args)
 
     where = "" if args.redo else "WHERE disposition IS NULL"
-    rows = [StoredPosting.from_row(r) for r in con.execute(f"SELECT * FROM postings {where}").fetchall()]
+    rows = [Posting(**{c: r[c] for c in POSTING_COLUMNS})
+            for r in con.execute(f"SELECT {','.join(POSTING_COLUMNS)} FROM postings {where}").fetchall()]
     if args.source:
         wanted = {s.lower() for s in args.source}
         rows = [r for r in rows if r.source.lower() in wanted]
