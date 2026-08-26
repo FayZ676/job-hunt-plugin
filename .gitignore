@@ -1,4 +1,5 @@
 .DS_Store
+.vscode/
 node_modules/
 
 # A user's own career data, if they run the skill from this directory.
