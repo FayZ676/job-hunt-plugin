@@ -43,10 +43,9 @@ git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
 pip install ~/.claude/skills/job
 ```
 
-The install is what brings in `pydantic` and puts the phases on your `PATH` as `job-scan`,
-`job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and `job-ui`. The skill itself runs the
-modules out of the clone (`PYTHONPATH=~/.claude/skills/job python3 -m jobhunt.phases.scan`), so
-`pydantic` alone is enough if you would rather not install it.
+The install is what brings in the dependencies and puts the phases on your `PATH` as `job-scan`,
+`job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and `job-ui`. The same modules run as
+`job-scan` once installed.
 
 Then, from anywhere:
 
@@ -93,8 +92,8 @@ your phone number in it.
 
 ## Requirements
 
-- **Scanning and scoring:** Python 3.10+ and `pydantic` (`pip install ~/.claude/skills/job`, which
-  installs the `jobhunt` package and its one dependency). SQLite ships with Python.
+- **Scanning and scoring:** Python 3.10+ and `pip install ~/.claude/skills/job`, which installs the
+  `jobhunt` package and its dependencies. SQLite ships with Python.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).

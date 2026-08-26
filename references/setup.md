@@ -5,10 +5,9 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 **1. Create the database.**
 
 ```bash
-export PYTHONPATH="$HOME/.claude/skills/job"
-CAREER=$(python3 -m jobhunt.jobkit career)
+CAREER=$(job-paths career)
 mkdir -p "$CAREER/resumes/submitted"
-python3 -m jobhunt.q -f "$HOME/.claude/skills/job/jobhunt/sql/seed.sql"
+job-q -f "$HOME/.claude/skills/job/jobhunt/sql/seed.sql"
 ```
 
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
@@ -37,15 +36,15 @@ INSERT INTO companies(slug,ats,name,source) VALUES('slug','greenhouse','Name','m
 UPDATE companies SET active=0 WHERE slug='…';
 ```
 
-**4. Check the tooling.** `pydantic` is what every source parses its payload into, so fetching needs
-it; Typst and Poppler are only for the resume build.
+**4. Check the tooling.** The `jobhunt` package and its dependencies are what fetching and scoring
+run on; Typst and Poppler are only for the resume build.
 
 ```bash
-python3 -c "import pydantic" 2>/dev/null || echo 'pip install "$HOME/.claude/skills/job"'
+python3 -c "import jobhunt.models" 2>/dev/null || echo 'pip install "$HOME/.claude/skills/job"'
 command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 ```
 
 **5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. Sensible companies means the
 filters are tuned; nothing, or thousands, means another pass — the drop counts say which rule, and
-`scan.py ingest --redo` re-rules the same postings after each adjustment without fetching again.
+`job-scan ingest --redo` re-rules the same postings after each adjustment without fetching again.

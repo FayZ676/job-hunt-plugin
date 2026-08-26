@@ -100,15 +100,15 @@ Screenshot the completed form into `$CAREER/resumes/`; that screenshot is what t
 Then record the application, one `--field` per answer:
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.stage add <key> \
+job-stage add <key> \
   --url <apply-url> --ats ashby --screenshot <png> \
   --field 'Work authorization|Yes|policy' \
   --field 'Why this company?|…|judgment|needs-review'
 ```
 
-`stage.py add` refuses a prospect with no built resume, refuses a screenshot that is not on disk,
+`job-stage add` refuses a prospect with no built resume, refuses a screenshot that is not on disk,
 and derives `ready` or `blocked` from the fields — a value left empty blocks the application and
-names itself in `blocked_on`. `stage.py answers` and `stage.py missing` are where the identity and
+names itself in `blocked_on`. `job-stage answers` and `job-stage missing` are where the identity and
 policy answers come from, and which of them are still `NULL`.
 
 **Then stop.** Do not click Submit, Apply, Continue, or Next in Phase 4. On a multi-page form, stop
@@ -169,7 +169,7 @@ the application for approval; never resubmit silently. Set `applied` only agains
 have seen in a snapshot:
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.submit record <key> \
+job-submit record <key> \
   --confirmation "Thank you for applying — confirmation #A12"
 ```
 

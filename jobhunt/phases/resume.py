@@ -1,15 +1,16 @@
 """Phase 3 — build the tailored one-page PDF, and record it on the prospect.
 
-  resume.py spec                            the spec contract, and every section type
-  resume.py build spec.json                 render to spec.pdf
-  resume.py build spec.json --key KEY       render, then record the absolute path
-  resume.py build spec.json out.pdf --density tight --keep-typ
+
+  job-resume spec                            the spec contract, and every section type
+  job-resume build spec.json                 render to spec.pdf
+  job-resume build spec.json --key KEY       render, then record the absolute path
+  job-resume build spec.json out.pdf --density tight --keep-typ
 
 Recording stores an absolute path, because a relative one breaks the next run
 started somewhere else.
 """
 
-import argparse
+import enum
 import json
 import os
 import re
@@ -18,7 +19,12 @@ import subprocess
 import sys
 import tempfile
 
+import typer
+
 from jobhunt import jobkit
+
+app = typer.Typer(help=__doc__, no_args_is_help=True,
+                  rich_markup_mode=None, add_completion=False)
 
 DENSITY = {
     "tight":  {"body": 9.5, "name": 17.0, "section": 10.5, "leading": 0.58,
@@ -31,6 +37,7 @@ DENSITY = {
                "para_gap": 7.0, "sec_above": 12.0, "sec_below": 5.0,
                "rule_gap": 2.5, "role_gap": 7.0, "bullet_gap": 0.50},
 }
+Density = enum.Enum("Density", {name: name for name in DENSITY})
 DEFAULT_MARGINS = {"top": 0.5, "bottom": 0.5, "left": 0.7, "right": 0.7}
 
 SECTION_TYPES = {
@@ -145,7 +152,7 @@ def build(spec, density):
     return "\n".join(L) + "\n"
 
 
-SPEC_HELP = """A resume spec is content only -- resume.py owns every formatting decision.
+SPEC_HELP = """A resume spec is content only -- job-resume owns every formatting decision.
 
 {{
   "name": "Ada Lovelace",
@@ -167,41 +174,42 @@ Section types:
 {types}"""
 
 
-def print_spec():
+@app.command()
+def spec():
+    """print the spec contract and every section type"""
     width = max(len(k) for k in SECTION_TYPES)
     types = "\n".join(f"  {k:<{width}}  {payload}\n  {'':<{width}}  renders as {shape}"
                        for k, (payload, shape) in SECTION_TYPES.items())
     print(SPEC_HELP.format(margins=json.dumps(DEFAULT_MARGINS), types=types))
 
 
-
-def cmd_spec(_args):
-    width = max(len(k) for k in SECTION_TYPES)
-    types = "\n".join(f"  {k:<{width}}  {payload}\n  {'':<{width}}  renders as {shape}"
-                       for k, (payload, shape) in SECTION_TYPES.items())
-    print(SPEC_HELP.format(margins=json.dumps(DEFAULT_MARGINS), types=types))
-    return 0
-
-
-def record(args, pdf):
-    con = jobkit.connect(args.db)
-    row = con.execute("SELECT key, status FROM prospects WHERE key=?", (args.key,)).fetchone()
+def record(db, key, pdf):
+    con = jobkit.connect(db)
+    row = con.execute("SELECT key, status FROM prospects WHERE key=?", (key,)).fetchone()
     if not row:
-        sys.exit(f"no prospect {args.key!r} — the PDF is at {pdf}, unrecorded")
-    con.execute("UPDATE postings SET resume=? WHERE key=?", (pdf, args.key))
+        sys.exit(f"no prospect {key!r} — the PDF is at {pdf}, unrecorded")
+    con.execute("UPDATE postings SET resume=? WHERE key=?", (pdf, key))
     con.commit()
-    print(f"recorded on {args.key} ({row['status']})")
+    print(f"recorded on {key} ({row['status']})")
 
 
-def cmd_build(args):
+@app.command("build")
+def cmd_build(spec_path: str = typer.Argument(..., metavar="SPEC"),
+              out: str = typer.Argument(None, help="default: <spec>.pdf"),
+              key: str = typer.Option(None, help="record the PDF on this prospect"),
+              density: Density = Density.normal,
+              keep_typ: bool = typer.Option(False, "--keep-typ",
+                                            help="write the .typ alongside the PDF"),
+              db: str = None):
+    """render a spec to PDF with Typst"""
     if not shutil.which("typst"):
         sys.exit("typst not found: brew install typst")
 
-    spec = json.load(open(args.spec, encoding="utf-8"))
-    out = os.path.abspath(args.out or os.path.splitext(args.spec)[0] + ".pdf")
-    markup = build(spec, args.density)
+    spec = json.load(open(spec_path, encoding="utf-8"))
+    out = os.path.abspath(out or os.path.splitext(spec_path)[0] + ".pdf")
+    markup = build(spec, density.value)
 
-    typ_path = os.path.splitext(out)[0] + ".typ" if args.keep_typ else None
+    typ_path = os.path.splitext(out)[0] + ".typ" if keep_typ else None
     if typ_path:
         open(typ_path, "w", encoding="utf-8").write(markup)
         source = typ_path
@@ -220,33 +228,11 @@ def cmd_build(args):
             os.unlink(cleanup)
     if not os.path.isfile(out):
         sys.exit(f"typst reported success but {out} is not there")
-    print(f"wrote {out} (density: {args.density})")
+    print(f"wrote {out} (density: {density.value})")
 
-    if args.key:
-        record(args, out)
-    return 0
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    s = sub.add_parser("spec", help="print the spec contract and every section type")
-    s.set_defaults(func=cmd_spec)
-
-    b = sub.add_parser("build", help="render a spec to PDF with Typst")
-    b.add_argument("spec")
-    b.add_argument("out", nargs="?", help="default: <spec>.pdf")
-    b.add_argument("--key", help="record the PDF on this prospect")
-    b.add_argument("--density", default="normal", choices=sorted(DENSITY))
-    b.add_argument("--keep-typ", action="store_true", help="write the .typ alongside the PDF")
-    b.add_argument("--db", default=None)
-    b.set_defaults(func=cmd_build)
-
-    args = parser.parse_args()
-    return args.func(args)
+    if key:
+        record(db, key, out)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    app()

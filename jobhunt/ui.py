@@ -1,27 +1,29 @@
 """Serve the local dashboard: a read-only window onto the job database.
 
-  ui.py                 serve on the first free port from 8765
-  ui.py --port 9000     pin the port
-  ui.py --no-open       do not open a browser
-  ui.py --lan           also answer other devices on this network, key-gated
-  ui.py --host 0.0.0.0  pin the bind address
+  job-ui                 serve on the first free port from 8765
+  job-ui --port 9000     pin the port
+  job-ui --no-open       do not open a browser
+  job-ui --lan           also answer other devices on this network, key-gated
+  job-ui --host 0.0.0.0  pin the bind address
 
 Binding past the loopback mints an access key: another device must carry it,
 as ?k= once and as a cookie thereafter.
 """
 
-import argparse
-import http.server
-import json
-import mimetypes
 import os
 import secrets
 import socket
 import sqlite3
 import sys
 import threading
-import urllib.parse
 import webbrowser
+
+import typer
+import uvicorn
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+
+from starlette.exceptions import HTTPException as AnyHTTPException
 
 from jobhunt import jobkit
 
@@ -118,104 +120,73 @@ def lan_ip():
         probe.close()
 
 
-class Handler(http.server.BaseHTTPRequestHandler):
-    protocol_version = "HTTP/1.1"
+DERIVED = {
+    "where": lambda: {"career": jobkit.CAREER, "db": jobkit.DB, "resumes": jobkit.RESUMES},
+    "help": lambda: {"text": open(HELP, encoding="utf-8").read()},
+    "career": career,
+}
 
-    def log_message(self, *_):
-        pass
+app = FastAPI(docs_url=None, redoc_url=None)
 
-    def local(self):
-        return self.client_address[0] in LOOPBACK
 
-    def presented_key(self):
-        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-        if query.get("k"):
-            return query["k"][0]
-        cookies = self.headers.get("Cookie") or ""
-        for crumb in cookies.split(";"):
-            name, _, value = crumb.strip().partition("=")
-            if name == "job_key":
-                return urllib.parse.unquote(value)
-        return None
+@app.exception_handler(sqlite3.Error)
+@app.exception_handler(OSError)
+async def _failed(_request, error):
+    return JSONResponse({"error": str(error)}, status_code=500)
 
-    def authorized(self):
-        if ACCESS is None or self.local():
-            return True
-        return secrets.compare_digest(self.presented_key() or "", ACCESS)
 
-    def send(self, body, content_type="application/json; charset=utf-8", status=200,
-             headers=(), fresh=False):
-        if isinstance(body, str):
-            body = body.encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        if fresh:
-            self.send_header("Cache-Control", "no-store")
-        for name, value in headers:
-            self.send_header(name, value)
-        self.end_headers()
-        if self.command != "HEAD":
-            self.wfile.write(body)
+@app.middleware("http")
+async def gate(request: Request, call_next):
+    local = request.client and request.client.host in LOOPBACK
+    if ACCESS is not None and not local:
+        presented = request.query_params.get("k") or request.cookies.get("job_key") or ""
+        if not secrets.compare_digest(presented, ACCESS):
+            return JSONResponse(
+                {"error": "this dashboard needs its access key — open the ?k= link"},
+                status_code=403)
+    return await call_next(request)
 
-    def send_file(self, path):
-        with open(path, "rb") as handle:
-            body = handle.read()
-        self.send(body, mimetypes.guess_type(path)[0] or "application/octet-stream",
-                  headers=[("Content-Disposition", f'inline; filename="{os.path.basename(path)}"')])
 
-    def fail(self, status, message):
-        self.send(json.dumps({"error": message}), status=status)
+@app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
+def page(request: Request):
+    local = request.client and request.client.host in LOOPBACK
+    response = HTMLResponse(open(HTML, encoding="utf-8").read(),
+                            headers={"Cache-Control": "no-store"})
+    if ACCESS is not None and not local:
+        response.set_cookie("job_key", ACCESS, max_age=604800, samesite="lax")
+    return response
 
-    def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
-        route = parsed.path
-        query = urllib.parse.parse_qs(parsed.query)
 
-        if not self.authorized():
-            return self.fail(403, "this dashboard needs its access key — open the ?k= link")
+@app.get("/asset/{kind}/{key:path}")
+def serve_asset(kind: str, key: str):
+    path = asset(kind, key)
+    if not path:
+        raise HTTPException(404, "no such file")
+    return FileResponse(path, headers={
+        "Content-Disposition": f'inline; filename="{os.path.basename(path)}"'})
 
-        try:
-            if route in ("/", "/index.html"):
-                with open(HTML, encoding="utf-8") as handle:
-                    page = handle.read()
-                headers = []
-                if ACCESS is not None and not self.local():
-                    headers.append(("Set-Cookie", f"job_key={urllib.parse.quote(ACCESS)};"
-                                                  " Path=/; SameSite=Lax; Max-Age=604800"))
-                return self.send(page, "text/html; charset=utf-8", headers=headers, fresh=True)
 
-            if route == "/api/where":
-                return self.send(json.dumps({
-                    "career": jobkit.CAREER, "db": jobkit.DB, "resumes": jobkit.RESUMES}))
+@app.get("/api/prospect")
+def api_prospect(key: str = ""):
+    found = prospect(key)
+    if not found:
+        raise HTTPException(404, f"no prospect {key!r}")
+    return found
 
-            if route == "/api/help":
-                return self.send(json.dumps({"text": open(HELP, encoding="utf-8").read()}))
 
-            if route == "/api/career":
-                return self.send(json.dumps(career(), ensure_ascii=False))
+@app.get("/api/{name}")
+def api(name: str):
+    if name in DERIVED:
+        return DERIVED[name]()
+    if name in LISTS:
+        return rows(LISTS[name])
+    raise HTTPException(404, "no such view")
 
-            if route == "/api/prospect":
-                key = query.get("key", [""])[0]
-                found = prospect(key)
-                return self.send(json.dumps(found, ensure_ascii=False)) if found \
-                    else self.fail(404, f"no prospect {key!r}")
 
-            if route.startswith("/api/"):
-                sql = LISTS.get(route[5:])
-                return self.send(json.dumps(rows(sql), ensure_ascii=False)) if sql \
-                    else self.fail(404, "no such view")
-
-            if route.startswith("/asset/"):
-                _, _, kind, key = route.split("/", 3)
-                path = asset(kind, urllib.parse.unquote(key))
-                return self.send_file(path) if path else self.fail(404, "no such file")
-
-            return self.fail(404, "no such route")
-        except (sqlite3.Error, OSError) as error:
-            self.fail(500, str(error))
-
-    do_HEAD = do_GET
+@app.exception_handler(AnyHTTPException)
+async def _http_error(_request, error):
+    return JSONResponse({"error": error.detail}, status_code=error.status_code)
 
 
 def free_port(start, host="127.0.0.1"):
@@ -227,30 +198,25 @@ def free_port(start, host="127.0.0.1"):
     sys.exit(f"no free port in {start}-{start + 19}")
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--no-open", action="store_true")
-    ap.add_argument("--lan", action="store_true",
-                    help="answer every device on this network, gated by an access key")
-    ap.add_argument("--host", help="bind address (implies --lan unless it is loopback)")
-    ap.add_argument("--key", help="reuse a fixed access key instead of minting one")
-    args = ap.parse_args()
-
+def main(port: int = 8765,
+         open_browser: bool = typer.Option(True, "--open/--no-open"),
+         lan: bool = typer.Option(False, help="answer every device on this network, "
+                                              "gated by an access key"),
+         host: str = typer.Option(None, help="bind address (implies --lan unless loopback)"),
+         key: str = typer.Option(None, help="reuse a fixed access key instead of minting one")):
+    """Serve the local dashboard: a read-only window onto the job database."""
     if not os.path.exists(jobkit.DB):
         sys.exit(f"no database at {jobkit.DB} — run /job setup first")
     jobkit.connect().close()
 
     global ACCESS
-    host = args.host or ("0.0.0.0" if args.lan else "127.0.0.1")
+    host = host or ("0.0.0.0" if lan else "127.0.0.1")
     exposed = host not in LOOPBACK
     if exposed:
-        ACCESS = args.key or secrets.token_urlsafe(16)
+        ACCESS = key or secrets.token_urlsafe(16)
 
-    port = free_port(args.port, host)
+    port = free_port(port, host)
     url = f"http://127.0.0.1:{port}/"
-    server = http.server.ThreadingHTTPServer((host, port), Handler)
     lines = [f"job dashboard  {url}", f"reading        {jobkit.DB}"]
     if exposed:
         address = lan_ip() if host == "0.0.0.0" else host
@@ -260,14 +226,14 @@ def main():
         lines.append("               has it can read your career data")
     lines.append("ctrl-c to stop")
     print("\n".join(lines), flush=True)
-    if not args.no_open:
+    if open_browser:
         threading.Timer(0.4, webbrowser.open, (url,)).start()
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nstopped")
-    return 0
+    uvicorn.run(app, host=host, port=port, log_level="warning")
+
+
+def cli():
+    typer.run(main)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    cli()

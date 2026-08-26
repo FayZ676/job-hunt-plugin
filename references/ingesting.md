@@ -4,7 +4,7 @@ Deriving `prospects` from the raw layer. **Ingest fetches nothing** — it reads
 already stored, rules on every row, and promotes the survivors.
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest
+job-scan ingest
 ```
 
 **One chain serves every source.** No filter names a source: each normalizes into the same columns,
@@ -16,8 +16,8 @@ drops — `kept` became a prospect, `upgraded` replaced a lower-ranked source on
 other value names the filter that dropped the row.
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest --help      # every flag
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan dispositions   # every verdict, in order
+job-scan ingest --help      # every flag
+job-scan dispositions   # every verdict, in order
 ```
 
 ## The filters
@@ -27,7 +27,7 @@ the chain, and the same values `postings.disposition` stores. The `filters` **ta
 **patterns** those branches match on, keyed by `kind`. Only four verdicts read the table; the rest
 rule on columns, dates, ranks and prior state, so neither describes the other.
 
-`scan.py dispositions` prints the verdicts in the order the chain rules them, straight off the
+`job-scan dispositions` prints the verdicts in the order the chain rules them, straight off the
 code that applies it — read it there rather than from a copy. The patterns live in
 `SELECT kind, pattern, note FROM filters`, so tuning is SQL, not a code change.
 
@@ -72,7 +72,7 @@ guessing from a count. Then change the rule and re-rule the same postings, with 
 ```bash
 $Q "SELECT kind, pattern, note FROM filters"
 $Q "INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)contract','no contract roles')"
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest --redo
+job-scan ingest --redo
 ```
 
 | Symptom | Fix |

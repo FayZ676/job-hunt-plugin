@@ -2,9 +2,9 @@
 
 Getting postings into `postings`, the raw layer. **Fetching judges nothing**: no filtering, no
 scoring, no `prospects` row. Everything a source returned is stored as it arrived, normalized into
-shared columns, and `scan.py ingest` rules on it afterwards — `references/ingesting.md`.
+shared columns, and `job-scan ingest` rules on it afterwards — `references/ingesting.md`.
 
-Two mechanisms, four sources, one destination. **`scan.py sources` prints the registry** — each
+Two mechanisms, four sources, one destination. **`job-scan sources` prints the registry** — each
 source's kind, rank, endpoint and the quirk that bites when it goes quiet:
 
 | Mechanism | Sources | How |
@@ -27,7 +27,7 @@ which source a row came from. `scan.py` needs `pydantic` (`pip install "$HOME/.c
 ## Boards
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan boards
+job-scan boards
 ```
 
 Reads the company list out of the database, hits every active Greenhouse, Lever and Ashby board in
@@ -47,8 +47,8 @@ with the ATS behind an iframe; view source, or check where the "Apply" button po
 
 ```bash
 $Q "INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual')"
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan boards --company Anthropic
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest
+job-scan boards --company Anthropic
+job-scan ingest
 ```
 
 A slug that 404s is wrong, or the company is on an ATS with no public board. Those go in as manual
@@ -122,12 +122,12 @@ Same trick for the descriptions file. Nothing large ever passes through the conv
 ### 3. Load it into the raw layer
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan harvest --source indeed --file <harvest.json>
+job-scan harvest --source indeed --file <harvest.json>
 ```
 
 Parses the harvest into `postings`, including the facts only this source states — `sponsored`,
 `expired`, and the salary band it extracted — into the same columns every source uses, so the same
-filters judge them. Then run `scan.py ingest` as for any other source.
+filters judge them. Then run `job-scan ingest` as for any other source.
 
 ### 4. Descriptions, for kept rows only
 
@@ -138,7 +138,7 @@ way. **Cap each at ~4,000 characters** — full ones run 9,000–14,500, and the
 dozen of them affordable.
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan descriptions --file <descs.json>
+job-scan descriptions --file <descs.json>
 ```
 
 Attaches them to the rows ingest kept and warns about any prospect still without one.

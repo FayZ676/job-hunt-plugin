@@ -6,6 +6,9 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 
+import dateutil.parser
+from tabulate import tabulate
+
 MAX_DESCRIPTION_CHARS = 20000
 
 
@@ -30,6 +33,13 @@ def connect(path=None):
     with open(SCHEMA_SQL, encoding="utf-8") as handle:
         con.executescript(handle.read())
     return con
+
+
+def vocabulary(table, column):
+    schema = open(SCHEMA_SQL, encoding="utf-8").read()
+    body = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\);", schema, re.S)
+    listed = re.search(rf"{column}\s+TEXT.*?IN \((.*?)\)\)", body.group(1), re.S)
+    return set(re.findall(r"'([^']+)'", listed.group(1)))
 
 
 def compile_patterns(patterns):
@@ -57,19 +67,16 @@ def norm_company(name):
 def to_iso(value):
     if value is None or value == "":
         return None
-    if isinstance(value, (int, float)):
-        seconds = value / 1000 if value > 1e11 else value
+    text = str(value).strip()
+    if isinstance(value, (int, float)) or text.isdigit():
+        seconds = float(text)
         try:
-            return datetime.fromtimestamp(seconds, timezone.utc).isoformat()
+            return datetime.fromtimestamp(seconds / 1000 if seconds > 1e11 else seconds,
+                                          timezone.utc).isoformat()
         except (OverflowError, OSError, ValueError):
             return None
-    text = str(value).strip()
-    if not text:
-        return None
-    if text.isdigit():
-        return to_iso(int(text))
     try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).isoformat()
+        return dateutil.parser.isoparse(text).isoformat()
     except ValueError:
         return text
 
@@ -78,7 +85,7 @@ def age_days(posted_at):
     if not posted_at:
         return None
     try:
-        moment = datetime.fromisoformat(str(posted_at).replace("Z", "+00:00"))
+        moment = dateutil.parser.isoparse(str(posted_at))
     except ValueError:
         return None
     if moment.tzinfo is None:
@@ -89,18 +96,10 @@ def age_days(posted_at):
 def print_rows(rows, as_json=False):
     if as_json:
         print(json.dumps(rows, ensure_ascii=False, indent=2))
-        return 0
-    if not rows:
+    elif not rows:
         print("(no rows)")
-        return 0
-    columns = list(rows[0])
-    width = {c: min(max(len(c), *(len(str(r.get(c) or "")) for r in rows)), 48) for c in columns}
-    print("  ".join(c.ljust(width[c]) for c in columns))
-    for row in rows:
-        print("  ".join(
-            str(row.get(c) if row.get(c) is not None else "")[:width[c]].ljust(width[c])
-            for c in columns))
-    return 0
+    else:
+        print(tabulate(rows, headers="keys", maxcolwidths=48, disable_numparse=True))
 
 
 PATHS = {"career": CAREER, "db": DB,

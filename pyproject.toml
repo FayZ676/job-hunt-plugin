@@ -9,20 +9,27 @@ description = "A Claude Code skill that scans job boards, scores openings, tailo
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-dependencies = ["pydantic>=2"]
+dependencies = [
+  "pydantic>=2",
+  "typer>=0.12",
+  "tabulate>=0.9",
+  "python-dateutil>=2.8",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+]
 
 [project.urls]
 Homepage = "https://github.com/FayZ676/job-hunt-plugin"
 
 [project.scripts]
 job-paths = "jobhunt.jobkit:main"
-job-q = "jobhunt.q:main"
-job-ui = "jobhunt.ui:main"
-job-scan = "jobhunt.phases.scan:main"
-job-score = "jobhunt.phases.score:main"
-job-resume = "jobhunt.phases.resume:main"
-job-stage = "jobhunt.phases.stage:main"
-job-submit = "jobhunt.phases.submit:main"
+job-q = "jobhunt.q:cli"
+job-ui = "jobhunt.ui:cli"
+job-scan = "jobhunt.phases.scan:app"
+job-score = "jobhunt.phases.score:app"
+job-resume = "jobhunt.phases.resume:app"
+job-stage = "jobhunt.phases.stage:app"
+job-submit = "jobhunt.phases.submit:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["jobhunt"]

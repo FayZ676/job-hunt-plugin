@@ -15,8 +15,8 @@ the way is a build input, kept next to the PDF so a later tweak is an edit and a
 - Check on every build — the list every defect that shipped turned into
 - The shape to start from — the structure of the strongest build so far
 - What the market asks for — measured across 112 real JDs
-- Build — `resume.py build`, and reading the rendered page
-- The spec — what belongs in each section (`resume.py spec` owns the format)
+- Build — `job-resume build`, and reading the rendered page
+- The spec — what belongs in each section (`job-resume spec` owns the format)
 
 ## Sources and restrictions
 
@@ -169,7 +169,7 @@ evidence than any listicle, and reproducible against `prospects` at any time.
 ## Build
 
 ```bash
-PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.resume build "$CAREER/resumes/<slug>.json" --key <key> --density tight
+job-resume build "$CAREER/resumes/<slug>.json" --key <key> --density tight
 pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
 ```
 
@@ -195,7 +195,7 @@ profile tables.
 
 ## The spec
 
-**`resume.py spec` prints the contract** — top-level keys, contact entries, the inline markup, and
+**`job-resume spec` prints the contract** — top-level keys, contact entries, the inline markup, and
 every section type with its payload. Read it there; this file covers only what belongs in each
 section. Write the spec to `$CAREER/resumes/<company>-<role-slug>.json`.
 

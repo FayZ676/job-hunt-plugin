@@ -1,28 +1,10 @@
 
-import re
 import sys
-from typing import Literal, get_args
-
-__all__ = ["Row", "Posting", "Status", "Disposition", "Tier",
-           "get_args", "verify_against_schema"]
 
 try:
     from pydantic import BaseModel, ConfigDict, field_validator
 except ModuleNotFoundError:
-    sys.exit(
-        "This skill needs pydantic:  python3 -m pip install pydantic\n"
-        "(Scanning needs it; nothing else does.)")
-
-from jobhunt import jobkit
-
-Status = Literal["new", "scored", "shortlisted", "skipped", "staged", "applied",
-                 "interviewing", "rejected", "not_pursued", "closed"]
-
-Disposition = Literal["kept", "upgraded", "title", "location", "stale", "seen",
-                      "duplicate", "sponsored", "expired", "agency", "noise",
-                      "lowball", "covered"]
-
-Tier = Literal["identity", "policy", "judgment"]
+    sys.exit('the jobhunt package is not installed: pip install "$HOME/.claude/skills/job"')
 
 
 class Row(BaseModel):
@@ -81,32 +63,3 @@ class Posting(Row):
     @classmethod
     def _period(cls, value: str | None) -> str | None:
         return value.upper() if value else None
-
-
-def _schema_vocabulary(table: str, column: str) -> set[str]:
-    sql = open(jobkit.SCHEMA_SQL, encoding="utf-8").read()
-    body = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\);", sql, re.S)
-    if not body:
-        raise AssertionError(f"no {table} table in schema.sql")
-    listed = re.search(rf"{column}\s+TEXT.*?IN \((.*?)\)\)", body.group(1), re.S)
-    if not listed:
-        raise AssertionError(f"no CHECK IN list on {table}.{column}")
-    return set(re.findall(r"'([^']+)'", listed.group(1)))
-
-
-def verify_against_schema() -> None:
-    for table, column, literal in (("postings", "status", Status),
-                                   ("postings", "disposition", Disposition),
-                                   ("staged_fields", "tier", Tier)):
-        in_schema = _schema_vocabulary(table, column)
-        in_model = set(get_args(literal))
-        if in_schema != in_model:
-            raise AssertionError(
-                f"{table}.{column} disagrees with models.py\n"
-                f"  only in schema: {sorted(in_schema - in_model)}\n"
-                f"  only in model:  {sorted(in_model - in_schema)}")
-
-
-if __name__ == "__main__":
-    verify_against_schema()
-    print("models and schema agree")
