@@ -22,7 +22,12 @@ RESUMES = f"{CAREER}/resumes"
 SUBMITTED = f"{RESUMES}/submitted"
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-SCHEMA_SQL = os.path.join(_HERE, "sql", "schema.sql")
+SCHEMA_PARTS = tuple(os.path.join(_HERE, "sql", f"{name}.sql")
+                     for name in ("job", "profile"))
+
+
+def schema():
+    return "\n".join(open(part, encoding="utf-8").read() for part in SCHEMA_PARTS)
 
 
 def connect(path=None):
@@ -30,14 +35,12 @@ def connect(path=None):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
-    with open(SCHEMA_SQL, encoding="utf-8") as handle:
-        con.executescript(handle.read())
+    con.executescript(schema())
     return con
 
 
 def vocabulary(table, column):
-    schema = open(SCHEMA_SQL, encoding="utf-8").read()
-    body = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\);", schema, re.S)
+    body = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\);", schema(), re.S)
     listed = re.search(rf"{column}\s+TEXT.*?IN \((.*?)\)\)", body.group(1), re.S)
     return set(re.findall(r"'([^']+)'", listed.group(1)))
 

@@ -29,7 +29,7 @@ def main(sql: str = typer.Argument(None),
              False, help="dump the whole database as SQL you can take anywhere"),
          db: str = None):
     if schema:
-        print(open(jobkit.SCHEMA_SQL, encoding="utf-8").read())
+        print(jobkit.schema())
         return
 
     if export:

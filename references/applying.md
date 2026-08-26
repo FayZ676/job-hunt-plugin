@@ -108,7 +108,7 @@ job-stage add <key> \
 
 `job-stage add` refuses a prospect with no built resume, refuses a screenshot that is not on disk,
 and derives `ready` or `blocked` from the fields — a value left empty blocks the application and
-names itself in `blocked_on`. `job-stage answers` and `job-stage missing` are where the identity and
+names itself in `blocked_on`. `job-profile answers` and `job-profile missing` are where the identity and
 policy answers come from, and which of them are still `NULL`.
 
 **Then stop.** Do not click Submit, Apply, Continue, or Next in Phase 4. On a multi-page form, stop

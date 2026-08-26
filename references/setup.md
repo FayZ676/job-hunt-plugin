@@ -13,10 +13,13 @@ job-q -f "$HOME/.claude/skills/job/jobhunt/sql/seed.sql"
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
 Lever and Ashby plus a starting set of filters.
 
-**2. Fill the profile by interviewing them.** They talk; you write the rows. Never hand them a form
-or a file to edit — chat is the whole interface. `$Q --schema` documents every table. Cover:
+**2. Fill the profile by interviewing them.** They talk; you write the rows with `job-profile set
+<section>.<name> <value>` — one answer per call, section derived from the key and refused if it is
+not one of `job-profile sections`. Never hand them a form or a file to edit — chat is the whole
+interface. `$Q --schema` documents every table. Cover:
 
-- **Identity and contact**, work authorization, availability, compensation floor. Demographics are
+- **Identity and contact** (`identity.*`), work authorization (`work_authorization.*`), availability
+  (`availability.*`), compensation floor (`compensation.*`). Demographics (`demographics.*`) are
   optional, and `"Decline to self-identify"` is a complete answer — offer it rather than pressing.
 - **What they're looking for** — titles that fit and don't, level, years of experience, hard
   dealbreakers, home metro. This becomes `search_criteria`; the reasoning a schema cannot hold goes

@@ -1,8 +1,6 @@
 """Phase 4 — fill the form, record it, and stop with a finger over the button.
 
 
-  job-stage answers                      what the profile answers: identity and policy
-  job-stage missing                      profile fields with no answer — each one blocks
   job-stage add KEY --url URL --ats ashby --screenshot shot.png
       --field 'Legal right to work without sponsorship?|Yes|policy'
       --field 'Tell us about an AI product you built|…|judgment|needs-review'
@@ -39,26 +37,6 @@ def parse_field(raw):
     if not label:
         sys.exit(f"a field needs a label: {raw!r}")
     return label, value, tier, flag
-
-
-@app.command()
-def answers(json: bool = False, db: str = None):
-    """the profile answers identity and policy fields draw from"""
-    con = jobkit.connect(db)
-    rows = [dict(r) for r in con.execute(
-        "SELECT section, field, value, notes FROM profile WHERE value IS NOT NULL "
-        "ORDER BY section, field").fetchall()]
-    jobkit.print_rows(rows, json)
-
-
-@app.command()
-def missing(json: bool = False, db: str = None):
-    """profile fields with no answer — each one blocks"""
-    con = jobkit.connect(db)
-    rows = [dict(r) for r in con.execute("SELECT field, section FROM unanswered").fetchall()]
-    jobkit.print_rows(rows, json)
-    if rows and not json:
-        print(f"\n{len(rows)} unanswered — a form asking for one of these blocks, never guesses")
 
 
 @app.command()

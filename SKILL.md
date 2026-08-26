@@ -17,7 +17,7 @@ Nothing below overrides these.
    the user names, in that run. Silence is not approval, and an unapproved application stays staged
    rather than going out on a later run.
 2. **Never write an answer the profile does not support.** `NULL` is a hard stop: leave the field
-   empty and report it — `SELECT * FROM unanswered` lists every one that will block an application.
+   empty and report it — `job-profile missing` lists every one that will block an application.
    Never infer a phone number, a salary, or a demographic answer.
 3. **Answer to the truth, including when it costs the application.** A commitment in the profile is
    a ceiling, not an opening position.
@@ -220,8 +220,8 @@ Every field is one of three tiers, and the tier decides who answers it:
 
 | Tier | What it is | Source | Auto-filled |
 | ---- | ---------- | ------ | ----------- |
-| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `profile` | Yes |
-| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `profile` | Yes |
+| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `profile` `identity.*` | Yes |
+| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `profile` `work_authorization.* availability.* compensation.* demographics.*` | Yes |
 | **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
 
 A judgment question gets the answer the profile supports. Where nothing supports one, flag it for the
@@ -232,8 +232,8 @@ not in `projects` is a flag, not an inference.
 Attach the PDF, screenshot the completed form, then record it:
 
 ```bash
-job-stage answers   # what the profile answers
-job-stage missing   # every NULL, each one a hard stop
+job-profile answers   # what the profile answers
+job-profile missing   # every NULL, each one a hard stop
 job-stage add <key> --url <apply-url> --ats ashby --screenshot <png> \
   --field 'Do you have the legal right to work without sponsorship?|Yes|policy' \
   --field 'Tell us about an AI product you built…|…|judgment|needs-review'
