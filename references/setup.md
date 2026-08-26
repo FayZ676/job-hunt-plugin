@@ -5,9 +5,10 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 **1. Create the database.**
 
 ```bash
-CAREER=$(python3 "$HOME/.claude/skills/job/scripts/lib/jobkit.py" career)
+export PYTHONPATH="$HOME/.claude/skills/job"
+CAREER=$(python3 -m jobhunt.jobkit career)
 mkdir -p "$CAREER/resumes/submitted"
-python3 "$HOME/.claude/skills/job/scripts/lib/q.py" -f "$HOME/.claude/skills/job/sql/seed.sql"
+python3 -m jobhunt.q -f "$HOME/.claude/skills/job/jobhunt/sql/seed.sql"
 ```
 
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
@@ -40,7 +41,7 @@ UPDATE companies SET active=0 WHERE slug='…';
 it; Typst and Poppler are only for the resume build.
 
 ```bash
-python3 -c "import pydantic" 2>/dev/null || echo "python3 -m pip install pydantic"
+python3 -c "import pydantic" 2>/dev/null || echo 'pip install "$HOME/.claude/skills/job"'
 command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 ```

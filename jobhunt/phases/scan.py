@@ -13,16 +13,11 @@
 import argparse
 import concurrent.futures
 import json
-import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
-
-import jobkit
-import models
-import sources
-from jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, norm, norm_company
-from models import Posting, Prospect, StoredPosting
+from jobhunt import jobkit, models, sources
+from jobhunt.jobkit import MAX_DESCRIPTION_CHARS, age_days, compile_patterns, matches_any, norm, norm_company
+from jobhunt.models import Posting, Prospect, StoredPosting
 
 POSTING_COLUMNS = tuple(Posting.model_fields)
 

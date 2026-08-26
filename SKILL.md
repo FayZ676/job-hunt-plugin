@@ -39,15 +39,15 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the read-only dashboard — `scripts/lib/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
-| `/job help` | `cat "$HOME/.claude/skills/job/help.txt"` and nothing else — no run, no queries, no commentary |
+| `/job ui` | Serve the read-only dashboard — `jobhunt/ui.py`; `--lan` also serves it, key-gated, to other devices on the network |
+| `/job help` | `cat "$HOME/.claude/skills/job/jobhunt/help.txt"` and nothing else — no run, no queries, no commentary |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
 means adding it to the table above and to `help.txt`.
 
 ## Modules
 
-**One module per phase, under `scripts/phases/`.** Each runs on its own, so any step can be redone
+**One module per phase, under `jobhunt/phases/`.** Each runs on its own, so any step can be redone
 without the ones before it, and `--help` on any of them lists its subcommands.
 
 | Phase | Module | Subcommands |
@@ -58,12 +58,19 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 | 4 — Stage | `phases/stage.py` | `answers` `missing` `add` `show` `list` `drop` |
 | 5 — Review and submit | `phases/submit.py` | `review` `record` `rejected` |
 
-`scripts/lib/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`,
+`jobhunt/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`,
 and the two tools you run directly, `q.py` and `ui.py`.
 
+Every command below runs a module of the `jobhunt` package, so each one needs the skill directory on
+the import path — on the same command line, since shell state does not survive between tool calls:
+
 ```bash
-P="$HOME/.claude/skills/job/scripts/phases"
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.scan --help
 ```
+
+`pip install "$HOME/.claude/skills/job"` installs the same modules as `job-scan`, `job-score`,
+`job-resume`, `job-stage`, `job-submit`, `job-q` and `job-ui`, but nothing here assumes it.
 
 **The phase modules refuse what the invariants forbid**, so the rule is enforced rather than
 remembered: `score.py set` will not score a prospect whose description is empty, `stage.py add`
@@ -101,7 +108,7 @@ history, and the user's whole profile are rows in it.
 where it is rather than resolving against the working directory:
 
 ```bash
-CAREER=$(python3 "$HOME/.claude/skills/job/scripts/lib/jobkit.py" career)
+CAREER=$(PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.jobkit career)
 ```
 
 `jobkit.py` also answers `db`, `resumes` and `submitted`. Default `~/data/job`; `JOB_CAREER_DIR`
@@ -114,14 +121,14 @@ naming the filter that ruled on it, so "what did that filter cost me" is a query
 filter re-rules what is stored instead of going back to the network.
 
 ```bash
-Q='python3 "$HOME/.claude/skills/job/scripts/lib/q.py"'
-$Q --schema                                        # the manual: tables, views, CHECKs, triggers
-$Q "SELECT * FROM triage WHERE status='new'"
-$Q --json "SELECT * FROM staged"
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.q --schema   # the manual: tables, views, CHECKs, triggers
+python3 -m jobhunt.q "SELECT * FROM triage WHERE status='new'"
+python3 -m jobhunt.q --json "SELECT * FROM staged"
 ```
 
-`$Q` is shorthand for that path throughout this skill and its references. Shell state does not
-survive between tool calls, so keep the assignment on the same command line as the query.
+`$Q` stands for `python3 -m jobhunt.q` throughout this skill and its references. Shell state does not
+survive between tool calls, so keep the `PYTHONPATH` export on the same command line as the query.
 
 **Read `--schema` before writing SQL** — it documents every table, and its `CHECK`s make an invalid
 row impossible to write. Three behaviors it encodes and you must not fight:
@@ -160,11 +167,11 @@ Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothi
 re-run, and every source normalizes into the same columns, so one filter chain rules on all of them.
 
 ```bash
-P="$HOME/.claude/skills/job/scripts/phases"
-python3 "$P/scan.py" boards                                   # every watched board, in parallel
-python3 "$P/scan.py" harvest --source indeed --file <harvest.json>
-python3 "$P/scan.py" ingest                                   # postings -> prospects
-python3 "$P/scan.py" ingest --redo --no-location-filter       # re-rule stored rows, no network
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.scan boards                               # every watched board, in parallel
+python3 -m jobhunt.phases.scan harvest --source indeed --file <harvest.json>
+python3 -m jobhunt.phases.scan ingest                               # postings -> prospects
+python3 -m jobhunt.phases.scan ingest --redo --no-location-filter   # re-rule stored rows, no network
 ```
 
 Flags and verdicts are `--help` and `scan.py dispositions` away; do not guess them.
@@ -181,11 +188,12 @@ every morning after.
 ## Phase 2 — Score
 
 ```bash
-python3 "$P/score.py" triage --status new          # no descriptions, on purpose
-python3 "$P/score.py" rubric                       # search_criteria and search_notes
-python3 "$P/score.py" show <key> <key>             # only what survives triage
-python3 "$P/score.py" set <key> --score 9 --reason "the JD language that drove it, quoted"
-python3 "$P/score.py" pending                      # what is still unscored
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.score triage --status new   # no descriptions, on purpose
+python3 -m jobhunt.phases.score rubric                # search_criteria and search_notes
+python3 -m jobhunt.phases.score show <key> <key>      # only what survives triage
+python3 -m jobhunt.phases.score set <key> --score 9 --reason "the JD language that drove it, quoted"
+python3 -m jobhunt.phases.score pending               # what is still unscored
 ```
 
 Triage against `search_criteria` (the rubric) and `search_notes` (the judgement the schema cannot
@@ -205,8 +213,9 @@ selection method, the writing rules, the one-pass test, the spec, and the build.
 page before moving on**; a resume that never got looked at is not ready to attach.
 
 ```bash
-python3 "$P/resume.py" spec                                   # the contract, and every section type
-python3 "$P/resume.py" build <spec.json> --key <key>          # renders, then records the path
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.resume spec                            # the contract, and every section type
+python3 -m jobhunt.phases.resume build <spec.json> --key <key>   # renders, then records the path
 ```
 
 `--key` records the absolute path on the prospect, so building and recording cannot drift apart.
@@ -232,9 +241,10 @@ not in `projects` is a flag, not an inference.
 Attach the PDF, screenshot the completed form, then record it:
 
 ```bash
-python3 "$P/stage.py" answers                     # what the profile answers
-python3 "$P/stage.py" missing                     # every NULL, each one a hard stop
-python3 "$P/stage.py" add <key> --url <apply-url> --ats ashby --screenshot <png> \
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.stage answers   # what the profile answers
+python3 -m jobhunt.phases.stage missing   # every NULL, each one a hard stop
+python3 -m jobhunt.phases.stage add <key> --url <apply-url> --ats ashby --screenshot <png> \
   --field 'Do you have the legal right to work without sponsorship?|Yes|policy' \
   --field 'Tell us about an AI product you built…|…|judgment|needs-review'
 ```
@@ -247,14 +257,15 @@ open; the staged rows survive a lost session and refilling from them is cheap.
 ## Phase 5 — Review and submit
 
 Present every staged application in one table — company, title, score, status, and whatever is named
-in `blocked_on` (`python3 "$P/submit.py" review`). Keep it to that table; the user reads the applications
+in `blocked_on` (`python3 -m jobhunt.phases.submit review`). Keep it to that table; the user reads the applications
 themselves in the dashboard. Then ask which to submit, accepting "all", a subset, or none.
 
 For each approved one: click submit, wait for the confirmation page, and **verify it**. A validation
 error means nothing was submitted — repair the named field and re-present it. Then:
 
 ```bash
-python3 "$P/submit.py" record <key> --confirmation "what the confirmation page said"
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.submit record <key> --confirmation "what the confirmation page said"
 ```
 
 That sets `applied` and moves the resume's `.pdf` and `.json` into `$CAREER/resumes/submitted/` in one
@@ -266,7 +277,8 @@ refuses an empty `--confirmation`.
 Only a reported rejection. Do nothing for a role that is merely quiet.
 
 ```bash
-python3 "$P/submit.py" rejected <key> --note "3 days, no interview — resume screen"
+export PYTHONPATH="$HOME/.claude/skills/job"
+python3 -m jobhunt.phases.submit rejected <key> --note "3 days, no interview — resume screen"
 ```
 
 That records the rejection and **deletes that resume's `.pdf` and `.json` from

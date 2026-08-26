@@ -5,3 +5,8 @@ node_modules/
 /career/
 __pycache__/
 *.pyc
+
+# Packaging artifacts.
+*.egg-info/
+build/
+dist/

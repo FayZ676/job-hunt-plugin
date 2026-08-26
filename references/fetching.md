@@ -15,7 +15,7 @@ source's kind, rank, endpoint and the quirk that bites when it goes quiet:
 
 Adding a source is one entry in `sources.REGISTRY` — a function returning `Posting` objects, a
 `kind`, a `rank`, an endpoint and a quirk; nothing downstream changes, because no later step knows
-which source a row came from. `scan.py` needs `pydantic` (`python3 -m pip install pydantic`); nothing else does.
+which source a row came from. `scan.py` needs `pydantic` (`pip install "$HOME/.claude/skills/job"`); nothing else does.
 
 ## Contents
 
@@ -27,7 +27,7 @@ which source a row came from. `scan.py` needs `pydantic` (`python3 -m pip instal
 ## Boards
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" boards
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan boards
 ```
 
 Reads the company list out of the database, hits every active Greenhouse, Lever and Ashby board in
@@ -47,8 +47,8 @@ with the ATS behind an iframe; view source, or check where the "Apply" button po
 
 ```bash
 $Q "INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual')"
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" boards --company Anthropic
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan boards --company Anthropic
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest
 ```
 
 A slug that 404s is wrong, or the company is on an ATS with no public board. Those go in as manual
@@ -122,7 +122,7 @@ Same trick for the descriptions file. Nothing large ever passes through the conv
 ### 3. Load it into the raw layer
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" harvest --source indeed --file <harvest.json>
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan harvest --source indeed --file <harvest.json>
 ```
 
 Parses the harvest into `postings`, including the facts only this source states — `sponsored`,
@@ -138,7 +138,7 @@ way. **Cap each at ~4,000 characters** — full ones run 9,000–14,500, and the
 dozen of them affordable.
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" descriptions --file <descs.json>
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan descriptions --file <descs.json>
 ```
 
 Attaches them to the rows ingest kept and warns about any prospect still without one.

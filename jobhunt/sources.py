@@ -5,8 +5,8 @@ import re
 import time
 import urllib.request
 
-from jobkit import MAX_DESCRIPTION_CHARS, to_iso
-from models import Posting
+from jobhunt.jobkit import MAX_DESCRIPTION_CHARS, to_iso
+from jobhunt.models import Posting
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) job-scan/1.0"
 TAG_RE = re.compile(r"<[^>]+>")

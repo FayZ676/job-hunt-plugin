@@ -4,7 +4,7 @@ Deriving `prospects` from the raw layer. **Ingest fetches nothing** — it reads
 already stored, rules on every row, and promotes the survivors.
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest
 ```
 
 **One chain serves every source.** No filter names a source: each normalizes into the same columns,
@@ -16,8 +16,8 @@ drops — `kept` became a prospect, `upgraded` replaced a lower-ranked source on
 other value names the filter that dropped the row.
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest --help      # every flag
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" dispositions   # every verdict, in order
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest --help      # every flag
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan dispositions   # every verdict, in order
 ```
 
 ## The filters
@@ -71,7 +71,7 @@ guessing from a count. Then change the rule and re-rule the same postings, with 
 ```bash
 $Q "SELECT kind, pattern, note FROM filters"
 $Q "INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)contract','no contract roles')"
-python3 "$HOME/.claude/skills/job/scripts/phases/scan.py" ingest --redo
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.scan ingest --redo
 ```
 
 | Symptom | Fix |

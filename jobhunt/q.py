@@ -11,7 +11,7 @@ import argparse
 import sqlite3
 import sys
 
-import jobkit
+from jobhunt import jobkit
 
 READS = {"SELECT", "WITH", "PRAGMA", "EXPLAIN", "VALUES"}
 

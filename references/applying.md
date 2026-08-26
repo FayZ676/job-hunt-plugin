@@ -100,7 +100,7 @@ Screenshot the completed form into `$CAREER/resumes/`; that screenshot is what t
 Then record the application, one `--field` per answer:
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/stage.py" add <key> \
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.stage add <key> \
   --url <apply-url> --ats ashby --screenshot <png> \
   --field 'Work authorization|Yes|policy' \
   --field 'Why this company?|…|judgment|needs-review'
@@ -169,7 +169,7 @@ the application for approval; never resubmit silently. Set `applied` only agains
 have seen in a snapshot:
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/submit.py" record <key> \
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.submit record <key> \
   --confirmation "Thank you for applying — confirmation #A12"
 ```
 

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "job-hunt"
+version = "0.1.0"
+description = "A Claude Code skill that scans job boards, scores openings, tailors resumes, and applies."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2"]
+
+[project.urls]
+Homepage = "https://github.com/FayZ676/job-hunt-plugin"
+
+[project.scripts]
+job-paths = "jobhunt.jobkit:main"
+job-q = "jobhunt.q:main"
+job-ui = "jobhunt.ui:main"
+job-scan = "jobhunt.phases.scan:main"
+job-score = "jobhunt.phases.score:main"
+job-resume = "jobhunt.phases.resume:main"
+job-stage = "jobhunt.phases.stage:main"
+job-submit = "jobhunt.phases.submit:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["jobhunt"]

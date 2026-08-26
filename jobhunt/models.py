@@ -13,7 +13,7 @@ except ModuleNotFoundError:
         "This skill needs pydantic:  python3 -m pip install pydantic\n"
         "(Scanning needs it; nothing else does.)")
 
-import jobkit
+from jobhunt import jobkit
 
 Status = Literal["new", "scored", "shortlisted", "skipped", "staged", "applied",
                  "interviewing", "rejected", "not_pursued", "closed"]

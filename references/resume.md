@@ -169,7 +169,7 @@ evidence than any listicle, and reproducible against `prospects` at any time.
 ## Build
 
 ```bash
-python3 "$HOME/.claude/skills/job/scripts/phases/resume.py" build "$CAREER/resumes/<slug>.json" --key <key> --density tight
+PYTHONPATH="$HOME/.claude/skills/job" python3 -m jobhunt.phases.resume build "$CAREER/resumes/<slug>.json" --key <key> --density tight
 pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
 ```
 

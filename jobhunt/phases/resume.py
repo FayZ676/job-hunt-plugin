@@ -18,9 +18,7 @@ import subprocess
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
-
-import jobkit
+from jobhunt import jobkit
 
 DENSITY = {
     "tight":  {"body": 9.5, "name": 17.0, "section": 10.5, "leading": 0.58,

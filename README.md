@@ -25,10 +25,11 @@ Five phases, in order.
 
 **The submit click is never unattended.** Everything before it is.
 
-Each phase is one module under `scripts/phases/` — `scan.py`, `score.py`, `resume.py`, `stage.py`,
-`submit.py` — so any step can be run or redone on its own, and `--help` on any of them lists what it
-does. `scripts/lib/` holds what they share, plus the two tools you run directly: `q.py` for SQL and
-`ui.py` for the dashboard. The rules above are enforced in those modules, not just described: the
+Everything is one Python package, `jobhunt`. Each phase is one module under `jobhunt/phases/` —
+`scan.py`, `score.py`, `resume.py`, `stage.py`, `submit.py` — so any step can be run or redone on its
+own, and `--help` on any of them lists what it does. `jobhunt/` holds what they share, plus the two
+tools you run directly: `q.py` for SQL and `ui.py` for the dashboard, and the schema the database is
+built from (`jobhunt/sql/`). The rules above are enforced in those modules, not just described: the
 scorer refuses a posting whose description was never read, staging refuses an application with no
 built resume, and nothing is marked applied without the confirmation text you saw.
 
@@ -38,7 +39,13 @@ Clone it into your skills directory, where Claude Code picks it up as `/job`:
 
 ```
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
+pip install ~/.claude/skills/job
 ```
+
+The install is what brings in `pydantic` and puts the phases on your `PATH` as `job-scan`,
+`job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and `job-ui`. The skill itself runs the
+modules out of the clone (`PYTHONPATH=~/.claude/skills/job python3 -m jobhunt.phases.scan`), so
+`pydantic` alone is enough if you would rather not install it.
 
 Then, from anywhere:
 
@@ -52,7 +59,7 @@ export, hand it over and it drafts the whole thing for you to correct.
 
 That's the whole install. `/job scan` works as soon as setup finishes.
 
-Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`scripts/lib/sources.py`) —
+Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`jobhunt/sources.py`) —
 a function that returns `Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
 no step below fetching knows which source a row came from.
 
@@ -85,7 +92,8 @@ your phone number in it.
 
 ## Requirements
 
-- **Scanning and scoring:** Python 3.10+ and `pydantic` (`python3 -m pip install pydantic`, or `-r requirements.txt`). SQLite ships with Python.
+- **Scanning and scoring:** Python 3.10+ and `pydantic` (`pip install ~/.claude/skills/job`, which
+  installs the `jobhunt` package and its one dependency). SQLite ships with Python.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).

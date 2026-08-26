@@ -23,10 +23,10 @@ import threading
 import urllib.parse
 import webbrowser
 
-import jobkit
+from jobhunt import jobkit
 
 HTML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui.html")
-HELP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "help.txt")
+HELP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "help.txt")
 
 ACCESS = None
 LOOPBACK = ("127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1")

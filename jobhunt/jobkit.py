@@ -19,7 +19,7 @@ RESUMES = f"{CAREER}/resumes"
 SUBMITTED = f"{RESUMES}/submitted"
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-SCHEMA_SQL = os.path.join(_HERE, "..", "..", "sql", "schema.sql")
+SCHEMA_SQL = os.path.join(_HERE, "sql", "schema.sql")
 
 
 def connect(path=None):
@@ -107,10 +107,15 @@ PATHS = {"career": CAREER, "db": DB,
          "resumes": RESUMES, "submitted": SUBMITTED}
 
 
-if __name__ == "__main__":
+def main():
     requested = sys.argv[1:] or ["career"]
     unknown = [name for name in requested if name not in PATHS]
     if unknown:
         sys.exit(f"unknown path {unknown[0]!r}; choose from {', '.join(PATHS)}")
     for name in requested:
         print(PATHS[name])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
