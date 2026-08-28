@@ -46,7 +46,7 @@ const postings = z.object({
 });
 
 export const TABLES = {
-  profile: z.object({ field: text, value: maybeText, notes: maybeText, section: SECTION }),
+  profile: z.object({ field: text, value: maybeText, section: SECTION }),
   education: z.object({ id: int, degree: text, institution: maybeText, finished: maybeText }),
   employers: z.object({
     id: int, name: text, title: maybeText, start: maybeText, finish: maybeText,

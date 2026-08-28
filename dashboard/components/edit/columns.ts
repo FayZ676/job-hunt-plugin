@@ -15,15 +15,6 @@ export const title = (column: Column) =>
   column.label ?? column.name.replace(/_/g, " ");
 
 export const COLUMNS = {
-  profile: [
-    { name: "value", label: "answer", blocking: true, width: "minmax(0,1.4fr)" },
-    { name: "notes", kind: "area", width: "minmax(0,1fr)" },
-  ],
-  profileNew: [
-    { name: "field", placeholder: "section.name", width: "minmax(0,1fr)" },
-    { name: "value", label: "answer", width: "minmax(0,1.4fr)" },
-    { name: "notes", width: "minmax(0,1fr)" },
-  ],
   education: [
     { name: "degree", width: "minmax(0,1.2fr)" },
     { name: "institution", width: "minmax(0,1.2fr)" },

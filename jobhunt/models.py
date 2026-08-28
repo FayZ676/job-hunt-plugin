@@ -72,7 +72,6 @@ class Posting(Row):
 class Profile(Row):
     field: str
     value: str | None = None
-    notes: str | None = None
 
     @field_validator("field")
     @classmethod

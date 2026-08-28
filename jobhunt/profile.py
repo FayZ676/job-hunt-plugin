@@ -2,7 +2,7 @@
 
 
   job-profile set identity.email you@example.com
-  job-profile set availability.notice_period '2 weeks' --notes 'negotiable to 1'
+  job-profile set availability.notice_period '2 weeks'
   job-profile clear identity.phone       back to unanswered — a hard stop again
   job-profile answers                    what the profile answers
   job-profile missing                    every unanswered field, each one a hard stop
@@ -24,17 +24,16 @@ app = typer.Typer(help=__doc__, no_args_is_help=True,
 
 
 @app.command("set")
-def set_(field: str, value: str, notes: str = typer.Option(None), db: str = None):
+def set_(field: str, value: str, db: str = None):
     """answer one field, or correct the answer it already has"""
     try:
-        row = Profile(field=field, value=value, notes=notes).row()
+        row = Profile(field=field, value=value).row()
     except ValidationError as bad:
         sys.exit("; ".join(e["msg"].removeprefix("Value error, ") for e in bad.errors()))
     con = jobkit.connect(db)
     con.execute(
-        "INSERT INTO profile(field,value,notes) VALUES(:field,:value,:notes) "
-        "ON CONFLICT(field) DO UPDATE SET value=excluded.value,"
-        "  notes=COALESCE(excluded.notes, profile.notes)", row)
+        "INSERT INTO profile(field,value) VALUES(:field,:value) "
+        "ON CONFLICT(field) DO UPDATE SET value=excluded.value", row)
     con.commit()
     print(f"{field} = {value}")
 
@@ -54,7 +53,7 @@ def answers(json: bool = False, db: str = None):
     """what the profile answers"""
     con = jobkit.connect(db)
     rows = [dict(r) for r in con.execute(
-        "SELECT section, field, value, notes FROM profile WHERE value IS NOT NULL "
+        "SELECT section, field, value FROM profile WHERE value IS NOT NULL "
         "ORDER BY section, field").fetchall()]
     jobkit.print_rows(rows, json)
 

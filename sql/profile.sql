@@ -11,7 +11,6 @@
 CREATE TABLE IF NOT EXISTS profile (
   field   TEXT PRIMARY KEY,      -- 'identity.email', 'availability.notice_period'
   value   TEXT,                  -- NULL = unanswered = hard stop
-  notes   TEXT,
   section TEXT GENERATED ALWAYS AS (substr(field, 1, instr(field, '.') - 1)) VIRTUAL
             CHECK (section IN (
             'identity', 'work_authorization', 'availability', 'compensation',

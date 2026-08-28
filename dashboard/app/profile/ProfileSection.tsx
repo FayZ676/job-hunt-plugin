@@ -9,8 +9,7 @@ import { say } from "@/components/Toaster";
 import type { Field as Answer } from "@/lib/queries";
 
 const VALUE = { name: "value", label: "answer", blocking: true } as const;
-const NOTES = { name: "notes", placeholder: "note", quiet: true } as const;
-const TRACKS = { ["--tracks" as string]: "minmax(0,0.9fr) minmax(0,1.3fr) minmax(0,1.1fr) auto" };
+const TRACKS = { ["--tracks" as string]: "minmax(0,0.9fr) minmax(0,1.6fr) auto" };
 
 export default function ProfileSection({ section, rows }: { section: string; rows: Answer[] }) {
   const [name, setName] = useState("");
@@ -40,7 +39,6 @@ export default function ProfileSection({ section, rows }: { section: string; row
             {row.value === null && <span className="ml-1.5 text-xs text-error">needs an answer</span>}
           </label>
           <Field table="profile" rowid={row.rowid} column={VALUE} value={row.value} />
-          <Field table="profile" rowid={row.rowid} column={NOTES} value={row.notes} />
           <div className="flex justify-end md:block">
             <DeleteButton table="profile" rowid={row.rowid} what={row.field} />
           </div>
@@ -54,7 +52,6 @@ export default function ProfileSection({ section, rows }: { section: string; row
                onChange={(event) => setName(event.target.value)} />
         <input className="input input-sm w-full" placeholder="your answer" value={value} aria-label="answer"
                onChange={(event) => setValue(event.target.value)} />
-        <span className="hidden md:block" />
         <button type="button" onClick={add} className="btn btn-sm btn-primary">Add</button>
       </div>
     </div>
