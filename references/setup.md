@@ -13,11 +13,17 @@ job-q -f "$HOME/.claude/skills/job/sql/seed.sql"
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
 Lever and Ashby plus a starting set of filters.
 
-**2. Fill the profile by interviewing them.** They talk; you write the rows with `job-profile set
-<section>.<name> <value>` — one answer per call, section derived from the key and refused if it is
-not one of `job-profile sections`. Never hand them a file to edit, and never make the first pass a
-form — the interview is a conversation. Afterwards they revise themselves in the dashboard, whose
-Profile page writes every one of these tables, so tell them where it is once the profile stands up. `$Q --schema` documents every table. Cover:
+**2. Fill the profile by interviewing them.** Every field a form can ask for already exists as an
+unanswered row — the field list is the schema, in `sql/profile.sql`, not something an interview or
+the dashboard adds to. They talk; you answer the rows with `job-profile set <section>.<name>
+<value>` — one answer per call, and a name that is not declared is refused rather than filed as a
+new field. If a form genuinely asks something no field covers, add it to `sql/profile.sql` and
+`lib/schema.ts`; it then appears in the dashboard on the next connect.
+
+Never hand them a file to edit, and never make the first pass a form — the interview is a
+conversation. Afterwards they revise themselves in the dashboard, whose Profile page writes every
+one of these tables, so tell them where it is once the profile stands up. `$Q --schema` documents
+every table. Cover:
 
 - **Identity and contact** (`identity.*`), work authorization (`work_authorization.*`), availability
   (`availability.*`), compensation floor (`compensation.*`). Demographics (`demographics.*`) are

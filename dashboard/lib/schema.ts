@@ -12,6 +12,21 @@ export const SECTION = z.enum([
   "demographics", "experience", "search",
 ]);
 
+export const FIELD = z.enum([
+  "identity.full_name", "identity.preferred_name", "identity.last_name", "identity.email",
+  "identity.phone", "identity.location", "identity.street_address", "identity.linkedin",
+  "identity.github", "work_authorization.authorized_in_country_of_residence",
+  "work_authorization.legal_right_to_work_without_sponsorship",
+  "work_authorization.requires_sponsorship_now_or_future", "work_authorization.over_18",
+  "availability.earliest_start", "availability.earliest_daily_start",
+  "availability.notice_period", "availability.employment_type", "availability.remote_preference",
+  "availability.willing_to_relocate", "compensation.floor", "compensation.currency",
+  "demographics.gender", "demographics.race_ethnicity", "demographics.hispanic_or_latino",
+  "demographics.veteran_status", "demographics.disability_status", "experience.years",
+  "experience.relevant_years", "experience.clock_starts", "search.home_metro",
+  "search.relocation",
+]);
+
 export const CRITERION = z.enum([
   "title_preferred", "title_acceptable", "title_excluded", "title_penalty",
   "score_up", "score_down", "dealbreaker", "brings", "location_tier",
@@ -46,7 +61,7 @@ const postings = z.object({
 });
 
 export const TABLES = {
-  profile: z.object({ field: text, value: maybeText, section: SECTION }),
+  profile: z.object({ field: FIELD, value: maybeText, section: SECTION }),
   education: z.object({ id: int, degree: text, institution: maybeText, finished: maybeText }),
   employers: z.object({
     id: int, name: text, title: maybeText, start: maybeText, finish: maybeText,

@@ -1,14 +1,16 @@
 
 import sys
+from enum import StrEnum
 
 try:
-    from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+    from pydantic import BaseModel, ConfigDict, field_validator
 except ModuleNotFoundError:
     sys.exit('the jobhunt package is not installed: pip install "$HOME/.claude/skills/job"')
 
 from jobhunt import jobkit
 
-SECTIONS = jobkit.vocabulary("profile", "section")
+ProfileField = StrEnum("ProfileField", {
+    name: name for name in sorted(jobkit.vocabulary("profile", "field"))})
 
 
 class Row(BaseModel):
@@ -70,16 +72,5 @@ class Posting(Row):
 
 
 class Profile(Row):
-    field: str
+    field: ProfileField
     value: str | None = None
-
-    @field_validator("field")
-    @classmethod
-    def _filed(cls, value: str) -> str:
-        section, _, name = value.partition(".")
-        if section not in SECTIONS:
-            raise ValueError(f"no section {section!r} — a field is '<section>.<name>', "
-                             f"section one of {', '.join(sorted(SECTIONS))}")
-        if not name:
-            raise ValueError(f"field needs a name after '{section}.', got {value!r}")
-        return value

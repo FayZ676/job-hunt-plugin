@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { one, rows } from "./db";
 import {
-  CRITERION, PROJECT_STATUS, SECTION, TABLES, VIEWS, withRowid,
+  CRITERION, FIELD, PROJECT_STATUS, SECTION, TABLES, VIEWS, withRowid,
   type Rowed, type Table,
 } from "./schema";
 
@@ -19,7 +19,8 @@ export type Project = Rowed<"projects"> & {
 };
 export type Employer = Rowed<"employers"> & { projects: Project[] };
 
-export const fields = () => listing("profile", "ORDER BY section, field");
+export const fields = () => listing("profile").sort(
+  (a, b) => FIELD.options.indexOf(a.field) - FIELD.options.indexOf(b.field));
 export const education = () => listing("education");
 export const criteria = () => listing("search_criteria", "ORDER BY kind, seq IS NULL, seq, value");
 export const notes = () => listing("search_notes", "ORDER BY topic");

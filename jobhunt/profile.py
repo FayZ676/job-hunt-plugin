@@ -7,29 +7,32 @@
   job-profile answers                    what the profile answers
   job-profile missing                    every unanswered field, each one a hard stop
 
+Every field a form can ask for is declared in sql/profile.sql and exists as a
+row from the first connect, so answering is always an update: a name that is not
+declared is refused rather than filed as a new field. Something genuinely
+missing is a change to that list, not a row invented here.
+
 The section is never typed or stored twice: it is the part of the field before
-the dot, so `availability.notice_period` files itself. A field naming no known
-section is refused rather than filed somewhere new.
+the dot, so `availability.notice_period` files itself.
 """
 
-import sys
+from typing import Annotated
 
 import typer
 
 from jobhunt import jobkit
-from jobhunt.models import Profile, ValidationError
+from jobhunt.models import Profile, ProfileField
 
 app = typer.Typer(help=__doc__, no_args_is_help=True,
                   rich_markup_mode=None, add_completion=False)
 
+FIELD = Annotated[ProfileField, typer.Argument(metavar="<section>.<name>", show_choices=False)]
+
 
 @app.command("set")
-def set_(field: str, value: str, db: str = None):
+def set_(field: FIELD, value: str, db: str = None):
     """answer one field, or correct the answer it already has"""
-    try:
-        row = Profile(field=field, value=value).row()
-    except ValidationError as bad:
-        sys.exit("; ".join(e["msg"].removeprefix("Value error, ") for e in bad.errors()))
+    row = Profile(field=field, value=value).row()
     con = jobkit.connect(db)
     con.execute(
         "INSERT INTO profile(field,value) VALUES(:field,:value) "
@@ -39,11 +42,10 @@ def set_(field: str, value: str, db: str = None):
 
 
 @app.command()
-def clear(field: str, db: str = None):
+def clear(field: FIELD, db: str = None):
     """drop an answer — the field goes back to blocking"""
     con = jobkit.connect(db)
-    if not con.execute("UPDATE profile SET value=NULL WHERE field=?", (field,)).rowcount:
-        sys.exit(f"no profile field {field!r}")
+    con.execute("UPDATE profile SET value=NULL WHERE field=?", (field,))
     con.commit()
     print(f"{field} unanswered — it blocks any form that asks for it")
 

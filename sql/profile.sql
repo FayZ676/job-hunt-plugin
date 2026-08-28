@@ -5,18 +5,68 @@
 -- the model writes these rows. A NULL value means "not answered yet" and is a
 -- hard stop when a form asks for it -- absence is typed, not a TODO string.
 
--- Scalar answers. Key/value because that is genuinely the shape of a form.
+-- Scalar answers. Key/value because that is genuinely the shape of a form, but
+-- the keys are the schema, not the user's to invent: every field a form can ask
+-- for is named here, one row per name is seeded below, and the dashboard edits
+-- values only. Something missing is a change to this list, not a new row.
 -- 'field' is '<section>.<name>' and the section is read back out of it, so the
 -- two can never disagree and nothing has to assert one.
 CREATE TABLE IF NOT EXISTS profile (
-  field   TEXT PRIMARY KEY,      -- 'identity.email', 'availability.notice_period'
+  field   TEXT PRIMARY KEY      -- 'identity.email', 'availability.notice_period'
+            CHECK (field IN (
+            'identity.full_name', 'identity.preferred_name', 'identity.last_name',
+            'identity.email', 'identity.phone', 'identity.location', 'identity.street_address',
+            'identity.linkedin', 'identity.github',
+            'work_authorization.authorized_in_country_of_residence',
+            'work_authorization.legal_right_to_work_without_sponsorship',
+            'work_authorization.requires_sponsorship_now_or_future',
+            'work_authorization.over_18', 'availability.earliest_start',
+            'availability.earliest_daily_start', 'availability.notice_period',
+            'availability.employment_type', 'availability.remote_preference',
+            'availability.willing_to_relocate', 'compensation.floor', 'compensation.currency',
+            'demographics.gender', 'demographics.race_ethnicity',
+            'demographics.hispanic_or_latino', 'demographics.veteran_status',
+            'demographics.disability_status', 'experience.years', 'experience.relevant_years',
+            'experience.clock_starts', 'search.home_metro', 'search.relocation')),
   value   TEXT,                  -- NULL = unanswered = hard stop
   section TEXT GENERATED ALWAYS AS (substr(field, 1, instr(field, '.') - 1)) VIRTUAL
             CHECK (section IN (
             'identity', 'work_authorization', 'availability', 'compensation',
-            'demographics', 'experience', 'search')),
-  CHECK (instr(field, '.') < length(field))
+            'demographics', 'experience', 'search'))
 );
+
+INSERT OR IGNORE INTO profile(field) VALUES
+  ('identity.full_name'),
+  ('identity.preferred_name'),
+  ('identity.last_name'),
+  ('identity.email'),
+  ('identity.phone'),
+  ('identity.location'),
+  ('identity.street_address'),
+  ('identity.linkedin'),
+  ('identity.github'),
+  ('work_authorization.authorized_in_country_of_residence'),
+  ('work_authorization.legal_right_to_work_without_sponsorship'),
+  ('work_authorization.requires_sponsorship_now_or_future'),
+  ('work_authorization.over_18'),
+  ('availability.earliest_start'),
+  ('availability.earliest_daily_start'),
+  ('availability.notice_period'),
+  ('availability.employment_type'),
+  ('availability.remote_preference'),
+  ('availability.willing_to_relocate'),
+  ('compensation.floor'),
+  ('compensation.currency'),
+  ('demographics.gender'),
+  ('demographics.race_ethnicity'),
+  ('demographics.hispanic_or_latino'),
+  ('demographics.veteran_status'),
+  ('demographics.disability_status'),
+  ('experience.years'),
+  ('experience.relevant_years'),
+  ('experience.clock_starts'),
+  ('search.home_metro'),
+  ('search.relocation');
 
 CREATE TABLE IF NOT EXISTS education (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
