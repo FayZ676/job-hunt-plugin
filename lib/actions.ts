@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { z } from "zod";
+
 import { db } from "./db.ts";
-import type { Table } from "./schema.ts";
+import { TABLES, type Table } from "./schema.ts";
 
 const WRITABLE = new Set<Table>([
   "identity", "work_authorization", "availability", "compensation", "demographics",
@@ -14,7 +16,11 @@ const WRITABLE = new Set<Table>([
 
 export type Saved = { rowid: number } | { error: string };
 
-const failed = (error: unknown) => ({ error: String((error as Error).message).replace(/\s+/g, " ") });
+const failed = (error: unknown) => ({
+  error: error instanceof z.ZodError
+    ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")
+    : String((error as Error).message).replace(/\s+/g, " "),
+});
 
 type Held = { name: string; type: string; hidden: number };
 
@@ -43,6 +49,8 @@ export async function save(
     const names = Object.keys(bound);
     if (!names.length)
       return { error: `no writable column among ${Object.keys(values).join(", ") || "(none)"}` };
+
+    TABLES[table as Table].partial().parse(bound);
 
     if (rowid === null) {
       rowid = Number(db().prepare(

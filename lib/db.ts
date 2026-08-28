@@ -44,10 +44,8 @@ export function open(at?: string | null) {
   return (held.db = connect(path.resolve(at.replace(/^~(?=$|\/)/, os.homedir()))));
 }
 
-export const rows = <T extends z.ZodType>(shape: T, sql: string, args: unknown[] = []) =>
-  db().prepare(sql).all(...args).map((row) => shape.parse(row) as z.infer<T>);
+export const rows = <T extends z.ZodType>(_shape: T, sql: string, args: unknown[] = []) =>
+  db().prepare(sql).all(...args) as z.infer<T>[];
 
-export const one = <T extends z.ZodType>(shape: T, sql: string, args: unknown[] = []) => {
-  const found = db().prepare(sql).get(...args);
-  return found ? (shape.parse(found) as z.infer<T>) : null;
-};
+export const one = <T extends z.ZodType>(_shape: T, sql: string, args: unknown[] = []) =>
+  (db().prepare(sql).get(...args) ?? null) as z.infer<T> | null;
