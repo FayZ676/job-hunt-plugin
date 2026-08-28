@@ -38,10 +38,66 @@ def connect(path=None):
     return con
 
 
+def body(table):
+    """the column declarations of one table, straight from the DDL"""
+    found = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\)[^;]*;", schema(), re.S)
+    return found.group(1) if found else ""
+
+
+def sections():
+    """the profile's sections -- the single-row tables, in declaration order"""
+    return [m.group(1) for m in re.finditer(
+        r"CREATE TABLE IF NOT EXISTS (\w+) \(\s*\n\s*id\s+INTEGER PRIMARY KEY CHECK \(id = 1\)",
+        schema())]
+
+
+def columns(table):
+    """every column of a table but its id, in declaration order"""
+    return [m.group(1) for m in re.finditer(r"^  (\w+)\s+(?:INTEGER|TEXT|REAL)", body(table), re.M)
+            if m.group(1) != "id"]
+
+
+def declared(table, column):
+    """the type and CHECK one column was declared with"""
+    found = re.search(rf"^  {column}\s+(INTEGER|TEXT|REAL)(.*?)(?=\n  \w+\s+(?:INTEGER|TEXT|REAL)"
+                      rf"|\n  CHECK|\n  PRIMARY KEY|\Z)", body(table), re.M | re.S)
+    return found.groups() if found else ("TEXT", "")
+
+
+def choices(table, column):
+    """the words one column's CHECK allows, in declaration order"""
+    listed = re.search(rf"{column} IN \((\s*'.*?)\)", declared(table, column)[1], re.S)
+    return re.findall(r"'([^']+)'", listed.group(1)) if listed else []
+
+
 def vocabulary(table, column):
-    body = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \((.*?)\n\);", schema(), re.S)
-    listed = re.search(rf"{column}\s+TEXT.*?IN \((.*?)\)\)", body.group(1), re.S)
-    return set(re.findall(r"'([^']+)'", listed.group(1)))
+    return set(choices(table, column))
+
+
+SHAPES = (
+    (r"IN \(0,1\)", "0 or 1"),
+    (r">= 0", "a whole number, 0 or more"),
+    (r"date\(\w+ \|\| '-01'\)", "a year, a year and month, or a full date"),
+    (r"IS date\(", "a date, as YYYY-MM-DD"),
+    (r"datetime\(\w+\) IS NOT NULL", "a timestamp"),
+    (r"GLOB '\[0-2\]\[0-9\]:", "a 24-hour time, as HH:MM"),
+    (r"GLOB '\[A-Z\]\[A-Z\]\[A-Z\]'", "a three-letter currency code, like USD"),
+    (r"LIKE '_%@_%\._%'", "an email address"),
+    (r"LIKE 'http%://%\.%'", "a URL, starting http"),
+    (r"NOT \w+ GLOB '\*\[A-Za-z\]\*'", "a phone number -- digits and separators, no words"),
+)
+
+
+def takes(table, column):
+    """the shape sql/*.sql declares for one column, in words"""
+    kind, check = declared(table, column)
+    listed = choices(table, column)
+    if listed:
+        return "one of " + ", ".join(listed)
+    for pattern, phrase in SHAPES:
+        if re.search(pattern, check):
+            return phrase
+    return "a whole number" if kind == "INTEGER" else "anything but an empty answer"
 
 
 def compile_patterns(patterns):

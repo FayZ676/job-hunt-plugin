@@ -13,11 +13,13 @@ const TONE: Record<State, string> = {
   "": "", saving: "primary", saved: "success", failed: "error",
 };
 
+type Entry = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
 export function Control({ column, value, onValue, onCommit, state = "", autoFocus }: {
   column: Column;
   value: string;
   onValue: (value: string) => void;
-  onCommit?: (value: string) => void;
+  onCommit?: (value: string, entry: Entry) => void;
   state?: State;
   autoFocus?: boolean;
 }) {
@@ -34,12 +36,13 @@ export function Control({ column, value, onValue, onCommit, state = "", autoFocu
     autoFocus,
     value,
     onChange: (event: { target: { value: string } }) => onValue(event.target.value),
-    onBlur: () => onCommit?.(value),
+    onBlur: (event: { currentTarget: Entry }) => onCommit?.(value, event.currentTarget),
   };
 
   if (options)
     return (
-      <select {...shared} onChange={(event) => { onValue(event.target.value); onCommit?.(event.target.value); }}>
+      <select {...shared}
+              onChange={(event) => { onValue(event.target.value); onCommit?.(event.target.value, event.currentTarget); }}>
         {!column.required && <option value="">—</option>}
         {options.map((option) => {
           const [held, shown] = Array.isArray(option) ? option : [option, option.replace(/_/g, " ")];
@@ -47,8 +50,11 @@ export function Control({ column, value, onValue, onCommit, state = "", autoFocu
         })}
       </select>
     );
-  if (column.kind === "area") return <textarea {...shared} rows={2} />;
-  return <input {...shared} />;
+  if (column.kind === "area") return <textarea {...shared} rows={2} required={column.required} />;
+  return (
+    <input {...shared} type={column.type ?? "text"} pattern={column.pattern}
+           min={column.min} step={column.step} required={column.required} />
+  );
 }
 
 export default function Field({ table, rowid, column, value }: {
@@ -59,8 +65,12 @@ export default function Field({ table, rowid, column, value }: {
   const [state, setState] = useState<State>("");
   const router = useRouter();
 
-  const commit = async (next: string) => {
+  const commit = async (next: string, entry: Entry) => {
     if (next === was) return setState("");
+    if (!entry.checkValidity()) {
+      setState("failed");
+      return say(entry.validationMessage, true);
+    }
     setState("saving");
     const result = await save(table, rowid, { [column.name]: next });
     if ("error" in result) {

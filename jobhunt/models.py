@@ -10,7 +10,8 @@ except ModuleNotFoundError:
 from jobhunt import jobkit
 
 ProfileField = StrEnum("ProfileField", {
-    name: name for name in sorted(jobkit.vocabulary("profile", "field"))})
+    f"{section}.{column}": f"{section}.{column}"
+    for section in jobkit.sections() for column in jobkit.columns(section)})
 
 
 class Row(BaseModel):
@@ -65,12 +66,15 @@ class Posting(Row):
             raise ValueError("company and title cannot be blank")
         return value
 
+    @field_validator("comp_min", "comp_max", mode="before")
+    @classmethod
+    def _pay(cls, value):
+        """a board's "no maximum" sentinel is a negative number, not a salary"""
+        return None if value is not None and float(value) < 0 else value
+
     @field_validator("comp_period")
     @classmethod
     def _period(cls, value: str | None) -> str | None:
-        return value.upper() if value else None
+        said = (value or "").upper()
+        return said if said in jobkit.vocabulary("postings", "comp_period") else None
 
-
-class Profile(Row):
-    field: ProfileField
-    value: str | None = None

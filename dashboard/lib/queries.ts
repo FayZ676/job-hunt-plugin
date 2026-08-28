@@ -1,15 +1,13 @@
 import { z } from "zod";
 
-import { one, rows } from "./db";
+import { ddl, one, rows } from "./db";
 import {
-  CRITERION, FIELD, PROJECT_STATUS, SECTION, TABLES, VIEWS, withRowid,
-  type Rowed, type Table,
+  choices, TABLES, VIEWS, withRowid, type Rowed, type Table,
 } from "./schema";
 
 const listing = <T extends Table>(table: T, order = "") =>
   rows(withRowid(table), `SELECT rowid AS rowid, * FROM ${table} ${order}`);
 
-export type Field = Rowed<"profile">;
 export type Bullet = Rowed<"project_bullets">;
 export type Project = Rowed<"projects"> & {
   bullets: Bullet[];
@@ -19,8 +17,20 @@ export type Project = Rowed<"projects"> & {
 };
 export type Employer = Rowed<"employers"> & { projects: Project[] };
 
-export const fields = () => listing("profile").sort(
-  (a, b) => FIELD.options.indexOf(a.field) - FIELD.options.indexOf(b.field));
+const singleton = <T extends Table>(table: T) =>
+  one(withRowid(table), `SELECT rowid AS rowid, * FROM ${table}`) as Rowed<T>;
+
+export const identity = () => singleton("identity");
+export const workAuthorization = () => singleton("work_authorization");
+export const availability = () => singleton("availability");
+export const compensation = () => singleton("compensation");
+export const demographics = () => singleton("demographics");
+export const experience = () => singleton("experience");
+export const searchProfile = () => singleton("search");
+
+export const options = (table: Table, column: string) => choices(ddl(), table, column) ?? [];
+
+export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
 export const criteria = () => listing("search_criteria", "ORDER BY kind, seq IS NULL, seq, value");
 export const notes = () => listing("search_notes", "ORDER BY topic");
@@ -83,7 +93,6 @@ export function prospect(key: string): Prospect | null {
 }
 
 export const vocabularies = () => ({
-  section: SECTION.options,
-  kind: CRITERION.options,
-  status: PROJECT_STATUS.options,
+  kind: options("search_criteria", "kind"),
+  status: options("projects", "status"),
 });

@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 import { db } from "./db";
-import { TABLES, type Table } from "./schema";
+import type { Table } from "./schema";
 
 const WRITABLE = new Set<Table>([
-  "profile", "education", "employers", "projects", "project_bullets",
+  "identity", "work_authorization", "availability", "compensation", "demographics",
+  "experience", "search", "education", "employers", "projects", "project_bullets",
   "project_technologies", "project_metrics", "project_links",
   "search_criteria", "search_notes", "facts", "company_limits", "accounts",
 ]);
@@ -16,21 +16,22 @@ export type Saved = { rowid: number } | { error: string };
 
 const failed = (error: unknown) => ({ error: String((error as Error).message).replace(/\s+/g, " ") });
 
+type Held = { name: string; type: string; hidden: number };
+
 function writable(table: string) {
   if (!WRITABLE.has(table as Table)) throw new Error(`${table} is not editable from the dashboard`);
-  const generated = new Set(
-    (db().pragma(`table_xinfo(${table})`) as { name: string; hidden: number }[])
-      .filter((column) => column.hidden).map((column) => column.name));
-
-  return z.object(Object.fromEntries(
-    Object.entries(TABLES[table as Table].shape)
-      .filter(([name]) => !generated.has(name))
-      .map(([name, column]) => [name, z.preprocess((value) => {
-        if (value === "" || value == null) return null;
-        return column.safeParse(0).success ? Number(value) : value;
-      }, column)]),
-  )).partial();
+  return (db().pragma(`table_xinfo(${table})`) as Held[]).filter((column) => !column.hidden);
 }
+
+const bind = (column: Held, raw: string) =>
+  raw === "" || raw === null || raw === undefined ? null
+    : column.type === "INTEGER" || column.type === "REAL" ? Number(raw)
+    : raw;
+
+const marshalled = (table: string, values: Record<string, string>) =>
+  Object.fromEntries(writable(table)
+    .filter((column) => column.name in values)
+    .map((column) => [column.name, bind(column, values[column.name])]));
 
 export async function save(
   table: string,
@@ -38,10 +39,7 @@ export async function save(
   values: Record<string, string>,
 ): Promise<Saved> {
   try {
-    const parsed = writable(table).safeParse(values);
-    if (!parsed.success) return { error: z.prettifyError(parsed.error).replace(/\s+/g, " ") };
-
-    const bound = parsed.data as Record<string, unknown>;
+    const bound = marshalled(table, values);
     const names = Object.keys(bound);
     if (!names.length)
       return { error: `no writable column among ${Object.keys(values).join(", ") || "(none)"}` };

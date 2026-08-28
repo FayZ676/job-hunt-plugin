@@ -1,11 +1,11 @@
 import CareerEditor from "./CareerEditor";
-import ProfileSection from "./ProfileSection";
+import {
+  Availability, Compensation, Demographics, Experience, Identity, Search, WorkAuthorization,
+} from "./sections";
 import RecordList, { type Record_ } from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
-import {
-  accounts, career, criteria, education, facts, fields, limits, notes,
-} from "@/lib/queries";
-import { SECTION } from "@/lib/schema";
+import { accounts, career, criteria, education, facts, limits, notes } from "@/lib/queries";
+import type { Table } from "@/lib/schema";
 import type { ReactNode } from "react";
 
 type Panel = { title: string; tab?: string; sub?: string; body: () => ReactNode };
@@ -20,19 +20,21 @@ const BLURB: Record<string, string> = {
   search: "How you describe the job you want, in your own words.",
 };
 
-const records = (table: string, columns: Column[], rows: Record_[], what: string) => (
+const records = (table: Table, columns: Column[], rows: Record_[], what: string) => (
   <RecordList table={table} columns={columns} rows={rows} what={what} addLabel="Add" />
 );
 
 export const PANELS: Record<string, Panel> = {
-  ...Object.fromEntries(SECTION.options.map((section) => [section, {
-    title: section.replace(/_/g, " ").replace(/^./, (first) => first.toUpperCase()),
-    sub: BLURB[section],
-    body: () => (
-      <ProfileSection section={section}
-                      rows={fields().filter((answer) => answer.section === section)} />
-    ),
-  }])),
+  identity: { title: "Identity", sub: BLURB.identity, body: () => <Identity /> },
+  work_authorization: {
+    title: "Work authorization", sub: BLURB.work_authorization,
+    body: () => <WorkAuthorization />,
+  },
+  availability: { title: "Availability", sub: BLURB.availability, body: () => <Availability /> },
+  compensation: { title: "Compensation", sub: BLURB.compensation, body: () => <Compensation /> },
+  demographics: { title: "Demographics", sub: BLURB.demographics, body: () => <Demographics /> },
+  experience: { title: "Experience", sub: BLURB.experience, body: () => <Experience /> },
+  search: { title: "Search", sub: BLURB.search, body: () => <Search /> },
 
   career: {
     title: "Experience",

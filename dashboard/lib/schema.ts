@@ -7,25 +7,23 @@ const maybeText = text.nullable();
 const maybeInt = int.nullable();
 const maybeReal = z.number().nullable();
 
-export const SECTION = z.enum([
-  "identity", "work_authorization", "availability", "compensation",
-  "demographics", "experience", "search",
-]);
+const body = (ddl: string, table: string) =>
+  ddl.match(new RegExp(`CREATE TABLE IF NOT EXISTS ${table} \\(([\\s\\S]*?)\\n\\)[^;]*;`))?.[1] ?? "";
 
-export const FIELD = z.enum([
-  "identity.full_name", "identity.preferred_name", "identity.last_name", "identity.email",
-  "identity.phone", "identity.location", "identity.street_address", "identity.linkedin",
-  "identity.github", "work_authorization.authorized_in_country_of_residence",
-  "work_authorization.legal_right_to_work_without_sponsorship",
-  "work_authorization.requires_sponsorship_now_or_future", "work_authorization.over_18",
-  "availability.earliest_start", "availability.earliest_daily_start",
-  "availability.notice_period", "availability.employment_type", "availability.remote_preference",
-  "availability.willing_to_relocate", "compensation.floor", "compensation.currency",
-  "demographics.gender", "demographics.race_ethnicity", "demographics.hispanic_or_latino",
-  "demographics.veteran_status", "demographics.disability_status", "experience.years",
-  "experience.relevant_years", "experience.clock_starts", "search.home_metro",
-  "search.relocation",
-]);
+const declared = (ddl: string, table: string, column: string) => {
+  const chunk = body(ddl, table)
+    .split(/\n  (?=\w+\s+(?:INTEGER|TEXT|REAL)\b|CHECK\b|PRIMARY KEY\b)/)
+    .find((held) => new RegExp(`^\\s*${column}\\s+(?:INTEGER|TEXT|REAL)\\b`).test(held));
+  const kind = chunk?.match(/\s*\w+\s+(INTEGER|TEXT|REAL)/)?.[1] ?? "TEXT";
+  return { kind, check: chunk ?? "" };
+};
+
+export const choices = (ddl: string, table: string, column: string) => {
+  const { check } = declared(ddl, table, column);
+  const listed = check.match(new RegExp(`${column} IN \\(([\\s\\S]*?)\\)`));
+  const options = listed ? [...listed[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : [];
+  return options.length ? options : null;
+};
 
 export const CRITERION = z.enum([
   "title_preferred", "title_acceptable", "title_excluded", "title_penalty",
@@ -61,7 +59,30 @@ const postings = z.object({
 });
 
 export const TABLES = {
-  profile: z.object({ field: FIELD, value: maybeText, section: SECTION }),
+  identity: z.object({
+    id: int, full_name: maybeText, preferred_name: maybeText, last_name: maybeText,
+    email: maybeText, phone: maybeText, location: maybeText, street_address: maybeText,
+    linkedin: maybeText, github: maybeText,
+  }),
+  work_authorization: z.object({
+    id: int, authorized_in_country_of_residence: maybeInt,
+    legal_right_to_work_without_sponsorship: maybeInt,
+    requires_sponsorship_now_or_future: maybeInt, over_18: maybeInt,
+  }),
+  availability: z.object({
+    id: int, earliest_start: maybeText, earliest_daily_start: maybeText,
+    notice_period: maybeText, employment_type: maybeText, remote_preference: maybeText,
+    willing_to_relocate: maybeInt,
+  }),
+  compensation: z.object({ id: int, floor: maybeInt, currency: maybeText }),
+  demographics: z.object({
+    id: int, gender: maybeText, race_ethnicity: maybeText, hispanic_or_latino: maybeText,
+    veteran_status: maybeText, disability_status: maybeText,
+  }),
+  experience: z.object({
+    id: int, years: maybeInt, relevant_years: maybeInt, clock_starts: maybeText,
+  }),
+  search: z.object({ id: int, home_metro: maybeText, relocation: maybeInt }),
   education: z.object({ id: int, degree: text, institution: maybeText, finished: maybeText }),
   employers: z.object({
     id: int, name: text, title: maybeText, start: maybeText, finish: maybeText,
@@ -115,6 +136,10 @@ export const VIEWS = {
     status: true, resume: true, url: true,
   }),
   stats: z.object({ status: POSTING_STATUS.nullable(), n: int }),
+  answers: z.object({
+    section: text, field: text, value: z.union([text, int]).nullable(),
+  }),
+  unanswered: z.object({ section: text, field: text }),
 };
 
 export type Table = keyof typeof TABLES;
@@ -128,12 +153,6 @@ type Column = { name: string; notnull: number; pk: number; hidden: number };
 const enumerated = (shape: z.ZodType): string[] | null => {
   const inner = shape instanceof z.ZodNullable ? shape.unwrap() : shape;
   return inner instanceof z.ZodEnum ? inner.options.map(String) : null;
-};
-
-const listed = (ddl: string, table: string, column: string) => {
-  const body = ddl.match(new RegExp(`CREATE TABLE IF NOT EXISTS ${table} \\(([\\s\\S]*?)\\n\\);`));
-  const check = body?.[1].match(new RegExp(`${column}\\s+TEXT[\\s\\S]*?IN \\(([\\s\\S]*?)\\)\\)`));
-  return check ? [...check[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : null;
 };
 
 export function align(database: Database, ddl: string) {
@@ -154,7 +173,7 @@ export function align(database: Database, ddl: string) {
       if (!column.hidden && held.safeParse(null).success !== nullable)
         wrong.push(`${name}.${column.name}: SQL says ${nullable ? "nullable" : "NOT NULL"}`);
       const options = enumerated(held);
-      const check = listed(ddl, name, column.name);
+      const check = choices(ddl, name, column.name);
       if (options && check && String(options) !== String(check))
         wrong.push(`${name}.${column.name}: SQL allows ${check.join(", ")}`);
     }

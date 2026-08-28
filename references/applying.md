@@ -90,6 +90,11 @@ browser_file_upload → paths: ["/absolute/path/to/resume.pdf"]
 **Skip "Autofill from resume."** Auditing what it guessed costs more than filling the fields
 explicitly from the profile.
 
+**The profile stores the answer, not the wording.** `work_authorization.over_18` is `1` and
+`availability.employment_type` is `full_time`; the form wants "Yes" and "Full-time". Say it the way
+that form says it, and never widen the answer while rewording it -- `0` is "No" however the question
+was phrased.
+
 ## Before you stop
 
 Re-snapshot and check every required field — marked `*` — holds a value. The silent failures are an

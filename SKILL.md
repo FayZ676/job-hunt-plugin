@@ -143,6 +143,16 @@ row impossible to write. Three behaviors it encodes and you must not fight:
 The filesystem holds only built PDFs: `$CAREER/resumes/`, moved to `submitted/` when an application
 goes out.
 
+**Every column says what it holds.** Each table is `STRICT`, so the declared type is enforced by the
+database rather than by whoever wrote the INSERT, and a CHECK beside each column says what that type
+allows — a flag is `0`/`1`, a date is `YYYY-MM-DD`, a career date may be a year or a year and month,
+a timestamp is what `datetime()` reads, a choice lists its words. **The profile is seven single-row
+tables** — `identity`, `work_authorization`, `availability`, `compensation`, `demographics`,
+`experience`, `search` — one column per question a form can ask, so `<section>.<name>` is a table
+and a column. `lib/schema.ts` and `jobkit.takes()` both read those declarations for the dashboard's
+controls and the CLI's errors; neither keeps its own copy, and a field added in SQL arrives in both
+on the next connect.
+
 **Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves
 `127.0.0.1:8765` — every job opening on its full application with each drafted essay and flagged
 field, the whole profile with its `NULL`s called out, and the watchlist. **The Profile page
@@ -233,8 +243,8 @@ Every field is one of three tiers, and the tier decides who answers it:
 
 | Tier | What it is | Source | Auto-filled |
 | ---- | ---------- | ------ | ----------- |
-| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `profile` `identity.*` | Yes |
-| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `profile` `work_authorization.* availability.* compensation.* demographics.*` | Yes |
+| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` | Yes |
+| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `work_authorization` `availability` `compensation` `demographics` | Yes |
 | **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
 
 A judgment question gets the answer the profile supports. Where nothing supports one, flag it for the

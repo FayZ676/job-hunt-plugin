@@ -13,19 +13,20 @@ export const DB = path.join(CAREER, "job.db");
 export const RESUMES = path.join(CAREER, "resumes");
 
 const SQL = path.join(process.cwd(), "..", "sql");
-const schema = () =>
-  ["job", "profile"]
-    .map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8"))
-    .join("\n");
 
-const held = globalThis as { db?: Database.Database };
+const held = globalThis as { db?: Database.Database; ddl?: string };
+
+export const ddl = () =>
+  (held.ddl ??= ["job", "profile"]
+    .map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8"))
+    .join("\n"));
 
 export function db() {
   if (!held.db) {
     fs.mkdirSync(CAREER, { recursive: true });
     const opened = new Database(DB);
     opened.pragma("foreign_keys = ON");
-    const sql = schema();
+    const sql = ddl();
     opened.exec(sql);
     align(opened, sql);
     held.db = opened;

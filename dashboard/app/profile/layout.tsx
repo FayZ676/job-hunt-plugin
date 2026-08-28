@@ -3,13 +3,13 @@ import Tabs from "./Tabs";
 import { PANELS } from "./panels";
 import { VocabularyProvider } from "@/components/edit/Vocabulary";
 import { Card, Meter, PageHeader } from "@/components/ui";
-import { fields, vocabularies } from "@/lib/queries";
+import { answers, vocabularies } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
-  const answers = fields();
-  const blocking = answers.filter((answer) => answer.value === null);
+  const asked = answers();
+  const blocking = asked.filter((answer) => answer.value === null);
 
   return (
     <VocabularyProvider value={vocabularies()}>
@@ -19,7 +19,7 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
              emptying one takes the answer back."
       >
         <div className="mt-4">
-          <Meter done={answers.length - blocking.length} total={answers.length} />
+          <Meter done={asked.length - blocking.length} total={asked.length} />
         </div>
       </PageHeader>
 
@@ -30,8 +30,10 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
           </p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs opacity-60">
             {blocking.map((answer) => (
-              <li key={answer.field}>
-                <Link href={`/profile/${answer.section}`} className="link">{answer.field}</Link>
+              <li key={`${answer.section}.${answer.field}`}>
+                <Link href={`/profile/${answer.section}`} className="link">
+                  {answer.section}.{answer.field}
+                </Link>
               </li>
             ))}
           </ul>

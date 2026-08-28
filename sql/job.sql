@@ -1,31 +1,23 @@
--- The openings, and the machinery that rules on them. Applied on every connect
--- ahead of profile.sql; every statement is idempotent.
--- Constraints and triggers carry the rules that used to live in Python:
--- CHECK rejects an invalid status at the storage layer, and the triggers below
--- log history without any caller having to remember to.
-
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
 
 CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
   value TEXT
-);
+) STRICT;
 
--- Both kinds of board. ats in (greenhouse,lever,ashby) is scanned by API;
--- ats='manual' is checked by hand on `cadence`.
 CREATE TABLE IF NOT EXISTS companies (
   slug         TEXT NOT NULL,
   ats          TEXT NOT NULL,
   name         TEXT NOT NULL,
-  active       INTEGER NOT NULL DEFAULT 1,
-  added_on     TEXT DEFAULT (date('now')),
+  active       INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
+  added_on     TEXT DEFAULT (date('now')) CHECK (added_on IS date(added_on)),
   source       TEXT,
-  careers_url  TEXT,
+  careers_url  TEXT CHECK (careers_url LIKE 'http%://%.%'),
   cadence      TEXT CHECK (cadence IS NULL OR cadence IN ('Weekly','Monthly','Quarterly')),
-  last_checked TEXT,
+  last_checked TEXT CHECK (last_checked IS date(last_checked)),
   PRIMARY KEY (ats, slug)
-);
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS filters (
   kind    TEXT NOT NULL CHECK (kind IN (
@@ -34,7 +26,7 @@ CREATE TABLE IF NOT EXISTS filters (
   pattern TEXT NOT NULL,
   note    TEXT,
   PRIMARY KEY (kind, pattern)
-);
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS postings (
   key           TEXT PRIMARY KEY,
@@ -42,30 +34,31 @@ CREATE TABLE IF NOT EXISTS postings (
   ats           TEXT,
   company       TEXT NOT NULL,
   title         TEXT NOT NULL,
-  url           TEXT,
-  apply_url     TEXT,
+  url           TEXT CHECK (url LIKE 'http%://%.%'),
+  apply_url     TEXT CHECK (apply_url LIKE 'http%://%.%'),
   location      TEXT,
-  remote        INTEGER,
+  remote        INTEGER CHECK (remote IN (0,1)),
   compensation  TEXT,
-  posted_at     TEXT,
+  posted_at     TEXT CHECK (posted_at IS NULL OR datetime(posted_at) IS NOT NULL),
   description   TEXT,
-  sponsored     INTEGER NOT NULL DEFAULT 0,
-  expired       INTEGER NOT NULL DEFAULT 0,
-  comp_min      REAL,
-  comp_max      REAL,
-  comp_period   TEXT,
+  sponsored     INTEGER NOT NULL DEFAULT 0 CHECK (sponsored IN (0,1)),
+  expired       INTEGER NOT NULL DEFAULT 0 CHECK (expired IN (0,1)),
+  comp_min      REAL CHECK (comp_min >= 0),
+  comp_max      REAL CHECK (comp_max >= 0),
+  comp_period   TEXT CHECK (comp_period IN (
+                  'HOURLY','DAILY','WEEKLY','BIWEEKLY','MONTHLY','YEARLY')),
   raw           TEXT,
-  first_fetched TEXT NOT NULL DEFAULT (date('now')),
-  last_fetched  TEXT NOT NULL DEFAULT (date('now')),
+  first_fetched TEXT NOT NULL DEFAULT (date('now')) CHECK (first_fetched IS date(first_fetched)),
+  last_fetched  TEXT NOT NULL DEFAULT (date('now')) CHECK (last_fetched IS date(last_fetched)),
 
-  ingested_on   TEXT,
+  ingested_on   TEXT CHECK (ingested_on IS date(ingested_on)),
   disposition   TEXT CHECK (disposition IS NULL OR disposition IN (
                   'kept','upgraded','title','location','stale','seen','duplicate',
                   'sponsored','expired','agency','noise','lowball','covered')),
   canonical_key TEXT REFERENCES postings(key) ON DELETE SET NULL,
 
-  first_seen    TEXT,
-  last_seen     TEXT,
+  first_seen    TEXT CHECK (first_seen IS date(first_seen)),
+  last_seen     TEXT CHECK (last_seen IS date(last_seen)),
   score         INTEGER CHECK (score IS NULL OR score BETWEEN 0 AND 10),
   reason        TEXT,
   resume        TEXT,
@@ -77,7 +70,7 @@ CREATE TABLE IF NOT EXISTS postings (
   CHECK (canonical_key IS NULL OR canonical_key <> key),
   CHECK (disposition IS 'kept' OR (status IS NULL AND score IS NULL AND reason IS NULL
                                    AND resume IS NULL AND first_seen IS NULL))
-);
+) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_postings_pending   ON postings(disposition, last_fetched);
 CREATE INDEX IF NOT EXISTS idx_postings_status    ON postings(status);
@@ -88,19 +81,19 @@ CREATE INDEX IF NOT EXISTS idx_postings_canonical ON postings(canonical_key);
 CREATE TABLE IF NOT EXISTS events (
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
   key    TEXT NOT NULL REFERENCES postings(key) ON DELETE CASCADE,
-  at     TEXT NOT NULL DEFAULT (datetime('now')),
+  at     TEXT NOT NULL DEFAULT (datetime('now')) CHECK (datetime(at) IS NOT NULL),
   status TEXT,
   note   TEXT
-);
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS staged (
   key        TEXT PRIMARY KEY REFERENCES postings(key) ON DELETE CASCADE,
-  url        TEXT,
+  url        TEXT CHECK (url LIKE 'http%://%.%'),
   ats        TEXT,
   screenshot TEXT,
   status     TEXT CHECK (status IN ('ready','blocked')),
   blocked_on TEXT
-);
+) STRICT;
 
 CREATE TABLE IF NOT EXISTS staged_fields (
   key   TEXT NOT NULL REFERENCES postings(key) ON DELETE CASCADE,
@@ -108,7 +101,7 @@ CREATE TABLE IF NOT EXISTS staged_fields (
   value TEXT,
   tier  TEXT CHECK (tier IN ('identity','policy','judgment')),
   flag  TEXT
-);
+) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_events_key ON events(key);
 

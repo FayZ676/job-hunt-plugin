@@ -1,27 +1,10 @@
-"""The profile — the user's own answers, and the only thing they own.
-
-
-  job-profile set identity.email you@example.com
-  job-profile set availability.notice_period '2 weeks'
-  job-profile clear identity.phone       back to unanswered — a hard stop again
-  job-profile answers                    what the profile answers
-  job-profile missing                    every unanswered field, each one a hard stop
-
-Every field a form can ask for is declared in sql/profile.sql and exists as a
-row from the first connect, so answering is always an update: a name that is not
-declared is refused rather than filed as a new field. Something genuinely
-missing is a change to that list, not a row invented here.
-
-The section is never typed or stored twice: it is the part of the field before
-the dot, so `availability.notice_period` files itself.
-"""
-
+import sqlite3
 from typing import Annotated
 
 import typer
 
 from jobhunt import jobkit
-from jobhunt.models import Profile, ProfileField
+from jobhunt.models import ProfileField
 
 app = typer.Typer(help=__doc__, no_args_is_help=True,
                   rich_markup_mode=None, add_completion=False)
@@ -32,11 +15,13 @@ FIELD = Annotated[ProfileField, typer.Argument(metavar="<section>.<name>", show_
 @app.command("set")
 def set_(field: FIELD, value: str, db: str = None):
     """answer one field, or correct the answer it already has"""
-    row = Profile(field=field, value=value).row()
+    section, _, column = field.partition(".")
     con = jobkit.connect(db)
-    con.execute(
-        "INSERT INTO profile(field,value) VALUES(:field,:value) "
-        "ON CONFLICT(field) DO UPDATE SET value=excluded.value", row)
+    try:
+        con.execute(f"UPDATE {section} SET {column}=? WHERE id=1", (value.strip(),))
+    except sqlite3.IntegrityError:
+        print(f"{value!r} is not an answer to {field} — it takes {jobkit.takes(section, column)}")
+        raise typer.Exit(1)
     con.commit()
     print(f"{field} = {value}")
 
@@ -44,8 +29,9 @@ def set_(field: FIELD, value: str, db: str = None):
 @app.command()
 def clear(field: FIELD, db: str = None):
     """drop an answer — the field goes back to blocking"""
+    section, _, column = field.partition(".")
     con = jobkit.connect(db)
-    con.execute("UPDATE profile SET value=NULL WHERE field=?", (field,))
+    con.execute(f"UPDATE {section} SET {column}=NULL WHERE id=1")
     con.commit()
     print(f"{field} unanswered — it blocks any form that asks for it")
 
@@ -54,9 +40,12 @@ def clear(field: FIELD, db: str = None):
 def answers(json: bool = False, db: str = None):
     """what the profile answers"""
     con = jobkit.connect(db)
-    rows = [dict(r) for r in con.execute(
-        "SELECT section, field, value FROM profile WHERE value IS NOT NULL "
-        "ORDER BY section, field").fetchall()]
+    rows = []
+    for section in jobkit.sections():
+        columns = jobkit.columns(section)
+        held = con.execute(f"SELECT {','.join(columns)} FROM {section} WHERE id=1").fetchone()
+        rows += [{"section": section, "field": name, "value": held[name]}
+                 for name in columns if held[name] is not None]
     jobkit.print_rows(rows, json)
 
 
