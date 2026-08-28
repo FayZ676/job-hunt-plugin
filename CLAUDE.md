@@ -1,6 +1,6 @@
 ## Making Code Changes
 
-1. Every time you think you are done with a change, run `git diff --stat` to see how much code you added vs removed. Don't stop your work until the "insertions" number is the absolute lowest possible and the "deletions" number is the absolute highest. Keeping in mind of course that both of these are in service of functional, maintainable, optimal code.
+1. Before making any change, tell me your plan or idea first in as few words as possible.
 
 ## Code Comments
 Don't ever add code comments. Write code that is self documenting.
