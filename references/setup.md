@@ -15,8 +15,9 @@ Lever and Ashby plus a starting set of filters.
 
 **2. Fill the profile by interviewing them.** They talk; you write the rows with `job-profile set
 <section>.<name> <value>` — one answer per call, section derived from the key and refused if it is
-not one of `job-profile sections`. Never hand them a form or a file to edit — chat is the whole
-interface. `$Q --schema` documents every table. Cover:
+not one of `job-profile sections`. Never hand them a file to edit, and never make the first pass a
+form — the interview is a conversation. Afterwards they revise themselves in the dashboard, whose
+Profile page writes every one of these tables, so tell them where it is once the profile stands up. `$Q --schema` documents every table. Cover:
 
 - **Identity and contact** (`identity.*`), work authorization (`work_authorization.*`), availability
   (`availability.*`), compensation floor (`compensation.*`). Demographics (`demographics.*`) are

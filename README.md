@@ -112,12 +112,13 @@ You can start with just Python and add the rest before your first resume.
 | `/job resume <JD, URL, or key>` | Build one resume |
 | `/job apply <key or URL>` | Build and stage one application, stopping before submit |
 | `/job submit` | Review and submit whatever is staged |
-| `/job ui` | Serve the read-only dashboard |
+| `/job ui` | Serve the dashboard, and edit your profile in it |
 | `/job help` | Print the command list |
 
 ## The dashboard
 
-Chat is how you change things; the dashboard is how you see them.
+Chat is how you change the search; the dashboard is how you see it — and how you change
+yourself, which is the part worth your attention.
 
 ```
 /job ui
@@ -125,10 +126,15 @@ Chat is how you change things; the dashboard is how you see them.
 
 That serves a local page on `127.0.0.1`: the jobs, each one opening on its full application with
 every drafted essay and flagged field in it, your whole profile with its unanswered fields called
-out, and the watchlist. It is
-**read-only, enforced by SQLite** — every request opens the database `mode=ro`, so nothing the page
-itself can do will touch the record. `--lan` serves it to your phone too, gated by an access key
-printed with the link.
+out, and the watchlist.
+
+**The Profile page is editable.** Every box on it — your answers, your employers and projects, the
+bullets a resume draws on, your search criteria, the facts that must never be misreported — saves
+the moment you leave it, and emptying a box takes the answer back to unanswered, which is a hard
+stop rather than a guess. Nothing else is: postings, scores and staged forms open `mode=ro`, because
+the rules that make those writes safe live in the phases, not in a web page. A write is refused
+unless it comes from the page itself, so another tab cannot reach in. `--lan` serves it to your
+phone too — the profile included — gated by an access key printed with the link.
 
 It has one button. **Run** opens your terminal — Terminal on macOS, Windows Terminal on Windows — on
 an interactive `claude "/job"`, so the phases that need your approval still get to ask for it. The

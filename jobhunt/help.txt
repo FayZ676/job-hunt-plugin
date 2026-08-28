@@ -11,7 +11,7 @@ commands:
   resume <JD, URL, or key>    build one tailored resume as a PDF
   apply <key or URL>          build and stage one application, stopping before submit
   submit                      review what is staged and submit only what you name
-  ui                          serve the read-only dashboard on 127.0.0.1
+  ui                          serve the dashboard on 127.0.0.1; edit your profile there
   ui --lan                    also serve it to your phone on the same network
   help                        this message
 

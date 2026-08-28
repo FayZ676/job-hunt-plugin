@@ -1,4 +1,5 @@
-"""Serve the local dashboard: a read-only window onto the job database.
+"""Serve the local dashboard: a window onto the job database, and the one
+place the user edits their own profile by hand.
 
   job-ui                 serve on the first free port from 8765
   job-ui --port 9000     pin the port
@@ -7,7 +8,9 @@
   job-ui --host 0.0.0.0  pin the bind address
 
 Binding past the loopback mints an access key: another device must carry it,
-as ?k= once and as a cookie thereafter.
+as ?k= once and as a cookie thereafter. Reads open the database `mode=ro`; the
+write endpoints touch only the profile tables, and only from this page -- a
+cross-origin request is refused before it reaches one.
 """
 
 import os
@@ -20,7 +23,7 @@ import webbrowser
 
 import typer
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from starlette.exceptions import HTTPException as AnyHTTPException
@@ -37,15 +40,15 @@ LOOPBACK = ("127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1")
 LISTS = {
     "stats": "SELECT status, n FROM stats",
     "jobs": "SELECT * FROM triage",
-    "profile": "SELECT field, value, section, notes FROM profile ORDER BY section, field",
-    "unanswered": "SELECT field, section FROM unanswered",
-    "education": "SELECT degree, institution, finished FROM education",
-    "criteria": "SELECT kind, value, weight, note FROM search_criteria ORDER BY kind, seq, value",
-    "notes": "SELECT topic, note FROM search_notes ORDER BY topic",
-    "facts": "SELECT id, fact FROM facts ORDER BY id",
-    "accounts": "SELECT employer, system, portal_url, login_email, password_location, created"
+    "profile": "SELECT rowid AS rowid, field, value, section, notes FROM profile ORDER BY section, field",
+    "education": "SELECT rowid AS rowid, degree, institution, finished FROM education",
+    "criteria": "SELECT rowid AS rowid, kind, value, weight, note FROM search_criteria"
+                " ORDER BY kind, seq IS NULL, seq, value",
+    "notes": "SELECT rowid AS rowid, topic, note FROM search_notes ORDER BY topic",
+    "facts": "SELECT rowid AS rowid, fact FROM facts ORDER BY rowid",
+    "accounts": "SELECT rowid AS rowid, employer, system, portal_url, login_email, password_location, created"
                 " FROM accounts ORDER BY employer",
-    "limits": "SELECT company, stated FROM company_limits ORDER BY company",
+    "limits": "SELECT rowid AS rowid, company, stated FROM company_limits ORDER BY company",
     "companies": "SELECT slug, ats, name, active, source, careers_url, cadence, last_checked"
                  " FROM companies ORDER BY ats, name",
     "manual_boards": "SELECT name, slug, cadence, last_checked, careers_url FROM manual_boards",
@@ -79,21 +82,25 @@ def prospect(key):
 
 
 def career():
-    employers = rows("SELECT id, name, title, start, finish, current, context FROM employers ORDER BY seq, id")
-    projects = rows("SELECT id, employer_id, name, start, finish, status, summary, shared_with, notes"
-                    " FROM projects ORDER BY seq, id")
-    bullets = rows("SELECT project_id, text FROM project_bullets ORDER BY project_id, seq, rowid")
-    tech = rows("SELECT project_id, technology FROM project_technologies ORDER BY project_id, technology")
-    metrics = rows("SELECT project_id, metric FROM project_metrics ORDER BY project_id, rowid")
-    links = rows("SELECT project_id, label, url FROM project_links ORDER BY project_id, rowid")
+    employers = rows("SELECT rowid AS rowid, name, title, start, finish, current, context, seq"
+                     " FROM employers ORDER BY seq IS NULL, seq, rowid")
+    projects = rows("SELECT rowid AS rowid, employer_id, name, start, finish, status, summary,"
+                    " shared_with, notes, seq FROM projects ORDER BY seq IS NULL, seq, rowid")
+    children = {
+        "bullets": rows("SELECT rowid AS rowid, project_id, text FROM project_bullets"
+                        " ORDER BY project_id, seq IS NULL, seq, rowid"),
+        "technologies": rows("SELECT rowid AS rowid, project_id, technology FROM project_technologies"
+                             " ORDER BY project_id, technology"),
+        "metrics": rows("SELECT rowid AS rowid, project_id, metric FROM project_metrics"
+                        " ORDER BY project_id, rowid"),
+        "links": rows("SELECT rowid AS rowid, project_id, label, url FROM project_links"
+                      " ORDER BY project_id, rowid"),
+    }
     for project in projects:
-        pid = project["id"]
-        project["bullets"] = [r["text"] for r in bullets if r["project_id"] == pid]
-        project["technologies"] = [r["technology"] for r in tech if r["project_id"] == pid]
-        project["metrics"] = [r["metric"] for r in metrics if r["project_id"] == pid]
-        project["links"] = [r for r in links if r["project_id"] == pid]
+        for name, found in children.items():
+            project[name] = [r for r in found if r["project_id"] == project["rowid"]]
     for employer in employers:
-        employer["projects"] = [p for p in projects if p["employer_id"] == employer["id"]]
+        employer["projects"] = [p for p in projects if p["employer_id"] == employer["rowid"]]
     return employers
 
 
@@ -125,7 +132,62 @@ DERIVED = {
     "where": lambda: {"career": jobkit.CAREER, "db": jobkit.DB, "resumes": jobkit.RESUMES},
     "help": lambda: {"text": open(HELP, encoding="utf-8").read()},
     "career": career,
+    "vocabulary": lambda: {f"{table}.{column}": sorted(jobkit.vocabulary(table, column))
+                           for table, column in (("profile", "section"),
+                                                 ("search_criteria", "kind"),
+                                                 ("projects", "status"))},
 }
+
+# The profile: the user's own answers, and the only rows this page may write.
+# Everything a job phase decides -- postings, scores, staged forms -- stays
+# read-only here, because the invariants that make those writes safe live in
+# the phases. A column not named by PRAGMA table_info is not settable, so the
+# generated `section` and any column added later are refused by construction.
+WRITABLE = {"profile", "education", "employers", "projects", "project_bullets",
+            "project_technologies", "project_metrics", "project_links",
+            "search_criteria", "search_notes", "facts", "company_limits", "accounts"}
+
+
+def editable(con, table):
+    if table not in WRITABLE:
+        raise HTTPException(404, f"{table} is not editable from the dashboard")
+    return {r["name"] for r in con.execute(f"PRAGMA table_info({table})")}
+
+
+def write(table, rowid, values):
+    """Insert a row, or update the one at `rowid`. '' means NULL: clearing a
+    box is how the user unanswers a field, and unanswered is a hard stop."""
+    con = jobkit.connect()
+    try:
+        named = editable(con, table)
+        fields = {k: (v if v != "" else None) for k, v in values.items() if k in named}
+        if not fields:
+            raise HTTPException(400, f"no writable column among {', '.join(values) or '(none)'}")
+        if rowid is None:
+            columns = ", ".join(fields)
+            cursor = con.execute(f"INSERT INTO {table}({columns})"
+                                 f" VALUES({', '.join(':' + k for k in fields)})", fields)
+            rowid = cursor.lastrowid
+        elif not con.execute(f"UPDATE {table} SET {', '.join(f'{k}=:{k}' for k in fields)}"
+                             " WHERE rowid=:rowid", {**fields, "rowid": rowid}).rowcount:
+            raise HTTPException(404, f"no row {rowid} in {table}")
+        con.commit()
+        return {"rowid": rowid}
+    finally:
+        con.close()
+
+
+def drop(table, rowid):
+    con = jobkit.connect()
+    try:
+        editable(con, table)
+        if not con.execute(f"DELETE FROM {table} WHERE rowid=?", (rowid,)).rowcount:
+            raise HTTPException(404, f"no row {rowid} in {table}")
+        con.commit()
+        return {"deleted": rowid}
+    finally:
+        con.close()
+
 
 app = FastAPI(docs_url=None, redoc_url=None)
 
@@ -133,7 +195,10 @@ app = FastAPI(docs_url=None, redoc_url=None)
 @app.exception_handler(sqlite3.Error)
 @app.exception_handler(OSError)
 async def _failed(_request, error):
-    return JSONResponse({"error": str(error)}, status_code=500)
+    # A CHECK the user tripped is their mistake to fix, not a server fault.
+    refused = isinstance(error, sqlite3.IntegrityError)
+    return JSONResponse({"error": " ".join(str(error).split())},
+                        status_code=400 if refused else 500)
 
 
 @app.middleware("http")
@@ -145,6 +210,12 @@ async def gate(request: Request, call_next):
             return JSONResponse(
                 {"error": "this dashboard needs its access key — open the ?k= link"},
                 status_code=403)
+    # A page in some other tab can reach 127.0.0.1 too. Reads it cannot see;
+    # a write it must not make, so a request carrying someone else's origin is
+    # refused before it gets to one.
+    origin = request.headers.get("origin")
+    if request.method != "GET" and origin and origin != str(request.base_url).rstrip("/"):
+        return JSONResponse({"error": f"refused a write from {origin}"}, status_code=403)
     return await call_next(request)
 
 
@@ -166,6 +237,16 @@ def serve_asset(kind: str, key: str):
         raise HTTPException(404, "no such file")
     return FileResponse(path, headers={
         "Content-Disposition": f'inline; filename="{os.path.basename(path)}"'})
+
+
+@app.post("/api/edit/{table}")
+def api_edit(table: str, body: dict = Body(...)):
+    return write(table, body.get("rowid"), body.get("values") or {})
+
+
+@app.delete("/api/edit/{table}/{rowid}")
+def api_drop(table: str, rowid: int):
+    return drop(table, rowid)
 
 
 @app.get("/api/prospect")
@@ -205,7 +286,7 @@ def main(port: int = 8765,
                                               "gated by an access key"),
          host: str = typer.Option(None, help="bind address (implies --lan unless loopback)"),
          key: str = typer.Option(None, help="reuse a fixed access key instead of minting one")):
-    """Serve the local dashboard: a read-only window onto the job database."""
+    """Serve the local dashboard, the one place the profile is edited by hand."""
     if not os.path.exists(jobkit.DB):
         sys.exit(f"no database at {jobkit.DB} — run /job setup first")
     jobkit.connect().close()

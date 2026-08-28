@@ -6,15 +6,11 @@
 <title>Job dashboard</title>
 <style>
 :root {
-  --bg: #ffffff; --panel: #f7f7f8; --line: #e3e3e6; --ink: #1a1a1c; --dim: #6b6b73;
-  --accent: #2f5fd0; --good: #177a4a; --warn: #9a6400; --bad: #a8332a; --flag: #fff4d6;
+  color-scheme: dark;   /* dark, not "whatever the OS says": the scrollbars, the
+                           select menus and the text carets follow it too */
+  --bg: #131316; --panel: #1b1b1f; --line: #2c2c32; --ink: #e8e8ea; --dim: #9a9aa4;
+  --accent: #7aa2f7; --good: #5cc98d; --warn: #e0b34a; --bad: #f07a71; --flag: #3a3116;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #131316; --panel: #1b1b1f; --line: #2c2c32; --ink: #e8e8ea; --dim: #9a9aa4;
-    --accent: #7aa2f7; --good: #5cc98d; --warn: #e0b34a; --bad: #f07a71; --flag: #3a3116;
-  }
 }
 * { box-sizing: border-box; }
 body {
@@ -31,11 +27,11 @@ nav a {
   text-decoration: none; margin-bottom: 2px;
 }
 nav a:hover { background: var(--line); }
-nav a.on { background: var(--accent); color: #fff; }
+nav a.on { background: var(--accent); color: var(--bg); }
 .run { margin: 0 0 16px; }
 .run button {
   width: 100%; border: 0; border-radius: 7px; font: inherit; font-weight: 600;
-  padding: 11px 12px; cursor: pointer; background: var(--accent); color: #fff;
+  padding: 11px 12px; cursor: pointer; background: var(--accent); color: var(--bg);
 }
 .run button:hover { filter: brightness(1.08); }
 nav .where { margin: 18px 8px 0; font: 11px/1.5 var(--mono); color: var(--dim); word-break: break-all; }
@@ -55,16 +51,14 @@ tbody tr.click:hover { background: var(--panel); cursor: pointer; }
 .card { border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; background: var(--panel); }
 .card > h4:first-child { margin-top: 0; }
 .card .sub { margin: 6px 0 0; }
-.project { margin-top: 14px; padding-left: 14px; border-left: 2px solid var(--line); }
-.project p { margin: 4px 0 0; }
-.tiny { font-size: 12px; }
+.project { margin-top: 18px; padding-left: 14px; border-left: 2px solid var(--line); }
 .fields td:first-child { width: 32%; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .chip {
   border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer;
   padding: 4px 11px; border-radius: 20px; font-size: 12px; font-family: inherit;
 }
-.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .chip b { font-weight: 600; opacity: .65; margin-left: 5px; }
 .chip-sep { width: 1px; background: var(--line); margin: 2px 2px; align-self: stretch; }
 .pager { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 10px 0 4px; }
@@ -95,11 +89,38 @@ input[type=search] {
 .desc { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
 iframe, img.shot { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 iframe { height: 780px; }
-ul.tight { margin: 4px 0; padding-left: 20px; }
-ul.tight li { margin-bottom: 3px; }
-.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-.tag { font-size: 11px; font-family: var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--dim); }
 .empty { color: var(--dim); padding: 20px 0; }
+
+/* Editing. Every box writes one column of one row the moment it loses focus,
+   so there is no save button to forget and no draft to lose. */
+.b {
+  font: inherit; font-size: 12px; padding: 4px 6px; width: 22ch;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: var(--bg); color: var(--ink);
+}
+.b:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+textarea.b { width: 46ch; min-height: 2.4em; resize: vertical; vertical-align: top; }
+select.b { width: auto; }
+[data-row].want:placeholder-shown { border-color: var(--bad); background: var(--flag); }
+table.edit td { padding: 3px 4px; }
+table.edit tr.new td { border-bottom: 0; }
+table.edit tr.new .b { opacity: .75; }
+table.edit tr.new .b:focus { opacity: 1; }
+.x {
+  border: 1px solid var(--line); background: var(--bg); color: var(--dim);
+  border-radius: 5px; cursor: pointer; font: inherit; line-height: 1; padding: 4px 8px;
+}
+.x:hover { color: var(--bad); border-color: var(--bad); }
+.x.add:hover { color: var(--good); border-color: var(--good); }
+.grid dd .b { width: 30ch; }
+#toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+  padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 9;
+  background: var(--ink); color: var(--bg); opacity: 0; transition: opacity .2s;
+  pointer-events: none; max-width: 80vw;
+}
+#toast.on { opacity: .94; }
+#toast.bad { background: var(--bad); color: var(--bg); }
 .time { font-family: var(--mono); font-size: 12px; color: var(--dim); }
 @media (max-width: 720px) {
   body { flex-direction: column; }
@@ -128,6 +149,7 @@ ul.tight li { margin-bottom: 3px; }
   .grid { grid-template-columns: 1fr; gap: 1px 0; }
   .grid dt { margin-top: 8px; }
   input[type=search] { width: 100%; }
+  .b, textarea.b, .grid dd .b { width: 100%; }
   iframe { height: 65vh; }
   .desc { max-height: 320px; }
 }
@@ -145,12 +167,15 @@ ul.tight li { margin-bottom: 3px; }
   <div class="where" id="where"></div>
 </nav>
 <main id="main"></main>
+<div id="toast"></div>
 <script>
 const esc = v => String(v ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const get = async (path, params) => {
   const url = new URL(path, location.origin);
   Object.entries(params || {}).forEach(([k, v]) => url.searchParams.set(k, v));
-  const response = await fetch(url);
+  // no-store: the page writes now, so a read must never come back from the
+  // browser's cache showing what the database said before the last edit.
+  const response = await fetch(url, { cache: "no-store" });
   return response.json();
 };
 const main = document.getElementById("main");
@@ -160,18 +185,84 @@ const badge = s => s ? `<span class="badge ${esc(s)}">${esc(s)}</span>` : "";
 const scoreCell = s => s === null || s === undefined ? '<span class="score lo">—</span>'
   : `<span class="score ${s >= 7 ? "hi" : s >= 4 ? "mid" : "lo"}">${s}</span>`;
 const link = (url, label) => url ? `<a href="${esc(url)}" target="_blank" rel="noreferrer">${esc(label || url)}</a>` : "—";
-const value = v => v === null || v === undefined || v === "" ? '<span class="null">not answered</span>' : esc(v);
 const all = (items, fn) => items.map(fn).join("");
+const toast = document.getElementById("toast");
+const say = (message, bad) => {
+  toast.textContent = message;
+  toast.className = "on" + (bad ? " bad" : "");
+  clearTimeout(say.timer);
+  say.timer = setTimeout(() => { toast.className = ""; }, bad ? 6000 : 1400);
+};
+const send = async (path, options) => {
+  const result = await fetch(path, options).then(r => r.json(), e => ({ error: String(e) }));
+  say(result.error || (result.deleted ? "deleted" : "saved"), !!result.error);
+  return !result.error;
+};
+const put = (table, rowid, values) => send("/api/edit/" + table, {
+  method: "POST", headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ rowid, values }),
+});
 const when = (cond, html) => cond ? (typeof html === "function" ? html() : html) : "";
 const card = inner => `<div class="card">${inner}</div>`;
 const grid = pairs => `<dl class="grid">${all(pairs.filter(Boolean),
   ([k, v, cls]) => `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ""}>${v}</dd>`)}</dl>`;
-const bulleted = items => when(items.length, `<ul class="tight">${all(items, i => `<li>${esc(i)}</li>`)}</ul>`);
 const section = (title, html) => `<h3>${esc(title)}</h3>${html}`;
 const table = (columns, data, rowAttrs, cls) => data.length ? `<div class="scroll"><table class="tbl${cls ? " " + cls : ""}">
   <thead><tr>${columns.map(c => `<th data-label="${esc(c)}">${esc(c)}</th>`).join("")}</tr></thead>
   <tbody>${data.map(r => `<tr ${rowAttrs ? rowAttrs(r) : ""}>${r.cells.map((c, i) => `<td data-label="${esc(columns[i])}">${c}</td>`).join("")}</tr>`).join("")}</tbody>
 </table></div>` : '<p class="empty">Nothing here.</p>';
+
+// One box, bound to one column of one row. Blank means NULL, which is what an
+// unanswered profile field is, so clearing a box is how the user takes an
+// answer back. A row of "" is the blank row that adds a new one.
+let VOCAB = {};   // the CHECK vocabularies, so a constrained column is a menu
+const title = col => esc(col.label || col.name.replace(/_/g, " "));
+const box = (table, row, col, v) => {
+  const attrs = `class="b${col.want ? " want" : ""}" data-table="${esc(table)}"` +
+    ` data-col="${esc(col.name)}" placeholder="${title(col)}"` +
+    (row === "" ? "" : ` data-row="${row}"`);
+  const options = col.options || VOCAB[col.vocab];
+  if (options) return `<select ${attrs}>${all(
+    (col.required ? [] : [["", ""]]).concat(options.map(o => Array.isArray(o) ? o : [o, o])),
+    ([o, text]) => `<option value="${esc(o)}"${o === String(v ?? "") ? " selected" : ""}>${esc(text)}</option>`)}</select>`;
+  if (col.area) return `<textarea ${attrs} rows="2">${esc(v ?? "")}</textarea>`;
+  return `<input ${attrs} value="${esc(v ?? "")}">`;
+};
+
+const drop = (table, row) => `<button class="x" data-drop="${esc(table)}/${row}" title="delete">×</button>`;
+// `blank` seeds the new row: what the user types over, plus the columns it
+// inherits without seeing them, like the project a bullet belongs to.
+const adder = (table, blank) =>
+  `<button class="x add" data-add="${esc(table)}" data-blank='${esc(JSON.stringify(blank))}' title="add">+</button>`;
+const boxes = (table, row, cols) =>
+  grid(cols.map(c => [title(c), box(table, row.rowid, c, row[c.name])]));
+
+// A table that writes through: every cell saves itself, × removes the row, and
+// the last row is empty and waiting to become a new one.
+const editable = (table, cols, rows, blank = {}) => `<div class="scroll"><table class="tbl edit">
+  <thead><tr>${all(cols, c => `<th>${title(c)}</th>`)}<th></th></tr></thead>
+  <tbody>${all(rows, r => `<tr>${all(cols, c => `<td>${box(table, r.rowid, c, r[c.name])}</td>`)}
+      <td>${drop(table, r.rowid)}</td></tr>`)}
+    <tr class="new">${all(cols, c => `<td>${box(table, "", c, blank[c.name])}</td>`)}
+      <td>${adder(table, blank)}</td></tr></tbody>
+</table></div>`;
+
+main.addEventListener("change", event => {
+  const cell = event.target.closest("[data-row][data-col]");
+  if (cell) put(cell.dataset.table, Number(cell.dataset.row), { [cell.dataset.col]: cell.value });
+});
+
+main.addEventListener("click", async event => {
+  const add = event.target.closest("button[data-add]");
+  const gone = event.target.closest("button[data-drop]");
+  if (add) {
+    const values = JSON.parse(add.dataset.blank);
+    add.closest("tr.new").querySelectorAll("[data-col]").forEach(b => values[b.dataset.col] = b.value);
+    if (await put(add.dataset.add, null, values)) route();
+  } else if (gone && confirm("Delete this row? It is gone from the profile for good.")) {
+    if (await send("/api/edit/" + gone.dataset.drop, { method: "DELETE" })) route();
+  }
+});
 
 const PAGE_SIZE = 15;
 
@@ -284,52 +375,69 @@ async function viewProspect(key) {
     ${when(p.description, () => section("Description", `<div class="desc prose">${esc(p.description)}</div>`))}`);
 }
 
+const COLS = {
+  profile: [{ name: "field" }, { name: "value", want: true }, { name: "notes" }],
+  education: [{ name: "degree" }, { name: "institution" }, { name: "finished" }],
+  employers: [{ name: "name", label: "employer" }, { name: "title" }, { name: "start" },
+              { name: "finish" }, { name: "current", options: [["0", "no"], ["1", "yes"]],
+                                    required: true },
+              { name: "context", area: true }, { name: "seq", label: "order" }],
+  projects: [{ name: "name", label: "project" }, { name: "start" }, { name: "finish" },
+             { name: "status", vocab: "projects.status" }, { name: "summary", area: true },
+             { name: "shared_with" }, { name: "notes", area: true }, { name: "seq", label: "order" }],
+  project_bullets: [{ name: "text", label: "bullet", area: true }, { name: "seq", label: "order" }],
+  project_technologies: [{ name: "technology" }],
+  project_metrics: [{ name: "metric", area: true }],
+  project_links: [{ name: "label" }, { name: "url" }],
+  search_criteria: [{ name: "kind", vocab: "search_criteria.kind" }, { name: "value" },
+                    { name: "weight" }, { name: "note" }, { name: "seq", label: "order" }],
+  search_notes: [{ name: "topic" }, { name: "note", area: true }],
+  facts: [{ name: "fact", area: true }],
+  accounts: [{ name: "employer" }, { name: "system" }, { name: "login_email" },
+             { name: "password_location" }, { name: "portal_url" }],
+  company_limits: [{ name: "company" }, { name: "stated", area: true }],
+};
+
 async function viewProfile() {
   loading();
-  const [fields, blockers, career, criteria, notes, facts, education, accounts, limits] =
-    await Promise.all(["profile", "unanswered", "career", "criteria", "notes", "facts",
-                       "education", "accounts", "limits"].map(n => get("/api/" + n)));
-  const groups = (rows, key) => [...new Set(rows.map(r => r[key]))];
+  const [fields, career, criteria, notes, facts, education, accounts, limits, vocabulary] =
+    await Promise.all(["profile", "career", "criteria", "notes", "facts", "education",
+                       "accounts", "limits", "vocabulary"].map(n => get("/api/" + n)));
+  VOCAB = vocabulary;
+  const sections = VOCAB["profile.section"];
+  const blocking = fields.filter(f => f.value === null);
   const project = p => `<div class="project">
-    <b>${esc(p.name)}</b> ${badge(p.status)}
-    <span class="time"> ${esc(p.start || "")}${when(p.finish, "–" + esc(p.finish))}</span>
-    ${when(p.shared_with, `<div class="time">shared with ${esc(p.shared_with)}</div>`)}
-    ${when(p.summary, `<p>${esc(p.summary)}</p>`)}
-    ${bulleted(p.bullets)}
-    ${when(p.metrics.length, `<div><b class="tiny">Metrics</b>${bulleted(p.metrics)}</div>`)}
-    ${when(p.links.length, `<div>${p.links.map(l => link(l.url, l.label)).join(" · ")}</div>`)}
-    ${when(p.technologies.length, `<div class="tags">${all(p.technologies, t => `<span class="tag">${esc(t)}</span>`)}</div>`)}
+    ${boxes("projects", p, COLS.projects)} ${drop("projects", p.rowid)}
+    <h4>Bullets — the only sentences a resume may draw on</h4>
+    ${editable("project_bullets", COLS.project_bullets, p.bullets, { project_id: p.rowid })}
+    <h4>Technologies</h4>
+    ${editable("project_technologies", COLS.project_technologies, p.technologies, { project_id: p.rowid })}
+    <h4>Metrics</h4>
+    ${editable("project_metrics", COLS.project_metrics, p.metrics, { project_id: p.rowid })}
+    <h4>Links</h4>
+    ${editable("project_links", COLS.project_links, p.links, { project_id: p.rowid })}
   </div>`;
   show(`<h2>Profile</h2>
-    <p class="sub">Everything an application draws on. Read-only here — corrections go through chat.</p>
-    ${card(blockers.length
-      ? `<h4>Will block an application</h4>${all(blockers, b => `<div class="null">${esc(b.field)}</div>`)}`
+    <p class="sub">Everything an application draws on, and yours to change here.
+      A box saves the moment you leave it; emptying one takes the answer back.</p>
+    ${card(blocking.length
+      ? `<h4>Unanswered — each one stops an application that asks for it</h4>
+         ${all(blocking, b => `<div class="null">${esc(b.field)}</div>`)}`
       : "No unanswered fields.")}
-    ${all(groups(fields, "section"), sec => `<h3>${esc(sec.replace(/_/g, " "))}</h3>` +
-      grid(fields.filter(f => f.section === sec).map(f => [
-        esc(f.field.split(".").slice(1).join(".").replace(/_/g, " ")),
-        value(f.value) + when(f.notes, `<br><span class="time">${esc(f.notes)}</span>`)])))}
-    ${section("Experience", all(career, e => card(`
-      <b>${esc(e.name)}</b>${when(e.title, ` — ${esc(e.title)}`)}
-      <span class="time"> ${esc(e.start || "")}–${esc(e.current ? "present" : e.finish || "")}</span>
-      ${when(e.context, `<div class="sub">${esc(e.context)}</div>`)}
-      ${all(e.projects, project)}`)))}
-    ${section("Education", table(["Degree", "Institution", "Finished"], education.map(e => ({
-      cells: [esc(e.degree), esc(e.institution || "—"), esc(e.finished || "—")] }))))}
-    ${section("Search criteria", all(groups(criteria, "kind"), kind =>
-      `<h4>${esc(kind.replace(/_/g, " "))}</h4>` +
-      grid(criteria.filter(c => c.kind === kind).map(c => [esc(c.value),
-        when(c.weight !== null, `<span class="score">${c.weight > 0 ? "+" : ""}${c.weight}</span> `) +
-        esc(c.note || "")]))))}
-    ${section("Search notes", all(notes, n =>
-      card(`<h4>${esc(n.topic)}</h4><div class="prose">${esc(n.note)}</div>`)))}
-    ${section("Facts that must never be misreported",
-      facts.length ? bulleted(facts.map(f => f.fact)) : '<p class="empty">None recorded.</p>')}
-    ${section("Accounts", table(["Employer", "System", "Login", "Password lives", "Portal"],
-      accounts.map(a => ({ cells: [esc(a.employer), esc(a.system || "—"), esc(a.login_email || "—"),
-                                   esc(a.password_location || "—"), link(a.portal_url, "open")] }))))}
-    ${section("Stated company limits", table(["Company", "Stated"],
-      limits.map(l => ({ cells: [esc(l.company), esc(l.stated)] }))))}`);
+    ${all(sections, sec => section(sec.replace(/_/g, " "),
+      editable("profile", COLS.profile, fields.filter(f => f.section === sec),
+               { field: sec + "." })))}
+    ${section("Experience", all(career, e => card(
+      boxes("employers", e, COLS.employers) + " " + drop("employers", e.rowid) +
+      all(e.projects, project) +
+      `<h4>Add a project</h4>${editable("projects", COLS.projects, [], { employer_id: e.rowid })}`)))}
+    ${card(`<h4>Add an employer</h4>${editable("employers", COLS.employers, [])}`)}
+    ${section("Education", editable("education", COLS.education, education))}
+    ${section("Search criteria", editable("search_criteria", COLS.search_criteria, criteria))}
+    ${section("Search notes", editable("search_notes", COLS.search_notes, notes))}
+    ${section("Facts that must never be misreported", editable("facts", COLS.facts, facts))}
+    ${section("Accounts", editable("accounts", COLS.accounts, accounts))}
+    ${section("Stated company limits", editable("company_limits", COLS.company_limits, limits))}`);
 }
 
 const dueDays = { Weekly: 7, Monthly: 30, Quarterly: 91 };

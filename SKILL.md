@@ -39,7 +39,7 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the read-only dashboard — `job-ui`; `--lan` also serves it, key-gated, to other devices on the network |
+| `/job ui` | Serve the dashboard — `job-ui`; the profile is edited there; `--lan` also serves it, key-gated, to other devices on the network |
 | `/job help` | `cat "$HOME/.claude/skills/job/jobhunt/help.txt"` and nothing else — no run, no queries, no commentary |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
@@ -137,10 +137,14 @@ goes out.
 
 **Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves `127.0.0.1` on
 the first free port from 8765 — every job opening on its full application with each drafted essay and
-flagged field, the whole profile with its `NULL`s called out, and the watchlist. It is **read-only,
-enforced by SQLite** (`mode=ro`), because the invariants that make a write safe live here, not in a
-web page. Its one action is a **Run** button, which opens the platform's terminal on `claude "/job"`,
-so the phases that need a person still get one.
+flagged field, the whole profile with its `NULL`s called out, and the watchlist. **The Profile page
+writes.** Every box on it saves the moment it loses focus, and emptying one sets `NULL` — the user
+correcting their own answers is the one thing they should never need you for. Everything a phase
+decides — postings, scores, staged forms — stays read-only there (`mode=ro`), because the invariants
+that make those writes safe live here, not in a web page.
+
+**So read the profile before you write it, always.** The user may have edited it in the page since
+you last looked, and a stale read overwrites their correction.
 
 **Never write run notes or daily summaries to disk.** The database is the record, and a question
 about the search — what went quiet, which companies reject fastest — is **answered with a query**, in
