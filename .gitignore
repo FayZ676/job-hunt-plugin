@@ -1,16 +1,15 @@
 .DS_Store
 .vscode/
+.playwright-mcp/
+
 node_modules/
 .next/
+out/
 next-env.d.ts
+*.tsbuildinfo
 
 # A user's own career data, if they run the skill from this directory.
 /career/
-__pycache__/
-*.pyc
 
-# Packaging artifacts.
-*.egg-info/
-build/
-dist/
-.playwright-mcp/
+.env*
+npm-debug.log*

@@ -15,7 +15,7 @@ source's kind, rank, endpoint and the quirk that bites when it goes quiet:
 
 Adding a source is one entry in `sources.REGISTRY` — a function returning `Posting` objects, a
 `kind`, a `rank`, an endpoint and a quirk; nothing downstream changes, because no later step knows
-which source a row came from. `scan.py` needs `pydantic` (`pip install "$HOME/.claude/skills/job"`); nothing else does.
+which source a row came from. The registry lives in `lib/sources.ts`, and `cli/scan.ts` is what calls it.
 
 ## Contents
 

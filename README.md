@@ -26,12 +26,12 @@ it keeps are the prospects. |
 
 **The submit click is never unattended.** Everything before it is.
 
-There are two halves, and one database between them. `jobhunt/` is the Python package that stands
-between the jobs and the database: one module per phase under `jobhunt/phases/` — `scan.py`,
-`score.py`, `resume.py`, `stage.py`, `submit.py` — so any step can be run or redone on its own, plus
-what they share and `q.py` for SQL. `dashboard/` is a Next.js app that stands between you and the
-database, and is the only thing that writes your profile. `sql/` belongs to neither: both halves
-apply it on every connect. The rules above are enforced in those modules, not just described: the
+It is one TypeScript app with two faces and one database under them. `cli/` stands between the jobs
+and the database: one module per phase — `scan.ts`, `score.ts`, `resume.ts`, `stage.ts`,
+`submit.ts` — so any step can be run or redone on its own, plus `q.ts` for SQL. `app/` is the
+Next.js dashboard that stands between you and the database, and is the only thing that writes your
+profile. `lib/` is what both use, including the one description of the schema, and `sql/` belongs to
+neither: every connect applies it, from a page or a phase. The rules above are enforced in those modules, not just described: the
 scorer refuses a posting whose description was never read, staging refuses an application with no
 built resume, and nothing is marked applied without the confirmation text you saw.
 
@@ -41,13 +41,13 @@ Clone it into your skills directory, where Claude Code picks it up as `/job`:
 
 ```
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
-pip install ~/.claude/skills/job
-npm install --prefix ~/.claude/skills/job/dashboard
+npm install --prefix ~/.claude/skills/job
+npm link --prefix ~/.claude/skills/job
 ```
 
-The `pip install` brings in the dependencies and puts the phases on your `PATH` as `job-scan`,
-`job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and `job-paths`. The `npm install` is
-the dashboard, and is needed once before `/job ui`.
+The install brings in the dependencies and serves `/job ui`; the link puts the phases on your `PATH`
+as `job-scan`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`, `job-profile` and
+`job-paths`. Node runs the TypeScript directly, so there is nothing to build.
 
 Then, from anywhere:
 
@@ -61,7 +61,7 @@ export, hand it over and it drafts the whole thing for you to correct.
 
 That's the whole install. `/job scan` works as soon as setup finishes.
 
-Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`jobhunt/sources.py`) —
+Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`lib/sources.ts`) —
 a function that returns `Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
 no step below fetching knows which source a row came from.
 
@@ -94,14 +94,12 @@ your phone number in it.
 
 ## Requirements
 
-- **Scanning and scoring:** Python 3.10+ and `pip install ~/.claude/skills/job`, which installs the
-  `jobhunt` package and its dependencies. SQLite ships with Python.
+- **Everything:** Node 22.18+ and `npm install ~/.claude/skills/job`. SQLite comes with it.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).
-- **The dashboard:** Node 20+, and `npm install` in `dashboard/` once.
 
-You can start with just Python and add the rest before your first resume.
+You can start with just Node and add the rest before your first resume.
 
 ## Commands
 

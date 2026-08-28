@@ -39,39 +39,45 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the dashboard — `cd dashboard && npm run dev`, on `127.0.0.1:8765`; the profile is edited there |
-| `/job help` | `cat "$HOME/.claude/skills/job/jobhunt/help.txt"` and nothing else — no run, no queries, no commentary |
+| `/job ui` | Serve the dashboard — `npm run dev` in the skill directory, on `127.0.0.1:8765`; the profile is edited there |
+| `/job help` | `cat "$HOME/.claude/skills/job/cli/help.txt"` and nothing else — no run, no queries, no commentary |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
 means adding it to the table above and to `help.txt`.
 
 ## Modules
 
-**One module per phase, under `jobhunt/phases/`.** Each runs on its own, so any step can be redone
+**One module per phase, under `cli/`.** Each runs on its own, so any step can be redone
 without the ones before it, and `--help` on any of them lists its subcommands.
 
 | Phase | Module | Subcommands |
 | ----- | ------ | ----------- |
-| 1 — Fetch, then ingest | `phases/scan.py` | `sources` `boards` `harvest` `descriptions` `ingest` `dispositions` |
-| 2 — Score | `phases/score.py` | `triage` `rubric` `show` `set` `pending` |
-| 3 — Resume | `phases/resume.py` | `spec` `build` |
-| 4 — Stage | `phases/stage.py` | `answers` `missing` `add` `show` `list` `drop` |
-| 5 — Review and submit | `phases/submit.py` | `review` `record` `rejected` |
+| 1 — Fetch, then ingest | `cli/scan.ts` | `sources` `boards` `harvest` `descriptions` `ingest` `dispositions` |
+| 2 — Score | `cli/score.ts` | `triage` `rubric` `show` `set` `pending` |
+| 3 — Resume | `cli/resume.ts` | `spec` `build` |
+| 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
+| 5 — Review and submit | `cli/submit.ts` | `review` `record` `rejected` |
 
-`jobhunt/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`
-and `q.py`. **`sql/` sits outside both halves** — `job.sql` and `profile.sql` are applied on every
-connect from either side, so neither the phases nor the dashboard owns the file that defines both.
+**One app, one language.** `lib/` holds everything both halves share — `schema.ts` (the typed
+mirror of the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`,
+`posting.ts`, `sources.ts`, `typst.ts` — and `sql/` sits under neither: `job.sql` and `profile.sql`
+are applied on every connect, from a page or a phase, so neither side owns the file that defines
+both.
 
-**`dashboard/` is a Next.js app and the only thing that writes the profile.** It opens `job.db`
-directly: a page reads the rows it renders, a server action in `lib/actions.ts` writes the one
-column it was given. Nothing in Python serves it, and it calls nothing in Python. Everything under
-`components/edit/` writes and everything beside it only displays, so what can reach the database is
-the part of the tree you can point at.
+**The pages under `app/` are the only thing that writes the profile.** A page reads the rows it
+renders through `lib/queries.ts`, and a server action in `lib/actions.ts` writes the one column it
+was given. Everything under `components/edit/` writes and everything beside it only displays, so
+what can reach the database is the part of the tree you can point at.
 
-`pip install "$HOME/.claude/skills/job"` is the install: it brings in the dependencies and puts every
-phase on `PATH` as `job-scan`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and
-`job-paths` — the names used throughout this skill. Every one of them takes `--help`.
-`npm install` in `dashboard/` is the other half, and is needed once before `/job ui`.
+```bash
+npm install --prefix "$HOME/.claude/skills/job"   # dependencies
+npm link --prefix "$HOME/.claude/skills/job"      # the job-* commands, on PATH
+```
+
+That puts every phase on `PATH` as `job-scan`, `job-score`, `job-resume`, `job-stage`,
+`job-submit`, `job-q`, `job-profile` and `job-paths` — the names used throughout this skill. Every
+one of them takes `--help`. The same install serves `/job ui`. Node 22.18 or newer runs the
+TypeScript directly, so there is nothing to build.
 
 **The phase modules refuse what the invariants forbid**, so the rule is enforced rather than
 remembered: `job-score set` will not score a prospect whose description is empty, `job-stage add`
@@ -112,7 +118,7 @@ where it is rather than resolving against the working directory:
 CAREER=$(job-paths career)
 ```
 
-`jobkit.py` also answers `db`, `resumes` and `submitted`. Default `~/data/job`; `JOB_CAREER_DIR`
+`job-paths` also answers `db`, `resumes` and `submitted`. Default `~/data/job`; `JOB_CAREER_DIR`
 overrides it. **Paths stored in the database are absolute** — a relative one breaks the next run
 started somewhere else.
 
@@ -149,8 +155,8 @@ allows — a flag is `0`/`1`, a date is `YYYY-MM-DD`, a career date may be a yea
 a timestamp is what `datetime()` reads, a choice lists its words. **The profile is seven single-row
 tables** — `identity`, `work_authorization`, `availability`, `compensation`, `demographics`,
 `experience`, `search` — one column per question a form can ask, so `<section>.<name>` is a table
-and a column. `lib/schema.ts` and `jobkit.takes()` both read those declarations for the dashboard's
-controls and the CLI's errors; neither keeps its own copy, and a field added in SQL arrives in both
+and a column. `lib/schema.ts` reads those declarations for both the dashboard's
+controls and the CLI's errors, so there is one copy and not two, and a field added in SQL arrives in both
 on the next connect.
 
 **Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves

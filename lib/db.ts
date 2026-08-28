@@ -4,15 +4,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { align } from "./schema";
+import { ROOT } from "./root.ts";
+import { align } from "./schema.ts";
 
 export const CAREER = path.resolve(
   (process.env.JOB_CAREER_DIR || "~/data/job").replace(/^~(?=$|\/)/, os.homedir()),
 );
 export const DB = path.join(CAREER, "job.db");
 export const RESUMES = path.join(CAREER, "resumes");
+export const SUBMITTED = path.join(RESUMES, "submitted");
 
-const SQL = path.join(process.cwd(), "..", "sql");
+export const PATHS = { career: CAREER, db: DB, resumes: RESUMES, submitted: SUBMITTED };
+
+const SQL = path.join(ROOT, "sql");
 
 const held = globalThis as { db?: Database.Database; ddl?: string };
 
@@ -21,17 +25,23 @@ export const ddl = () =>
     .map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8"))
     .join("\n"));
 
+export function connect(at: string = DB) {
+  fs.mkdirSync(path.dirname(at) || ".", { recursive: true });
+  const opened = new Database(at);
+  opened.pragma("foreign_keys = ON");
+  const sql = ddl();
+  opened.exec(sql);
+  align(opened, sql);
+  return opened;
+}
+
 export function db() {
-  if (!held.db) {
-    fs.mkdirSync(CAREER, { recursive: true });
-    const opened = new Database(DB);
-    opened.pragma("foreign_keys = ON");
-    const sql = ddl();
-    opened.exec(sql);
-    align(opened, sql);
-    held.db = opened;
-  }
-  return held.db;
+  return (held.db ??= connect());
+}
+
+export function open(at?: string | null) {
+  if (!at) return db();
+  return (held.db = connect(path.resolve(at.replace(/^~(?=$|\/)/, os.homedir()))));
 }
 
 export const rows = <T extends z.ZodType>(shape: T, sql: string, args: unknown[] = []) =>

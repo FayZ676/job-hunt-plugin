@@ -5,7 +5,7 @@ already stored, rules on every row, and promotes the survivors.
 
 ## Contents
 
-- The filters — the verdicts in `scan.py` versus the patterns in the `filters` table
+- The filters — the verdicts in `cli/scan.ts` versus the patterns in the `filters` table
 - Source precedence — the rank that resolves an overlap without naming a source
 - Dedupe — the three checks, and where the collapsed siblings go
 - Tuning — reading the drop counts, and querying what a verdict cost
@@ -30,7 +30,7 @@ job-scan dispositions   # every verdict, in order
 
 ## The filters
 
-Two things share the word. `DISPOSITIONS` in `scan.py` names the **verdicts** — one per branch of
+Two things share the word. `DISPOSITIONS` in `cli/scan.ts` names the **verdicts** — one per branch of
 the chain, and the same values `postings.disposition` stores. The `filters` **table** holds the
 **patterns** those branches match on, keyed by `kind`. Only four verdicts read the table; the rest
 rule on columns, dates, ranks and prior state, so neither describes the other.

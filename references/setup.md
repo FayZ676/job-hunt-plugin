@@ -55,11 +55,11 @@ INSERT INTO companies(slug,ats,name,source) VALUES('slug','greenhouse','Name','m
 UPDATE companies SET active=0 WHERE slug='…';
 ```
 
-**4. Check the tooling.** The `jobhunt` package and its dependencies are what fetching and scoring
-run on; Typst and Poppler are only for the resume build.
+**4. Check the tooling.** The npm dependencies and the linked `job-*` commands are what fetching
+and scoring run on; Typst and Poppler are only for the resume build.
 
 ```bash
-python3 -c "import jobhunt.models" 2>/dev/null || echo 'pip install "$HOME/.claude/skills/job"'
+command -v job-scan || echo 'npm install --prefix "$HOME/.claude/skills/job" && npm link --prefix "$HOME/.claude/skills/job"'
 command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 ```

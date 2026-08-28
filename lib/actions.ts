@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "./db";
-import type { Table } from "./schema";
+import { db } from "./db.ts";
+import type { Table } from "./schema.ts";
 
 const WRITABLE = new Set<Table>([
   "identity", "work_authorization", "availability", "compensation", "demographics",

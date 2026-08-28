@@ -1,0 +1,46 @@
+{
+  "name": "job",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A Claude Code skill that scans job boards, scores openings, tailors resumes, and applies.",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "bin": {
+    "job-paths": "cli/paths.ts",
+    "job-q": "cli/q.ts",
+    "job-profile": "cli/profile.ts",
+    "job-scan": "cli/scan.ts",
+    "job-score": "cli/score.ts",
+    "job-resume": "cli/resume.ts",
+    "job-stage": "cli/stage.ts",
+    "job-submit": "cli/submit.ts"
+  },
+  "scripts": {
+    "dev": "next dev -p 8765",
+    "build": "next build",
+    "start": "next start -p 8765",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "commander": "^14.0.3",
+    "entities": "^8.0.0",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "daisyui": "^5.7.22",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
