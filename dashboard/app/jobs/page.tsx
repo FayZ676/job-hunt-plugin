@@ -7,15 +7,9 @@ export const dynamic = "force-dynamic";
 const ORDER = ["shortlisted", "staged", "applied", "interviewing", "new", "scored",
                "skipped", "rejected", "not_pursued", "closed"];
 
-type Job = {
-  key: string; company: string; title: string; location: string | null; remote: number;
-  compensation: string | null; first_seen: string | null; score: number | null;
-  status: string; resume: string | null;
-};
-
 export default function JobsPage() {
-  const rows = jobs() as Job[];
-  const counts = Object.fromEntries(stats().map((s) => [s.status, s.n]));
+  const rows = jobs();
+  const counts = Object.fromEntries(stats().map((group) => [group.status ?? "", group.n]));
 
   return (
     <>
@@ -40,7 +34,7 @@ export default function JobsPage() {
         rows={rows.map((job) => ({
           key: job.key,
           href: `/jobs/${encodeURIComponent(job.key)}`,
-          facets: [job.status],
+          facets: job.status ? [job.status] : [],
           haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
           cells: [
             <span key="c" className="font-medium hover:underline">{job.company}</span>,

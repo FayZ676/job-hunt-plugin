@@ -9,7 +9,11 @@ import { useVocabulary } from "./Vocabulary";
 
 type State = "" | "saving" | "saved" | "failed";
 
-export function Control({ column, value, onValue, onCommit, state, autoFocus }: {
+const TONE: Record<State, string> = {
+  "": "", saving: "primary", saved: "success", failed: "error",
+};
+
+export function Control({ column, value, onValue, onCommit, state = "", autoFocus }: {
   column: Column;
   value: string;
   onValue: (value: string) => void;
@@ -18,10 +22,13 @@ export function Control({ column, value, onValue, onCommit, state, autoFocus }: 
   autoFocus?: boolean;
 }) {
   const vocabulary = useVocabulary();
+  const options = column.options ?? (column.vocabulary && vocabulary[column.vocabulary]);
+  const look = options ? "select" : column.kind === "area" ? "textarea" : "input";
+  const tone = TONE[state] || (column.blocking && !value ? "error" : "");
+
   const shared = {
-    className: `field${column.quiet ? " quiet" : ""}`,
-    "data-state": state || undefined,
-    "data-blocking": column.blocking ? "yes" : undefined,
+    className: `${look} ${look}-sm w-full ${column.quiet ? `${look}-ghost` : ""}
+      ${tone ? `${look}-${tone}` : ""}`,
     placeholder: column.placeholder ?? title(column),
     "aria-label": title(column),
     autoFocus,
@@ -30,7 +37,6 @@ export function Control({ column, value, onValue, onCommit, state, autoFocus }: 
     onBlur: () => onCommit?.(value),
   };
 
-  const options = column.options ?? (column.vocabulary && vocabulary[column.vocabulary]);
   if (options)
     return (
       <select {...shared} onChange={(event) => { onValue(event.target.value); onCommit?.(event.target.value); }}>
@@ -48,12 +54,13 @@ export function Control({ column, value, onValue, onCommit, state, autoFocus }: 
 export default function Field({ table, rowid, column, value }: {
   table: string; rowid: number; column: Column; value: string | number | null;
 }) {
-  const [held, setHeld] = useState(value === null || value === undefined ? "" : String(value));
+  const was = value === null || value === undefined ? "" : String(value);
+  const [held, setHeld] = useState(was);
   const [state, setState] = useState<State>("");
   const router = useRouter();
 
   const commit = async (next: string) => {
-    if (next === (value === null || value === undefined ? "" : String(value))) return setState("");
+    if (next === was) return setState("");
     setState("saving");
     const result = await save(table, rowid, { [column.name]: next });
     if ("error" in result) {

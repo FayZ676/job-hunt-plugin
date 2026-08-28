@@ -1,13 +1,8 @@
 import FilterableTable from "@/components/FilterableTable";
 import { Out, PageHeader, Stamp } from "@/components/ui";
-import { companies } from "@/lib/queries";
+import { companies, type Company } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
-
-type Company = {
-  slug: string; ats: string; name: string; active: number;
-  careers_url: string | null; cadence: string | null; last_checked: string | null;
-};
 
 const DUE_AFTER: Record<string, number> = { Weekly: 7, Monthly: 30, Quarterly: 91 };
 
@@ -20,7 +15,7 @@ function checked(company: Company) {
 }
 
 export default function SourcesPage() {
-  const rows = companies() as Company[];
+  const rows = companies();
   const counts: Record<string, number> = {};
   for (const company of rows) counts[company.ats] = (counts[company.ats] ?? 0) + 1;
 
@@ -61,8 +56,8 @@ export default function SourcesPage() {
               <span key="n" className="font-medium">{company.name}</span>,
               <Stamp key="a">{company.ats}</Stamp>,
               company.cadence || "—",
-              <span key="c" className={seen.due ? "text-bad" : "text-dim"}>{seen.text}</span>,
-              company.active ? "✓" : <span key="o" className="text-dim">off</span>,
+              <span key="c" className={seen.due ? "text-error" : "opacity-60"}>{seen.text}</span>,
+              company.active ? "✓" : <span key="o" className="opacity-60">off</span>,
               <Out key="u" href={company.careers_url}>open</Out>,
             ],
           };

@@ -5,7 +5,7 @@ export const PageHeader = ({ title, sub, children }:
   { title: string; sub?: ReactNode; children?: ReactNode }) => (
   <header className="mb-7">
     <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-    {sub && <p className="mt-1 max-w-2xl text-sm text-dim">{sub}</p>}
+    {sub && <p className="mt-1 max-w-2xl text-sm opacity-60">{sub}</p>}
     {children}
   </header>
 );
@@ -16,7 +16,7 @@ export const Section = ({ title, sub, children, aside }:
     <div className="mb-3 flex items-baseline justify-between gap-4">
       <div>
         <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-        {sub && <p className="mt-0.5 text-sm text-dim">{sub}</p>}
+        {sub && <p className="mt-0.5 text-sm opacity-60">{sub}</p>}
       </div>
       {aside}
     </div>
@@ -25,15 +25,15 @@ export const Section = ({ title, sub, children, aside }:
 );
 
 export const Card = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={`rounded-xl border border-line bg-panel p-4 md:p-5 ${className}`}>{children}</div>
+  <div className={`card border border-base-300 bg-base-100 p-4 md:p-5 ${className}`}>{children}</div>
 );
 
 export const Label = ({ children }: { children: ReactNode }) => (
-  <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-dim">{children}</h3>
+  <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider opacity-60">{children}</h3>
 );
 
 export const Empty = ({ children }: { children: ReactNode }) => (
-  <p className="py-4 text-sm text-dim">{children}</p>
+  <p className="py-4 text-sm opacity-60">{children}</p>
 );
 
 export const Prose = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
@@ -41,60 +41,50 @@ export const Prose = ({ children, className = "" }: { children: ReactNode; class
 );
 
 const TONE: Record<string, string> = {
-  applied: "text-good border-good", interviewing: "text-good border-good",
-  shortlisted: "text-accent border-accent", staged: "text-accent border-accent",
-  rejected: "text-bad border-bad", blocked: "text-bad border-bad",
+  applied: "badge-success", interviewing: "badge-success",
+  shortlisted: "badge-primary", staged: "badge-primary",
+  rejected: "badge-error", blocked: "badge-error",
 };
 
 export const Badge = ({ children }: { children: string | null | undefined }) =>
   children ? (
-    <span className={`inline-block rounded-full border px-2 py-0.5 text-[11px] leading-4
-      ${TONE[children] ?? "border-line text-dim"}`}>{children}</span>
+    <span className={`badge badge-sm badge-outline ${TONE[children] ?? "opacity-60"}`}>{children}</span>
   ) : null;
 
 export const Score = ({ value }: { value: number | null }) => (
   <span className={`font-mono font-semibold ${
-    value === null ? "text-dim" : value >= 7 ? "text-good" : value >= 4 ? "text-warn" : "text-dim"}`}>
+    value === null ? "opacity-60" : value >= 7 ? "text-success" : value >= 4 ? "text-warning" : "opacity-60"}`}>
     {value ?? "—"}
   </span>
 );
 
 export const Stamp = ({ children }: { children: ReactNode }) => (
-  <span className="whitespace-nowrap font-mono text-xs text-dim">{children}</span>
+  <span className="whitespace-nowrap font-mono text-xs opacity-60">{children}</span>
 );
 
 export const Out = ({ href, children }: { href: string | null; children?: ReactNode }) =>
   href ? (
-    <a href={href} target="_blank" rel="noreferrer" className="text-accent hover:underline">
-      {children ?? href}
-    </a>
-  ) : <span className="text-dim">—</span>;
+    <a href={href} target="_blank" rel="noreferrer" className="link link-primary">{children ?? href}</a>
+  ) : <span className="opacity-60">—</span>;
 
 export const Meter = ({ done, total }: { done: number; total: number }) => (
   <div className="flex items-center gap-3">
-    <div className="h-1.5 w-40 overflow-hidden rounded-full bg-sunk">
-      <div className="h-full rounded-full bg-accent transition-all"
-           style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
-    </div>
-    <span className="text-xs text-dim">{done} of {total} answered</span>
+    <progress className="progress progress-primary w-40" value={done} max={total || 1} />
+    <span className="text-xs opacity-60">{done} of {total} answered</span>
   </div>
 );
-
-export type Cell = { label: string; node: ReactNode; hideNarrow?: boolean };
 
 export const DataTable = ({ head, rows, empty = "Nothing here yet." }: {
   head: { label: string; hideNarrow?: boolean }[];
   rows: { key: string; href?: string; cells: ReactNode[] }[];
   empty?: string;
 }) => rows.length === 0 ? <Empty>{empty}</Empty> : (
-  <div className="overflow-x-auto rounded-xl border border-line">
-    <table className="w-full text-sm">
+  <div className="overflow-x-auto rounded-box border border-base-300">
+    <table className="table table-sm">
       <thead>
-        <tr className="border-b border-line bg-sunk">
+        <tr>
           {head.map((column) => (
-            <th key={column.label}
-                className={`px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider
-                  text-dim ${column.hideNarrow ? "hidden md:table-cell" : ""}`}>
+            <th key={column.label} className={column.hideNarrow ? "hidden md:table-cell" : ""}>
               {column.label}
             </th>
           ))}
@@ -102,10 +92,10 @@ export const DataTable = ({ head, rows, empty = "Nothing here yet." }: {
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.key} className="border-b border-line last:border-0 hover:bg-sunk">
+          <tr key={row.key} className="hover:bg-base-200">
             {row.cells.map((cell, index) => (
               <td key={head[index].label}
-                  className={`px-3 py-2 align-top ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}>
+                  className={`align-top ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}>
                 {index === 0 && row.href
                   ? <Link href={row.href} className="block">{cell}</Link>
                   : cell}
@@ -124,7 +114,7 @@ export const DefList = ({ pairs }: { pairs: (Pair | false | null | undefined)[] 
   <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[10rem_minmax(0,1fr)]">
     {pairs.filter((pair): pair is Pair => Boolean(pair)).map(([label, node]) => (
       <div key={label} className="contents">
-        <dt className="text-dim">{label}</dt>
+        <dt className="opacity-60">{label}</dt>
         <dd className="mb-2 min-w-0 break-words sm:mb-0">{node}</dd>
       </div>
     ))}

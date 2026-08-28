@@ -2,7 +2,6 @@
 
 import Chips from "@/components/edit/Chips";
 import DeleteButton from "@/components/edit/DeleteButton";
-import Disclosure from "@/components/Disclosure";
 import FieldRow from "@/components/edit/FieldRow";
 import NewRow from "@/components/edit/NewRow";
 import RecordList from "@/components/edit/RecordList";
@@ -13,11 +12,14 @@ import type { Employer, Project } from "@/lib/queries";
 function ProjectPanel({ project }: { project: Project }) {
   const seed = { project_id: String(project.rowid) };
   return (
-    <Disclosure
-      summary={project.name}
-      meta={`${project.bullets.length} bullet${project.bullets.length === 1 ? "" : "s"}`}
-    >
-      <div className="space-y-5">
+    <details className="collapse collapse-arrow border border-base-300 bg-base-100">
+      <summary className="collapse-title flex items-center gap-2 font-medium">
+        {project.name}
+        <span className="ml-auto text-xs opacity-60">
+          {project.bullets.length} bullet{project.bullets.length === 1 ? "" : "s"}
+        </span>
+      </summary>
+      <div className="collapse-content space-y-5">
         <FieldRow table="projects" rowid={project.rowid} columns={COLUMNS.projects}
                   values={project} onDelete={false} />
         <FieldRow table="projects" rowid={project.rowid} columns={COLUMNS.projectDetail}
@@ -48,12 +50,12 @@ function ProjectPanel({ project }: { project: Project }) {
                       seed={seed} what="this link" />
         </div>
 
-        <div className="flex items-center gap-2 border-t border-line pt-4 text-xs text-dim">
+        <div className="flex items-center gap-2 border-t border-base-300 pt-4 text-xs opacity-60">
           <DeleteButton table="projects" rowid={project.rowid} what={project.name} />
           Delete this project and everything under it.
         </div>
       </div>
-    </Disclosure>
+    </details>
   );
 }
 

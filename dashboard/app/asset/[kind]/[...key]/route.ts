@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 import { CAREER, one } from "@/lib/db";
 
 const FROM = { resume: "postings", screenshot: "staged" } as const;
@@ -14,7 +15,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
   const table = FROM[kind as keyof typeof FROM];
   if (!table) return new Response("no such kind", { status: 404 });
 
-  const found = one<{ p: string | null }>(
+  const found = one(z.object({ p: z.string().nullable() }),
     `SELECT ${kind} AS p FROM ${table} WHERE key=?`, [decodeURIComponent(key.join("/"))]);
   if (!found?.p) return new Response("no such file", { status: 404 });
 

@@ -21,12 +21,12 @@ export default function FieldRow({
 }) {
   return (
     <div
-      className={stack ? "space-y-3" : "rowgrid rounded-xl bg-sunk p-3 md:bg-transparent md:p-0"}
+      className={stack ? "space-y-3" : "rowgrid rounded-box bg-base-200 p-3 md:bg-transparent md:p-0"}
       style={stack ? undefined : tracks(columns)}
     >
       {columns.map((column) => (
         <div key={column.name}>
-          <span className={`mb-1 block text-[11px] uppercase tracking-wide text-dim
+          <span className={`mb-1 block text-[11px] uppercase tracking-wide opacity-60
             ${stack ? "" : "md:hidden"}`}>
             {title(column)}
           </span>

@@ -35,13 +35,12 @@ export default function FilterableTable({
 
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
   const here = Math.min(page, pages - 1);
-  const step = (by: number) => setPage(here + by);
 
   return (
     <div className="space-y-4">
       <input
         type="search"
-        className="field md:!w-80"
+        className="input input-sm w-full md:w-80"
         placeholder={placeholder}
         value={query}
         onChange={(event) => { setQuery(event.target.value); setPage(0); }}
@@ -59,12 +58,10 @@ export default function FilterableTable({
                   setPicked({ ...picked, [group.name]: on ? null : facet.key });
                   setPage(0);
                 }}
-                className={`rounded-full border px-3 py-1 text-xs transition-colors ${on
-                  ? "border-accent bg-accent text-accent-ink"
-                  : "border-line bg-panel text-ink hover:border-accent"}`}
+                className={`btn btn-xs ${on ? "btn-primary" : "btn-outline"}`}
               >
                 {facet.label}
-                <span className="ml-1.5 opacity-60">{facet.count}</span>
+                <span className="opacity-60">{facet.count}</span>
               </button>
             );
           })}
@@ -74,16 +71,14 @@ export default function FilterableTable({
       <DataTable head={head} rows={shown.slice(here * PAGE, here * PAGE + PAGE)} empty={empty} />
 
       {pages > 1 && (
-        <div className="flex items-center gap-3 text-xs text-dim">
-          <button type="button" disabled={here === 0} onClick={() => step(-1)}
-                  className="rounded-lg border border-line px-3 py-1 disabled:opacity-40 hover:bg-sunk">
-            ‹ Prev
-          </button>
+        <div className="flex items-center gap-3 text-xs opacity-60">
+          <div className="join">
+            <button type="button" className="btn btn-xs join-item" disabled={here === 0}
+                    onClick={() => setPage(here - 1)}>‹ Prev</button>
+            <button type="button" className="btn btn-xs join-item" disabled={here === pages - 1}
+                    onClick={() => setPage(here + 1)}>Next ›</button>
+          </div>
           <span>Page {here + 1} of {pages} · {shown.length} total</span>
-          <button type="button" disabled={here === pages - 1} onClick={() => step(1)}
-                  className="rounded-lg border border-line px-3 py-1 disabled:opacity-40 hover:bg-sunk">
-            Next ›
-          </button>
         </div>
       )}
     </div>

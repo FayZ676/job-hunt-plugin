@@ -23,16 +23,12 @@ export default function Chips({ table, column, rows, seed = {}, placeholder }: {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {rows.map((row) => (
-        <span
-          key={row.rowid}
-          className="inline-flex items-center gap-1.5 rounded-full border border-line
-            bg-panel py-1 pl-3 pr-1.5 text-xs"
-        >
+        <span key={row.rowid} className="badge badge-outline gap-1 pr-1">
           {String(row[column])}
           <button
             type="button"
             aria-label={`remove ${String(row[column])}`}
-            className="rounded-full px-1 leading-none text-dim hover:text-bad"
+            className="btn btn-xs btn-circle btn-ghost"
             onClick={async () => act(await remove(table, row.rowid))}
           >
             ×
@@ -40,7 +36,7 @@ export default function Chips({ table, column, rows, seed = {}, placeholder }: {
         </span>
       ))}
       <input
-        className="field !w-40 !rounded-full !py-1 text-xs"
+        className="input input-xs w-40 rounded-full"
         placeholder={placeholder}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}

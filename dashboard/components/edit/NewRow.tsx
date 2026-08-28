@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { save } from "@/lib/actions";
 import { Control } from "./Field";
-import { title, type Column } from "./columns";
+import { tracks } from "./FieldRow";
 import { say } from "@/components/Toaster";
+import type { Column } from "./columns";
 
 export default function NewRow({ table, columns, seed = {}, label = "Add", compact }: {
   table: string;
@@ -32,8 +33,8 @@ export default function NewRow({ table, columns, seed = {}, label = "Add", compa
 
   return (
     <div
-      className={`rowgrid ${compact ? "" : "rounded-xl border border-dashed border-line p-3"}`}
-      style={{ ["--tracks" as string]: columns.map((c) => c.width ?? "minmax(0,1fr)").join(" ") + " auto" }}
+      className={`rowgrid ${compact ? "" : "rounded-box border border-dashed border-base-300 p-3"}`}
+      style={tracks(columns)}
       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); add(); } }}
     >
       {columns.map((column) => (
@@ -44,13 +45,7 @@ export default function NewRow({ table, columns, seed = {}, label = "Add", compa
           onValue={(value) => setDraft({ ...draft, [column.name]: value })}
         />
       ))}
-      <button
-        type="button"
-        disabled={busy}
-        onClick={add}
-        className="h-8 shrink-0 rounded-lg bg-accent px-3 text-sm font-medium text-accent-ink
-          disabled:opacity-50 hover:brightness-110"
-      >
+      <button type="button" disabled={busy} onClick={add} className="btn btn-sm btn-primary">
         {label}
       </button>
     </div>

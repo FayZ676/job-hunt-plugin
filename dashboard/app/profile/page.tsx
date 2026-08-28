@@ -38,11 +38,11 @@ export default function ProfilePage() {
       </PageHeader>
 
       {blocking.length > 0 && (
-        <Card className="mb-8 border-bad bg-bad-soft">
+        <Card className="mb-8 border-error bg-error/10">
           <p className="text-sm font-medium">
             {blocking.length} unanswered — a form asking for one of these stops rather than guesses.
           </p>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-dim">
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs opacity-60">
             {blocking.map((answer) => <li key={answer.field}>{answer.field}</li>)}
           </ul>
         </Card>

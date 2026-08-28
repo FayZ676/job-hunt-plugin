@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full md:flex">
+      <body className="min-h-full bg-base-200 md:flex">
         <Nav db={DB} />
         <main className="min-w-0 flex-1 px-5 py-8 pb-24 md:px-10">{children}</main>
         <Toaster />
