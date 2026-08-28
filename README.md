@@ -26,11 +26,12 @@ it keeps are the prospects. |
 
 **The submit click is never unattended.** Everything before it is.
 
-Everything is one Python package, `jobhunt`. Each phase is one module under `jobhunt/phases/` —
-`scan.py`, `score.py`, `resume.py`, `stage.py`, `submit.py` — so any step can be run or redone on its
-own, and `--help` on any of them lists what it does. `jobhunt/` holds what they share, plus the two
-tools you run directly: `q.py` for SQL and `jobhunt/ui/` for the dashboard, and the schema the database is
-built from (`jobhunt/sql/`). The rules above are enforced in those modules, not just described: the
+There are two halves, and one database between them. `jobhunt/` is the Python package that stands
+between the jobs and the database: one module per phase under `jobhunt/phases/` — `scan.py`,
+`score.py`, `resume.py`, `stage.py`, `submit.py` — so any step can be run or redone on its own, plus
+what they share and `q.py` for SQL. `dashboard/` is a Next.js app that stands between you and the
+database, and is the only thing that writes your profile. `sql/` belongs to neither: both halves
+apply it on every connect. The rules above are enforced in those modules, not just described: the
 scorer refuses a posting whose description was never read, staging refuses an application with no
 built resume, and nothing is marked applied without the confirmation text you saw.
 
@@ -41,11 +42,12 @@ Clone it into your skills directory, where Claude Code picks it up as `/job`:
 ```
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
 pip install ~/.claude/skills/job
+npm install --prefix ~/.claude/skills/job/dashboard
 ```
 
-The install is what brings in the dependencies and puts the phases on your `PATH` as `job-scan`,
-`job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and `job-ui`. The same modules run as
-`job-scan` once installed.
+The `pip install` brings in the dependencies and puts the phases on your `PATH` as `job-scan`,
+`job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and `job-paths`. The `npm install` is
+the dashboard, and is needed once before `/job ui`.
 
 Then, from anywhere:
 
@@ -97,7 +99,7 @@ your phone number in it.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).
-- **The dashboard:** nothing. It is Python standard library only.
+- **The dashboard:** Node 20+, and `npm install` in `dashboard/` once.
 
 You can start with just Python and add the rest before your first resume.
 
@@ -131,10 +133,10 @@ out, and the watchlist.
 **The Profile page is editable.** Every box on it — your answers, your employers and projects, the
 bullets a resume draws on, your search criteria, the facts that must never be misreported — saves
 the moment you leave it, and emptying a box takes the answer back to unanswered, which is a hard
-stop rather than a guess. Nothing else is: postings, scores and staged forms open `mode=ro`, because
-the rules that make those writes safe live in the phases, not in a web page. A write is refused
-unless it comes from the page itself, so another tab cannot reach in. `--lan` serves it to your
-phone too — the profile included — gated by an access key printed with the link.
+stop rather than a guess. Nothing else is: postings, scores and staged forms are read-only there,
+because the rules that make those writes safe live in the phases, not in a web page. The dashboard
+names the profile tables it may write and refuses every other one, and a write that arrives from
+another origin is refused before it reaches one, so another tab cannot reach in.
 
 It has one button. **Run** opens your terminal — Terminal on macOS, Windows Terminal on Windows — on
 an interactive `claude "/job"`, so the phases that need your approval still get to ask for it. The

@@ -2,6 +2,9 @@
 
 1. Every time you think you are done with a change, run `git diff --stat` to see how much code you added vs removed. Don't stop your work until the "insertions" number is the absolute lowest possible and the "deletions" number is the absolute highest. Keeping in mind of course that both of these are in service of functional, maintainable, optimal code.
 
+## Code Comments
+Don't ever add code comments. Write code that is self documenting.
+
 ## Git: never commit, never push
 
 Faizi runs all git write commands himself. Claude's job ends at the working tree.

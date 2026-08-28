@@ -7,7 +7,7 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 ```bash
 CAREER=$(job-paths career)
 mkdir -p "$CAREER/resumes/submitted"
-job-q -f "$HOME/.claude/skills/job/jobhunt/sql/seed.sql"
+job-q -f "$HOME/.claude/skills/job/sql/seed.sql"
 ```
 
 That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,

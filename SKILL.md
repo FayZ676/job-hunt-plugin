@@ -39,7 +39,7 @@ Nothing below overrides these.
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
-| `/job ui` | Serve the dashboard — `job-ui`; the profile is edited there; `--lan` also serves it, key-gated, to other devices on the network |
+| `/job ui` | Serve the dashboard — `cd dashboard && npm run dev`, on `127.0.0.1:8765`; the profile is edited there |
 | `/job help` | `cat "$HOME/.claude/skills/job/jobhunt/help.txt"` and nothing else — no run, no queries, no commentary |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
@@ -59,11 +59,19 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 | 5 — Review and submit | `phases/submit.py` | `review` `record` `rejected` |
 
 `jobhunt/` holds what they share: `jobkit.py` (paths, connect, text), `models.py`, `sources.py`
-and `q.py`. The dashboard is its own package, `jobhunt/ui/` — `server.py` and the `index.html` it serves.
+and `q.py`. **`sql/` sits outside both halves** — `job.sql` and `profile.sql` are applied on every
+connect from either side, so neither the phases nor the dashboard owns the file that defines both.
+
+**`dashboard/` is a Next.js app and the only thing that writes the profile.** It opens `job.db`
+directly: a page reads the rows it renders, a server action in `lib/actions.ts` writes the one
+column it was given. Nothing in Python serves it, and it calls nothing in Python. Everything under
+`components/edit/` writes and everything beside it only displays, so what can reach the database is
+the part of the tree you can point at.
 
 `pip install "$HOME/.claude/skills/job"` is the install: it brings in the dependencies and puts every
-phase on `PATH` as `job-scan`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`,
-`job-ui` and `job-paths` — the names used throughout this skill. Every one of them takes `--help`.
+phase on `PATH` as `job-scan`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q` and
+`job-paths` — the names used throughout this skill. Every one of them takes `--help`.
+`npm install` in `dashboard/` is the other half, and is needed once before `/job ui`.
 
 **The phase modules refuse what the invariants forbid**, so the rule is enforced rather than
 remembered: `job-score set` will not score a prospect whose description is empty, `job-stage add`
@@ -135,13 +143,14 @@ row impossible to write. Three behaviors it encodes and you must not fight:
 The filesystem holds only built PDFs: `$CAREER/resumes/`, moved to `submitted/` when an application
 goes out.
 
-**Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves `127.0.0.1` on
-the first free port from 8765 — every job opening on its full application with each drafted essay and
-flagged field, the whole profile with its `NULL`s called out, and the watchlist. **The Profile page
+**Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves
+`127.0.0.1:8765` — every job opening on its full application with each drafted essay and flagged
+field, the whole profile with its `NULL`s called out, and the watchlist. **The Profile page
 writes.** Every box on it saves the moment it loses focus, and emptying one sets `NULL` — the user
 correcting their own answers is the one thing they should never need you for. Everything a phase
-decides — postings, scores, staged forms — stays read-only there (`mode=ro`), because the invariants
-that make those writes safe live here, not in a web page.
+decides — postings, scores, staged forms — is read-only there: `lib/actions.ts` names the profile
+tables it may write and refuses every other one, because the invariants that make those writes
+safe live here, not in a web page.
 
 **So read the profile before you write it, always.** The user may have edited it in the page since
 you last looked, and a stale read overwrites their correction.

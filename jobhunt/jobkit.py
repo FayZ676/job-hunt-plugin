@@ -21,9 +21,8 @@ DB = f"{CAREER}/job.db"
 RESUMES = f"{CAREER}/resumes"
 SUBMITTED = f"{RESUMES}/submitted"
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-SCHEMA_PARTS = tuple(os.path.join(_HERE, "sql", f"{name}.sql")
-                     for name in ("job", "profile"))
+SQL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sql")
+SCHEMA_PARTS = tuple(os.path.join(SQL, f"{name}.sql") for name in ("job", "profile"))
 
 
 def schema():
