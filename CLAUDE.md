@@ -5,6 +5,10 @@
 ## Code Comments
 Don't ever add code comments. Write code that is self documenting.
 
+## Worktrees
+
+Don't ever make changes in a worktree. Always work directly in the repository.
+
 ## Git: never commit, never push
 
 Faizi runs all git write commands himself. Claude's job ends at the working tree.
