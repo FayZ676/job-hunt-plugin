@@ -4,7 +4,6 @@
 
 -- Settings -----------------------------------------------------------------
 INSERT OR REPLACE INTO settings(key,value) VALUES('max_age_days','30');
-INSERT OR REPLACE INTO settings(key,value) VALUES('comp_floor','100000');
 INSERT OR REPLACE INTO settings(key,value) VALUES('fromage_days','7');
 INSERT OR REPLACE INTO settings(key,value) VALUES('delay_ms','3000');
 INSERT OR REPLACE INTO settings(key,value) VALUES('shortlist_threshold','7');

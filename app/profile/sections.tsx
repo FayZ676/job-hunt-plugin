@@ -1,9 +1,7 @@
 import Field from "@/components/edit/Field";
 import { Card, Label } from "@/components/ui";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
-import {
-  availability, compensation, experience, identity, options,
-} from "@/lib/queries";
+import { experience, identity, options } from "@/lib/queries";
 
 const TRACKS = { ["--tracks" as string]: "minmax(0,0.9fr) minmax(0,1.6fr)" };
 
@@ -47,36 +45,22 @@ export function Identity() {
       {ask({ name: "requires_sponsorship_now_or_future", options: YES_NO })}
       {ask({ name: "over_18", options: YES_NO })}
 
+      <Label>When you could start, and what you would take</Label>
+      {ask({ name: "earliest_start", type: "date" })}
+      {ask({ name: "earliest_daily_start", type: "time" })}
+      {choice("notice_period")}
+      {choice("employment_type")}
+      {choice("remote_preference")}
+      {ask({ name: "willing_to_relocate", options: YES_NO })}
+      {ask({ name: "compensation_floor", type: "number", min: 0, step: 1 })}
+      {ask({ name: "compensation_currency", pattern: "[A-Z]{3}", placeholder: "USD" })}
+
       <Label>Optional on most forms — answer only what you want reported</Label>
       {choice("gender")}
       {choice("race_ethnicity")}
       {choice("hispanic_or_latino")}
       {choice("veteran_status")}
       {choice("disability_status")}
-    </Fields>
-  );
-}
-
-export function Availability() {
-  const ask = asking("availability", availability());
-  return (
-    <Fields>
-      {ask({ name: "earliest_start", type: "date" })}
-      {ask({ name: "earliest_daily_start", type: "time" })}
-      {ask({ name: "notice_period", options: options("availability", "notice_period") })}
-      {ask({ name: "employment_type", options: options("availability", "employment_type") })}
-      {ask({ name: "remote_preference", options: options("availability", "remote_preference") })}
-      {ask({ name: "willing_to_relocate", options: YES_NO })}
-    </Fields>
-  );
-}
-
-export function Compensation() {
-  const ask = asking("compensation", compensation());
-  return (
-    <Fields>
-      {ask({ name: "floor", type: "number", min: 0, step: 1 })}
-      {ask({ name: "currency", pattern: "[A-Z]{3}", placeholder: "USD" })}
     </Fields>
   );
 }

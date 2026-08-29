@@ -93,6 +93,9 @@ function loadConfig(database: Database, options: Options): Config {
     (database.prepare("SELECT key,value FROM settings").all() as { key: string; value: string }[])
       .map((row) => [row.key, row.value]));
 
+  const floor = database.prepare("SELECT compensation_floor FROM identity")
+    .get() as { compensation_floor: number | null } | undefined;
+
   const patterns = (kind: string) =>
     compilePatterns((database.prepare("SELECT pattern FROM filters WHERE kind=?")
       .all(kind) as { pattern: string }[]).map((row) => row.pattern));
@@ -104,7 +107,7 @@ function loadConfig(database: Database, options: Options): Config {
       (database.prepare("SELECT pattern FROM filters WHERE kind='agency_blocklist'")
         .all() as { pattern: string }[]).map((row) => normCompany(row.pattern))),
     max_age_days: options.max_age_days ?? Number(settings.max_age_days ?? 30),
-    comp_floor: options.comp_floor ?? Number(settings.comp_floor ?? 0),
+    comp_floor: options.comp_floor ?? Number(floor?.compensation_floor ?? 0),
   } as Config;
 }
 
@@ -342,7 +345,7 @@ program
     "keep postings whose company a higher-precedence source already covers")
   .option("--no-location-filter", "see what the location rule is costing")
   .option("--max-age-days <n>", "override the stored age limit for one run", Number)
-  .option("--comp-floor <n>", "override the stored compensation floor for one run", Number)
+  .option("--comp-floor <n>", "override identity.compensation_floor for one run", Number)
   .option("--db <path>")
   .action(guard((options) => {
     const database = open(options.db);

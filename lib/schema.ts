@@ -66,15 +66,12 @@ export const TABLES = {
     authorized_in_country_of_residence: maybeInt,
     legal_right_to_work_without_sponsorship: maybeInt,
     requires_sponsorship_now_or_future: maybeInt, over_18: maybeInt,
+    earliest_start: maybeText, earliest_daily_start: maybeText, notice_period: maybeText,
+    employment_type: maybeText, remote_preference: maybeText, willing_to_relocate: maybeInt,
+    compensation_floor: maybeInt, compensation_currency: maybeText,
     gender: maybeText, race_ethnicity: maybeText, hispanic_or_latino: maybeText,
     veteran_status: maybeText, disability_status: maybeText,
   }),
-  availability: z.object({
-    id: int, earliest_start: maybeText, earliest_daily_start: maybeText,
-    notice_period: maybeText, employment_type: maybeText, remote_preference: maybeText,
-    willing_to_relocate: maybeInt,
-  }),
-  compensation: z.object({ id: int, floor: maybeInt, currency: maybeText }),
   education: z.object({ id: int, degree: text, institution: maybeText, finished: maybeText }),
   employers: z.object({
     id: int, name: text, title: maybeText, start: maybeText, finish: maybeText,

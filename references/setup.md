@@ -24,8 +24,8 @@ it to `lib/schema.ts`; it then appears in the dashboard on the next connect.
 **Answers are typed, and the type is the column.** The tables are `STRICT` and each column carries a
 CHECK: a yes-or-no is INTEGER `0` or `1`, a date is `YYYY-MM-DD`, a time is `HH:MM`, a count is a
 non-negative number, and a choice is one of the words its CHECK lists — so an interview answer of
-"two weeks after an offer" is `availability.notice_period 2_weeks`, not a sentence in
-`availability.earliest_start`. `job-profile set` refuses anything else and says what the column
+"two weeks after an offer" is `identity.notice_period 2_weeks`, not a sentence in
+`identity.earliest_start`. `job-profile set` refuses anything else and says what the column
 takes; the dashboard reads the same declaration and renders a date picker, a yes/no or the list.
 Give a column a new shape or a new choice there and both halves follow.
 
@@ -34,8 +34,8 @@ conversation. Afterwards they revise themselves in the dashboard, whose Profile 
 one of these tables, so tell them where it is once the profile stands up. `$Q --schema` documents
 every table. Cover:
 
-- **Identity** (`identity.*`) — contact details, work authorization, and the EEO questions forms
-  ask last; then availability (`availability.*`) and the compensation floor (`compensation.*`). The
+- **Identity** (`identity.*`) — contact details, work authorization, when they could start, and
+  the EEO questions forms ask last, and the compensation floor. The
   EEO answers are optional, and `decline_to_say` is a complete answer — offer it rather than
   pressing.
 - **What they're looking for** — titles that fit and don't, level, years of experience, hard

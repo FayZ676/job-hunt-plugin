@@ -91,7 +91,7 @@ browser_file_upload → paths: ["/absolute/path/to/resume.pdf"]
 explicitly from the profile.
 
 **The profile stores the answer, not the wording.** `identity.over_18` is `1` and
-`availability.employment_type` is `full_time`; the form wants "Yes" and "Full-time". Say it the way
+`identity.employment_type` is `full_time`; the form wants "Yes" and "Full-time". Say it the way
 that form says it, and never widen the answer while rewording it -- `0` is "No" however the question
 was phrased.
 

@@ -21,8 +21,6 @@ const singleton = <T extends Table>(table: T) =>
   one(withRowid(table), `SELECT rowid AS rowid, * FROM ${table}`) as Rowed<T>;
 
 export const identity = () => singleton("identity");
-export const availability = () => singleton("availability");
-export const compensation = () => singleton("compensation");
 export const experience = () =>
   one(VIEWS.experience, "SELECT clock_starts, years, relevant_years FROM experience")!;
 

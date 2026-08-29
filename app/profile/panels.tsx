@@ -1,5 +1,5 @@
 import CareerEditor from "./CareerEditor";
-import { Availability, Compensation, Experience, Identity } from "./sections";
+import { Experience, Identity } from "./sections";
 import RecordList, { type Record_ } from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
 import { accounts, career, criteria, education } from "@/lib/queries";
@@ -11,9 +11,8 @@ type Panel = {
 };
 
 const BLURB: Record<string, string> = {
-  identity: "The name, address, links and standing answers every form starts by asking for.",
-  availability: "When you could start, and what you owe your current employer.",
-  compensation: "What you would take, and what you are on now.",
+  identity: "The name, address, links, when you could start, what you would take, and the standing"
+    + " answers every form starts by asking for.",
 };
 
 const records = (table: Table, columns: Column[], rows: Record_[], what: string) => (
@@ -22,8 +21,6 @@ const records = (table: Table, columns: Column[], rows: Record_[], what: string)
 
 export const PANELS: Record<string, Panel> = {
   identity: { title: "Identity", sub: BLURB.identity, body: () => <Identity /> },
-  availability: { title: "Availability", sub: BLURB.availability, body: () => <Availability /> },
-  compensation: { title: "Compensation", sub: BLURB.compensation, body: () => <Compensation /> },
 
   career: {
     title: "Experience",

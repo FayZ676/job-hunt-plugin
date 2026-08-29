@@ -8,7 +8,7 @@ import { db } from "./db.ts";
 import { TABLES, type Table } from "./schema.ts";
 
 const WRITABLE = new Set<Table>([
-  "identity", "availability", "compensation",
+  "identity",
   "education", "employers", "projects", "project_bullets",
   "project_technologies", "project_metrics", "project_links",
   "search_criteria", "accounts",

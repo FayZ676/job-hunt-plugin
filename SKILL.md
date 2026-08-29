@@ -152,9 +152,9 @@ goes out.
 **Every column says what it holds.** Each table is `STRICT`, so the declared type is enforced by the
 database rather than by whoever wrote the INSERT, and a CHECK beside each column says what that type
 allows — a flag is `0`/`1`, a date is `YYYY-MM-DD`, a career date may be a year or a year and month,
-a timestamp is what `datetime()` reads, a choice lists its words. **The profile is three single-row
-tables** — `identity`, which carries contact details, work authorization and the optional EEO
-answers, plus `availability` and `compensation` — one column per question a form can ask, so
+a timestamp is what `datetime()` reads, a choice lists its words. **The profile answers out of one
+single-row table** — `identity`, which carries contact details, work authorization, when you could
+start, the compensation floor and the optional EEO answers — one column per question a form can ask, so
 `<section>.<name>` is a table and a column. `experience` answers the same way but is a view: the totals count themselves off
 `employers`, so a stored number cannot go stale or disagree with the resume. `lib/schema.ts` reads those declarations for both the dashboard's
 controls and the CLI's errors, so there is one copy and not two, and a field added in SQL arrives in both
@@ -254,7 +254,7 @@ Every field is one of three tiers, and the tier decides who answers it:
 | Tier | What it is | Source | Auto-filled |
 | ---- | ---------- | ------ | ----------- |
 | **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` | Yes |
-| **Policy** | Work authorization, sponsorship, EEO, start date, compensation | `identity` `availability` `compensation` | Yes |
+| **Policy** | Work authorization, sponsorship, EEO, start date, compensation | `identity` | Yes |
 | **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
 
 A judgment question gets the answer the profile supports. Where nothing supports one, flag it for the
