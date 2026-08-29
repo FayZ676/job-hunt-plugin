@@ -1,5 +1,5 @@
 import FilterableTable from "@/components/FilterableTable";
-import { Badge, PageHeader, Out, Score, Stamp } from "@/components/ui";
+import { Badge, Out, Score, Stamp } from "@/components/ui";
 import { jobs, stats } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -13,11 +13,6 @@ export default function JobsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Jobs"
-        sub={`${rows.length} prospects, scored against your profile. Open one for the full posting,
-              its history and the resume that was built for it.`}
-      />
       <FilterableTable
         placeholder="company, title or location"
         empty="Nothing scanned yet. Run the job routine and they land here."

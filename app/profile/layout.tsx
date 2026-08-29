@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Tabs from "./Tabs";
+import Tabs from "@/components/Tabs";
 import { PANELS, slugFor } from "./panels";
 import { VocabularyProvider } from "@/components/edit/Vocabulary";
 import { Card, Meter, PageHeader } from "@/components/ui";
@@ -41,7 +41,7 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
       )}
 
       <Tabs items={Object.entries(PANELS).map(([slug, panel]) => ({
-        slug,
+        href: `/profile/${slug}`,
         label: panel.tab ?? panel.title,
         missing: blocking.filter((answer) => slugFor(answer.section) === slug).length,
       }))} />

@@ -2,7 +2,7 @@ import CareerEditor from "./CareerEditor";
 import { Experience, Identity } from "./sections";
 import RecordList, { type Record_ } from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
-import { accounts, career, criteria, education } from "@/lib/queries";
+import { career, education } from "@/lib/queries";
 import type { Table } from "@/lib/schema";
 import type { ReactNode } from "react";
 
@@ -33,18 +33,6 @@ export const PANELS: Record<string, Panel> = {
   education: {
     title: "Education",
     body: () => records("education", COLUMNS.education, education() as Record_[], "this degree"),
-  },
-  criteria: {
-    title: "What you are looking for",
-    tab: "Criteria",
-    sub: "How a new opening gets scored. `kind` says how the scorer uses the row.",
-    body: () => records("search_criteria", COLUMNS.criteria, criteria() as Record_[],
-                        "this criterion"),
-  },
-  accounts: {
-    title: "Accounts",
-    sub: "Where an employer login lives. Never the password itself.",
-    body: () => records("accounts", COLUMNS.accounts, accounts() as Record_[], "this account"),
   },
 };
 
