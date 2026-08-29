@@ -23,15 +23,17 @@ export const ScreenHead = ({ kicker, headline, children }:
 );
 
 export const Section = ({ title, sub, children, aside }:
-  { title: string; sub?: ReactNode; children: ReactNode; aside?: ReactNode }) => (
+  { title?: string; sub?: ReactNode; children: ReactNode; aside?: ReactNode }) => (
   <section className="mb-9">
-    <div className="mb-3 flex items-baseline justify-between gap-4">
-      <div>
-        <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>
-        {sub && <p className="mt-0.5 text-sm text-soft">{sub}</p>}
+    {(title || sub || aside) && (
+      <div className="mb-3 flex items-baseline justify-between gap-4">
+        <div>
+          {title && <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>}
+          {sub && <p className="mt-0.5 text-sm text-soft">{sub}</p>}
+        </div>
+        {aside}
       </div>
-      {aside}
-    </div>
+    )}
     {children}
   </section>
 );
@@ -100,13 +102,6 @@ export const Out = ({ href, children }: { href: string | null; children?: ReactN
       {children ?? href}
     </a>
   ) : <span className="text-soft">—</span>;
-
-export const Meter = ({ done, total }: { done: number; total: number }) => (
-  <div className="flex items-center gap-3">
-    <progress className="progress progress-primary w-40" value={done} max={total || 1} />
-    <span className="tnum text-xs text-soft">{done} of {total} answered</span>
-  </div>
-);
 
 export const DataTable = ({ head, rows, empty = "Nothing here yet." }: {
   head: { label: string; hideNarrow?: boolean; numeric?: boolean }[];

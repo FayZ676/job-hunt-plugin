@@ -29,9 +29,13 @@ export function Control({ column, value, onValue, onCommit, state = "", autoFocu
   const look = options ? "select" : column.kind === "area" ? "textarea" : "input";
   const tone = TONE[state] || (column.blocking && !value ? "error" : "");
 
+  const dressed = column.quiet
+    ? `${options ? "select select-sm select-ghost w-full" : "quietbox"}
+       ${tone === "error" ? "quiet-missing" : ""} ${tone === "success" ? "quiet-saved" : ""}`
+    : `${look} ${look}-sm w-full ${tone ? `${look}-${tone}` : ""}`;
+
   const shared = {
-    className: `${look} ${look}-sm w-full ${column.quiet ? `${look}-ghost` : ""}
-      ${tone ? `${look}-${tone}` : ""}`,
+    className: `${dressed} ${column.className ?? ""}`,
     placeholder: column.placeholder ?? title(column),
     "aria-label": title(column),
     autoFocus,
@@ -51,7 +55,8 @@ export function Control({ column, value, onValue, onCommit, state = "", autoFocu
         })}
       </select>
     );
-  if (column.kind === "area") return <textarea {...shared} rows={2} required={column.required} />;
+  if (column.kind === "area")
+    return <textarea {...shared} rows={column.rows ?? 2} required={column.required} />;
   return (
     <input {...shared} type={column.type ?? "text"} pattern={column.pattern}
            min={column.min} step={column.step} required={column.required} />

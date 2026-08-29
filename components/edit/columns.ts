@@ -13,6 +13,8 @@ export type Column = {
   width?: string;
   placeholder?: string;
   quiet?: boolean;
+  className?: string;
+  rows?: number;
 };
 
 export const title = (column: Column) =>

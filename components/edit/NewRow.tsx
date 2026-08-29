@@ -9,12 +9,15 @@ import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 import type { Column } from "./columns";
 
-export default function NewRow({ table, columns, seed = {}, label = "Add", compact }: {
+export default function NewRow({
+  table, columns, seed = {}, label = "Add", compact, autoFocus,
+}: {
   table: string;
   columns: Column[];
   seed?: Record<string, string>;
   label?: string;
   compact?: boolean;
+  autoFocus?: boolean;
 }) {
   const blank = Object.fromEntries(columns.map((column) => [column.name, ""]));
   const [draft, setDraft] = useState<Record<string, string>>(blank);
@@ -42,10 +45,11 @@ export default function NewRow({ table, columns, seed = {}, label = "Add", compa
       style={tracks(columns)}
       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); add(); } }}
     >
-      {columns.map((column) => (
+      {columns.map((column, index) => (
         <Control
           key={column.name}
           column={column}
+          autoFocus={autoFocus && index === 0}
           value={draft[column.name]}
           onValue={(value) => setDraft({ ...draft, [column.name]: value })}
         />

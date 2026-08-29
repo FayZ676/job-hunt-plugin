@@ -1,7 +1,7 @@
 "use client";
 
 import FieldRow, { tracks } from "./FieldRow";
-import NewRow from "./NewRow";
+import Adder from "./Adder";
 import { title, type Column } from "./columns";
 
 export type Record_ = { rowid: number } & { [column: string]: unknown };
@@ -34,7 +34,7 @@ export default function RecordList({
       ))}
 
       {rows.length === 0 && empty && <p className="py-1 text-sm text-soft">{empty}</p>}
-      <NewRow table={table} columns={columns} seed={seed} label={addLabel} />
+      <Adder table={table} columns={columns} seed={seed} label={addLabel ?? "Add"} />
     </div>
   );
 }
