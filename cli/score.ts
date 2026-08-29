@@ -10,7 +10,7 @@ const program = new Command("job-score").description(
 
   job-score triage                        the cheap list: no descriptions, on purpose
   job-score triage --status new
-  job-score rubric                        search_criteria and search_notes, what scoring reads
+  job-score rubric                        search_criteria, what scoring reads
   job-score show KEY [KEY ...]            full text, for survivors only
   job-score set KEY --score 9 --reason "the JD language that drove it, quoted"
   job-score pending                       what is still unscored and will come back tomorrow
@@ -35,25 +35,14 @@ program
 
 program
   .command("rubric")
-  .description("the criteria and notes scoring reads")
+  .description("the criteria scoring reads, strongest first within each kind")
   .option("--db <path>")
   .action(guard((options) => {
     const database = open(options.db);
     const criteria = database
-      .prepare("SELECT kind, value, weight, note FROM search_criteria ORDER BY kind, seq, value")
-      .all() as { kind: string; value: string; weight: number | null; note: string | null }[];
-    for (const row of criteria) {
-      const weight = row.weight === null ? "" : `  ${row.weight >= 0 ? "+" : ""}${row.weight}`;
-      const note = row.note ? `    ${row.note}` : "";
-      console.log(`${row.kind.padEnd(18)}  ${row.value}${weight}${note}`);
-    }
-    const notes = database
-      .prepare("SELECT topic, note FROM search_notes ORDER BY topic")
-      .all() as { topic: string; note: string }[];
-    if (notes.length) {
-      console.log("\nsearch_notes — judgement the rubric cannot hold; read every pass\n");
-      for (const row of notes) console.log(`  ${row.topic}\n    ${row.note}\n`);
-    }
+      .prepare("SELECT kind, value FROM search_criteria ORDER BY kind, seq IS NULL, seq, value")
+      .all() as { kind: string; value: string }[];
+    for (const row of criteria) console.log(`${row.kind.padEnd(18)}  ${row.value}`);
   }));
 
 program

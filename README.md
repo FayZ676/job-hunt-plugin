@@ -129,7 +129,7 @@ every drafted essay and flagged field in it, your whole profile with its unanswe
 out, and the watchlist.
 
 **The Profile page is editable.** Every box on it — your answers, your employers and projects, the
-bullets a resume draws on, your search criteria, the facts that must never be misreported — saves
+bullets a resume draws on, your search criteria — saves
 the moment you leave it, and emptying a box takes the answer back to unanswered, which is a hard
 stop rather than a guess. Nothing else is: postings, scores and staged forms are read-only there,
 because the rules that make those writes safe live in the phases, not in a web page. The dashboard
@@ -166,8 +166,8 @@ you're searching in a different field, say so — the companies and filters are 
 Claude edits them for you.
 
 The highest-leverage thing you can do is correct the profile when a scan surfaces something you'd
-never apply to, or misses something you would. Its `search_notes` field holds the reasoning that no
-schema captures, and it's read on every scoring pass.
+never apply to, or misses something you would. Its `search_criteria` rows are what every scoring
+pass reads.
 
 ## Upgrading from earlier versions
 

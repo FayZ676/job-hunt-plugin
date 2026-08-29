@@ -152,10 +152,11 @@ goes out.
 **Every column says what it holds.** Each table is `STRICT`, so the declared type is enforced by the
 database rather than by whoever wrote the INSERT, and a CHECK beside each column says what that type
 allows — a flag is `0`/`1`, a date is `YYYY-MM-DD`, a career date may be a year or a year and month,
-a timestamp is what `datetime()` reads, a choice lists its words. **The profile is seven single-row
-tables** — `identity`, `work_authorization`, `availability`, `compensation`, `demographics`,
-`experience`, `search` — one column per question a form can ask, so `<section>.<name>` is a table
-and a column. `lib/schema.ts` reads those declarations for both the dashboard's
+a timestamp is what `datetime()` reads, a choice lists its words. **The profile is three single-row
+tables** — `identity`, which carries contact details, work authorization and the optional EEO
+answers, plus `availability` and `compensation` — one column per question a form can ask, so
+`<section>.<name>` is a table and a column. `experience` answers the same way but is a view: the totals count themselves off
+`employers`, so a stored number cannot go stale or disagree with the resume. `lib/schema.ts` reads those declarations for both the dashboard's
 controls and the CLI's errors, so there is one copy and not two, and a field added in SQL arrives in both
 on the next connect.
 
@@ -179,8 +180,9 @@ the conversation.
 changed goal: they talk, you write rows. Read before writing — you are merging, not replacing — and
 ask about anything genuinely ambiguous: dates, whether work was solo, whether a number was measured
 or estimated, since an invented number here becomes a lie on a resume. **Never invent experience**; a
-project belongs in `projects` only if the user said it happened. **Add to `search_notes` and `facts`,
-never rewrite them** — they carry judgement that took real conversation to establish. A row that does
+project belongs in `projects` only if the user said it happened. **A correction lands on the row it
+corrects** — a wrong number in `project_metrics`, a wrong title on `employers`, everything else in
+that project's `notes` — so there is one place to read and nothing to reconcile. A row that does
 not exist means "none", not "never asked". `$Q --export` hands them the whole thing as portable SQL.
 
 ## Phase 1 — Fetch, then ingest
@@ -211,14 +213,16 @@ every morning after.
 
 ```bash
 job-score triage --status new   # no descriptions, on purpose
-job-score rubric                # search_criteria and search_notes
+job-score rubric                # what scoring reads
 job-score show <key> <key>      # only what survives triage
 job-score set <key> --score 9 --reason "the JD language that drove it, quoted"
 job-score pending               # what is still unscored
 ```
 
-Triage against `search_criteria` (the rubric) and `search_notes` (the judgement the schema cannot
-hold), pull descriptions for the plausible ones, then score, citing the JD language that drove it.
+Triage against `search_criteria`, pull descriptions for the plausible ones, then score, citing the JD
+language that drove it. **The criteria carry no numbers**: `kind` says how the scorer uses a row and
+its position within that kind says how much it counts, strongest first. Nothing is added up — the
+score is a judgement the ordered lists inform.
 
 **Anything you score must have had its description read** — scoring off a title is the failure this
 phase exists to prevent; a "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer"
@@ -250,7 +254,7 @@ Every field is one of three tiers, and the tier decides who answers it:
 | Tier | What it is | Source | Auto-filled |
 | ---- | ---------- | ------ | ----------- |
 | **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` | Yes |
-| **Policy** | Work authorization, sponsorship, start date, compensation, EEO | `work_authorization` `availability` `compensation` `demographics` | Yes |
+| **Policy** | Work authorization, sponsorship, EEO, start date, compensation | `identity` `availability` `compensation` | Yes |
 | **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
 
 A judgment question gets the answer the profile supports. Where nothing supports one, flag it for the

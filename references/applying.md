@@ -90,7 +90,7 @@ browser_file_upload → paths: ["/absolute/path/to/resume.pdf"]
 **Skip "Autofill from resume."** Auditing what it guessed costs more than filling the fields
 explicitly from the profile.
 
-**The profile stores the answer, not the wording.** `work_authorization.over_18` is `1` and
+**The profile stores the answer, not the wording.** `identity.over_18` is `1` and
 `availability.employment_type` is `full_time`; the form wants "Yes" and "Full-time". Say it the way
 that form says it, and never widen the answer while rewording it -- `0` is "No" however the question
 was phrased.
@@ -186,8 +186,8 @@ an application still `blocked`.
 - **Published salary ranges.** Ashby prints the band on the posting. Read it before answering any
   compensation field: answering a $120,000 floor against a published $180K–$240K band anchors the
   negotiation sixty thousand dollars below where the employer opened it.
-- **Application limits.** Some companies state them ("5 per 90 days"). `company_limits` is a record,
-  not a budget — add to it whenever a form declares one.
+- **Application limits.** Some companies state them ("5 per 90 days"). `postings` records every
+  application with its company and date — count what has already gone there before staging another.
 - **Cover letter fields** are usually optional. Leave optional essay fields empty rather than filling
   them with something generic; a weak answer costs more than no answer.
 - **"How did you hear about us?"** — answer the company's job board, which is true.

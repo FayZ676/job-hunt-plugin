@@ -14,7 +14,7 @@ That creates `$CAREER/job.db` — the schema applies on connect — and seeds co
 Lever and Ashby plus a starting set of filters.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
-NULL until answered: the profile is seven single-row tables in `sql/profile.sql`, one per section,
+NULL until answered: the profile is three single-row tables in `sql/profile.sql`, one per section,
 and the columns are the schema — not something an interview or the dashboard adds to. They talk;
 you answer with `job-profile set <section>.<name> <value>`, which names the table and the column —
 one answer per call, and a name that is not declared is refused rather than filed as a new field.
@@ -34,12 +34,12 @@ conversation. Afterwards they revise themselves in the dashboard, whose Profile 
 one of these tables, so tell them where it is once the profile stands up. `$Q --schema` documents
 every table. Cover:
 
-- **Identity and contact** (`identity.*`), work authorization (`work_authorization.*`), availability
-  (`availability.*`), compensation floor (`compensation.*`). Demographics (`demographics.*`) are
-  optional, and `decline_to_say` is a complete answer — offer it rather than pressing.
+- **Identity** (`identity.*`) — contact details, work authorization, and the EEO questions forms
+  ask last; then availability (`availability.*`) and the compensation floor (`compensation.*`). The
+  EEO answers are optional, and `decline_to_say` is a complete answer — offer it rather than
+  pressing.
 - **What they're looking for** — titles that fit and don't, level, years of experience, hard
-  dealbreakers, home metro. This becomes `search_criteria`; the reasoning a schema cannot hold goes
-  in `search_notes`.
+  dealbreakers, home metro. This becomes `search_criteria`, strongest first within each `kind`.
 - **Their experience.** The longest part and the one that matters most: `employers` → `projects` is
   **the only source a resume may draw from**, so a thin profile produces thin resumes. Offer to read
   a resume, CV, or LinkedIn export and draft it for them to correct.

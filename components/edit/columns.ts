@@ -61,25 +61,14 @@ export const COLUMNS = {
   ],
   criteria: [
     { name: "kind", vocabulary: "kind", required: true, width: "minmax(0,1.1fr)" },
-    { name: "value", required: true, width: "minmax(0,1.4fr)" },
-    { name: "weight", type: "number", step: 1, width: "minmax(0,0.5fr)" },
-    { name: "note", width: "minmax(0,1.4fr)" },
+    { name: "value", required: true, width: "minmax(0,2.4fr)" },
+    { name: "seq", label: "order", type: "number", min: 0, step: 1, width: "minmax(0,0.4fr)" },
   ],
-  notes: [
-    { name: "topic", required: true, width: "minmax(0,0.9fr)" },
-    { name: "note", kind: "area", required: true, width: "minmax(0,2.4fr)" },
-  ],
-  facts: [{ name: "fact", kind: "area", required: true }],
   accounts: [
     { name: "employer", required: true, width: "minmax(0,1fr)" },
     { name: "system", width: "minmax(0,0.8fr)" },
     { name: "login_email", label: "login", ...EMAIL, width: "minmax(0,1.2fr)" },
     { name: "password_location", label: "password lives", width: "minmax(0,1.2fr)" },
     { name: "portal_url", label: "portal", ...LINK, width: "minmax(0,1.2fr)" },
-  ],
-  limits: [
-    { name: "company", required: true, width: "minmax(0,0.9fr)" },
-    { name: "stated", label: "what you told them", kind: "area", required: true,
-      width: "minmax(0,2.4fr)" },
   ],
 } satisfies Record<string, Column[]>;

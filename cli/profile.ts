@@ -53,18 +53,9 @@ program
   .option("--json")
   .option("--db <path>")
   .action(guard((options) => {
-    const database = open(options.db);
-    const rows: Record<string, unknown>[] = [];
-    for (const section of sections(ddl())) {
-      const named = columns(ddl(), section);
-      const held = database
-        .prepare(`SELECT ${named.join(",")} FROM ${section} WHERE id=1`)
-        .get() as Record<string, unknown> | undefined;
-      if (!held) continue;
-      for (const field of named)
-        if (held[field] !== null && held[field] !== undefined)
-          rows.push({ section, field, value: held[field] });
-    }
+    const rows = open(options.db)
+      .prepare("SELECT section, field, value FROM answers WHERE value IS NOT NULL")
+      .all() as Record<string, unknown>[];
     printRows(rows, options.json);
   }));
 

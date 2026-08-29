@@ -21,21 +21,16 @@ const singleton = <T extends Table>(table: T) =>
   one(withRowid(table), `SELECT rowid AS rowid, * FROM ${table}`) as Rowed<T>;
 
 export const identity = () => singleton("identity");
-export const workAuthorization = () => singleton("work_authorization");
 export const availability = () => singleton("availability");
 export const compensation = () => singleton("compensation");
-export const demographics = () => singleton("demographics");
-export const experience = () => singleton("experience");
-export const searchProfile = () => singleton("search");
+export const experience = () =>
+  one(VIEWS.experience, "SELECT clock_starts, years, relevant_years FROM experience")!;
 
 export const options = (table: Table, column: string) => choices(ddl(), table, column) ?? [];
 
 export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
 export const criteria = () => listing("search_criteria", "ORDER BY kind, seq IS NULL, seq, value");
-export const notes = () => listing("search_notes", "ORDER BY topic");
-export const facts = () => listing("facts", "ORDER BY rowid");
-export const limits = () => listing("company_limits", "ORDER BY company");
 export const accounts = () => listing("accounts", "ORDER BY employer");
 
 export const jobs = () => rows(VIEWS.triage, "SELECT * FROM triage");

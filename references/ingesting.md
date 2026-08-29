@@ -87,7 +87,7 @@ job-scan ingest --redo
 | ------- | --- |
 | Obvious junk in prospects | add to `title_exclude`, then `--redo` |
 | A real role got filtered out | find it with a `disposition` query, then loosen that rule |
-| Prospects fine, scores wrong | `search_criteria` and `search_notes`, not filters |
+| Prospects fine, scores wrong | `search_criteria`, not filters |
 | Too few prospects | check the `location` and `stale` counts first; it is usually location |
 | Shortlist fills with staffing firms | `agency_blocklist` is stale — add the names; they repeat daily |
 | Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |

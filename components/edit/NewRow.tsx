@@ -6,6 +6,7 @@ import { save } from "@/lib/actions";
 import { Control } from "./Field";
 import { tracks } from "./FieldRow";
 import { say } from "@/components/Toaster";
+import { answered } from "./answered";
 import type { Column } from "./columns";
 
 export default function NewRow({ table, columns, seed = {}, label = "Add", compact }: {
@@ -26,7 +27,7 @@ export default function NewRow({ table, columns, seed = {}, label = "Add", compa
     const wrong = held.current?.querySelector<HTMLInputElement>(":invalid");
     if (wrong) return say(wrong.validationMessage, true);
     setBusy(true);
-    const result = await save(table, null, { ...seed, ...draft });
+    const result = await answered(save(table, null, { ...seed, ...draft }));
     setBusy(false);
     if ("error" in result) return say(result.error, true);
     setDraft(blank);

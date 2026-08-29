@@ -25,7 +25,8 @@ Education section, verbatim. Bullets come only from `project_bullets`, numbers o
 `project_metrics`.
 
 - **Never mine an existing resume for bullet text.** The copies in circulation carry exactly the
-  errors `facts` exists to correct. Read `facts` before writing and never contradict it.
+  errors the profile has since corrected. `projects.notes` and `employers.context` hold those
+  corrections; read them before writing and never contradict one.
 - **A number goes on the resume only if it is in `project_metrics`** — no estimating, no rounding up,
   no "over N" where N was never measured. A duration implied by a date range is a number too.
 - **Shared work is described as shared.** `projects.shared_with` says which; "built with one other
@@ -208,7 +209,7 @@ Emit sections in this order, omitting any the JD makes irrelevant except Experie
 | Projects | `bullets` | Only when an independent project maps to the JD better than the work project it would displace. Mark status honestly: discontinued / in progress |
 | Publications | `paragraph` | Only when the JD is research-adjacent. `project_links` records the paper by URL only — confirm the exact title and author list before printing a citation |
 | Education | `entries` | From the `education` table, verbatim: `{"primary": "BS Computer Science", "secondary": "State University, May 2022"}` |
-| Skills | `labeled` | Labels: Languages, Frameworks, AI/ML, Cloud & Data, Delivery. Drop a label rather than pad it. Drawn from the selected bullets plus the JD's named technologies that appear in `project_technologies` — no aspirational entries, no soft skills |
+| Skills | `labeled` | Labels: Languages, Frameworks, AI/ML, Cloud & Data, Delivery. Drop a label rather than pad it. Drawn from the selected bullets plus the JD's named technologies that appear in `project_technologies` — no aspirational entries, no soft skills. Order each label by depth of professional use, and never place a technology under an employer whose projects do not carry it |
 
 **Keep the contact line identical to the `profile` table** — it is the canonical header.
 

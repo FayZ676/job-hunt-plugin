@@ -1,8 +1,8 @@
 import Field from "@/components/edit/Field";
+import { Card, Label } from "@/components/ui";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
 import {
-  availability, compensation, demographics, experience, identity, options,
-  searchProfile, workAuthorization,
+  availability, compensation, experience, identity, options,
 } from "@/lib/queries";
 
 const TRACKS = { ["--tracks" as string]: "minmax(0,0.9fr) minmax(0,1.6fr)" };
@@ -26,7 +26,9 @@ const Fields = ({ children }: { children: React.ReactNode }) =>
   <div className="space-y-2">{children}</div>;
 
 export function Identity() {
-  const ask = asking("identity", identity());
+  const held = identity();
+  const ask = asking("identity", held);
+  const choice = (name: string) => ask({ name, options: options("identity", name) });
   return (
     <Fields>
       {ask({ name: "full_name" })}
@@ -38,18 +40,19 @@ export function Identity() {
       {ask({ name: "street_address" })}
       {ask({ name: "linkedin", ...LINK })}
       {ask({ name: "github", ...LINK })}
-    </Fields>
-  );
-}
 
-export function WorkAuthorization() {
-  const ask = asking("work_authorization", workAuthorization());
-  return (
-    <Fields>
+      <Label>Work authorization — asked on nearly every form</Label>
       {ask({ name: "authorized_in_country_of_residence", options: YES_NO })}
       {ask({ name: "legal_right_to_work_without_sponsorship", options: YES_NO })}
       {ask({ name: "requires_sponsorship_now_or_future", options: YES_NO })}
       {ask({ name: "over_18", options: YES_NO })}
+
+      <Label>Optional on most forms — answer only what you want reported</Label>
+      {choice("gender")}
+      {choice("race_ethnicity")}
+      {choice("hispanic_or_latino")}
+      {choice("veteran_status")}
+      {choice("disability_status")}
     </Fields>
   );
 }
@@ -78,36 +81,24 @@ export function Compensation() {
   );
 }
 
-export function Demographics() {
-  const ask = asking("demographics", demographics());
-  return (
-    <Fields>
-      {ask({ name: "gender", options: options("demographics", "gender") })}
-      {ask({ name: "race_ethnicity", options: options("demographics", "race_ethnicity") })}
-      {ask({ name: "hispanic_or_latino", options: options("demographics", "hispanic_or_latino") })}
-      {ask({ name: "veteran_status", options: options("demographics", "veteran_status") })}
-      {ask({ name: "disability_status", options: options("demographics", "disability_status") })}
-    </Fields>
-  );
-}
 
 export function Experience() {
-  const ask = asking("experience", experience());
+  const { years, relevant_years, clock_starts } = experience();
   return (
-    <Fields>
-      {ask({ name: "years", type: "number", min: 0, step: 1 })}
-      {ask({ name: "relevant_years", type: "number", min: 0, step: 1 })}
-      {ask({ name: "clock_starts", type: "date" })}
-    </Fields>
+    <Card className="mb-6">
+      <Label>Years of experience — what a form asks for as a number</Label>
+      {years === null ? (
+        <p className="text-sm text-error">
+          No employer dates yet, so a form asking for years of experience has nothing to answer with.
+        </p>
+      ) : (
+        <p className="text-sm">
+          <span className="font-medium">{years} years</span>, {relevant_years} of them relevant,
+          counted from {clock_starts} — the earliest start below. Correct a date on an employer;
+          there is no total to edit.
+        </p>
+      )}
+    </Card>
   );
 }
 
-export function Search() {
-  const ask = asking("search", searchProfile());
-  return (
-    <Fields>
-      {ask({ name: "home_metro" })}
-      {ask({ name: "relocation", options: YES_NO })}
-    </Fields>
-  );
-}

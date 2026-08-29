@@ -63,11 +63,11 @@ export const TABLES = {
     id: int, full_name: maybeText, preferred_name: maybeText, last_name: maybeText,
     email: maybeText, phone: maybeText, location: maybeText, street_address: maybeText,
     linkedin: maybeText, github: maybeText,
-  }),
-  work_authorization: z.object({
-    id: int, authorized_in_country_of_residence: maybeInt,
+    authorized_in_country_of_residence: maybeInt,
     legal_right_to_work_without_sponsorship: maybeInt,
     requires_sponsorship_now_or_future: maybeInt, over_18: maybeInt,
+    gender: maybeText, race_ethnicity: maybeText, hispanic_or_latino: maybeText,
+    veteran_status: maybeText, disability_status: maybeText,
   }),
   availability: z.object({
     id: int, earliest_start: maybeText, earliest_daily_start: maybeText,
@@ -75,14 +75,6 @@ export const TABLES = {
     willing_to_relocate: maybeInt,
   }),
   compensation: z.object({ id: int, floor: maybeInt, currency: maybeText }),
-  demographics: z.object({
-    id: int, gender: maybeText, race_ethnicity: maybeText, hispanic_or_latino: maybeText,
-    veteran_status: maybeText, disability_status: maybeText,
-  }),
-  experience: z.object({
-    id: int, years: maybeInt, relevant_years: maybeInt, clock_starts: maybeText,
-  }),
-  search: z.object({ id: int, home_metro: maybeText, relocation: maybeInt }),
   education: z.object({ id: int, degree: text, institution: maybeText, finished: maybeText }),
   employers: z.object({
     id: int, name: text, title: maybeText, start: maybeText, finish: maybeText,
@@ -97,12 +89,7 @@ export const TABLES = {
   project_technologies: z.object({ project_id: int, technology: text }),
   project_metrics: z.object({ project_id: int, metric: text }),
   project_links: z.object({ project_id: int, label: text, url: text }),
-  search_criteria: z.object({
-    kind: CRITERION, value: text, weight: maybeInt, note: maybeText, seq: maybeInt,
-  }),
-  search_notes: z.object({ topic: text, note: text }),
-  facts: z.object({ id: int, fact: text }),
-  company_limits: z.object({ company: text, stated: text }),
+  search_criteria: z.object({ kind: CRITERION, value: text, seq: maybeInt }),
   accounts: z.object({
     employer: text, system: maybeText, portal_url: maybeText, login_email: maybeText,
     password_location: maybeText, created: maybeText,
@@ -140,6 +127,7 @@ export const VIEWS = {
     section: text, field: text, value: z.union([text, int]).nullable(),
   }),
   unanswered: z.object({ section: text, field: text }),
+  experience: z.object({ clock_starts: maybeText, years: maybeInt, relevant_years: maybeInt }),
 };
 
 export type Table = keyof typeof TABLES;

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { save } from "@/lib/actions";
+import { answered } from "./answered";
 import { title, type Column } from "./columns";
 import { say } from "@/components/Toaster";
 import { useVocabulary } from "./Vocabulary";
@@ -72,7 +73,7 @@ export default function Field({ table, rowid, column, value }: {
       return say(entry.validationMessage, true);
     }
     setState("saving");
-    const result = await save(table, rowid, { [column.name]: next });
+    const result = await answered(save(table, rowid, { [column.name]: next }));
     if ("error" in result) {
       setState("failed");
       say(result.error, true);

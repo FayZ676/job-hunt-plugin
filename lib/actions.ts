@@ -8,10 +8,10 @@ import { db } from "./db.ts";
 import { TABLES, type Table } from "./schema.ts";
 
 const WRITABLE = new Set<Table>([
-  "identity", "work_authorization", "availability", "compensation", "demographics",
-  "experience", "search", "education", "employers", "projects", "project_bullets",
+  "identity", "availability", "compensation",
+  "education", "employers", "projects", "project_bullets",
   "project_technologies", "project_metrics", "project_links",
-  "search_criteria", "search_notes", "facts", "company_limits", "accounts",
+  "search_criteria", "accounts",
 ]);
 
 export type Saved = { rowid: number } | { error: string };

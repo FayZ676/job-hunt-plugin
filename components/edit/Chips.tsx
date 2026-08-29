@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { remove, save } from "@/lib/actions";
 import { say } from "@/components/Toaster";
+import { answered } from "./answered";
 
 export default function Chips({ table, column, rows, seed = {}, placeholder }: {
   table: string;
@@ -29,7 +30,7 @@ export default function Chips({ table, column, rows, seed = {}, placeholder }: {
             type="button"
             aria-label={`remove ${String(row[column])}`}
             className="btn btn-xs btn-circle btn-ghost"
-            onClick={async () => act(await remove(table, row.rowid))}
+            onClick={async () => act(await answered(remove(table, row.rowid)))}
           >
             ×
           </button>
@@ -45,7 +46,7 @@ export default function Chips({ table, column, rows, seed = {}, placeholder }: {
           event.preventDefault();
           const value = draft.trim();
           setDraft("");
-          act(await save(table, null, { ...seed, [column]: value }));
+          act(await answered(save(table, null, { ...seed, [column]: value })));
         }}
       />
     </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Tabs from "./Tabs";
-import { PANELS } from "./panels";
+import { PANELS, slugFor } from "./panels";
 import { VocabularyProvider } from "@/components/edit/Vocabulary";
 import { Card, Meter, PageHeader } from "@/components/ui";
 import { answers, vocabularies } from "@/lib/queries";
@@ -31,7 +31,7 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs opacity-60">
             {blocking.map((answer) => (
               <li key={`${answer.section}.${answer.field}`}>
-                <Link href={`/profile/${answer.section}`} className="link">
+                <Link href={`/profile/${slugFor(answer.section)}`} className="link">
                   {answer.section}.{answer.field}
                 </Link>
               </li>
@@ -43,7 +43,7 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
       <Tabs items={Object.entries(PANELS).map(([slug, panel]) => ({
         slug,
         label: panel.tab ?? panel.title,
-        missing: blocking.filter((answer) => answer.section === slug).length,
+        missing: blocking.filter((answer) => slugFor(answer.section) === slug).length,
       }))} />
       {children}
     </VocabularyProvider>
