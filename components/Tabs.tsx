@@ -5,21 +5,35 @@ import { usePathname } from "next/navigation";
 
 export type Tab = { href: string; label: string; missing?: number };
 
-export default function Tabs({ items }: { items: Tab[] }) {
+export default function Tabs({ items, label = "Views" }: { items: Tab[]; label?: string }) {
   const here = usePathname();
   return (
-    <div role="tablist" className="tabs tabs-box mb-7 flex-wrap justify-start">
-      {items.map(({ href, label, missing = 0 }) => (
-        <Link key={href} role="tab" href={href}
-              className={`tab gap-1.5 ${here === href ? "tab-active" : ""}`}>
-          {label}
-          {missing > 0 && (
-            <span className="badge badge-xs badge-error" title={`${missing} unanswered`}>
-              {missing}
-            </span>
-          )}
-        </Link>
-      ))}
-    </div>
+    <nav aria-label={label}
+         className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-base-300">
+      {items.map(({ href, label: text, missing = 0 }) => {
+        const active = here === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 text-sm
+              transition-colors ${
+              active
+                ? "border-base-content font-medium text-base-content"
+                : "border-transparent text-soft hover:border-base-300 hover:text-base-content"}`}
+          >
+            {text}
+            {missing > 0 && (
+              <span className="tnum rounded-selector bg-signal px-1.5 py-px text-[11px]
+                font-semibold text-accent-content">
+                {missing}
+                <span className="sr-only"> unanswered</span>
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

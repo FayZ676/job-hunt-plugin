@@ -22,9 +22,7 @@ export default function RecordList({
       {rows.length > 0 && (
         <div className="rowgrid hidden px-1 md:!grid" style={tracks(columns)}>
           {columns.map((column) => (
-            <span key={column.name} className="text-[11px] uppercase tracking-wide opacity-60">
-              {title(column)}
-            </span>
+            <span key={column.name} className="eyebrow">{title(column)}</span>
           ))}
           <span className="w-8" />
         </div>
@@ -32,10 +30,10 @@ export default function RecordList({
 
       {rows.map((row) => (
         <FieldRow key={row.rowid} table={table} rowid={row.rowid} columns={columns}
-                  values={row} what={what} />
+                  values={row} what={what} labelled={false} />
       ))}
 
-      {rows.length === 0 && empty && <p className="py-1 text-sm opacity-60">{empty}</p>}
+      {rows.length === 0 && empty && <p className="py-1 text-sm text-soft">{empty}</p>}
       <NewRow table={table} columns={columns} seed={seed} label={addLabel} />
     </div>
   );

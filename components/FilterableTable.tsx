@@ -3,8 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { DataTable } from "./ui";
 
-export type Facet = { key: string; label: string; count: number };
-export type FacetGroup = { name: string; facets: Facet[] };
+export type Facet = { key: string; label: string; count: number; quiet?: boolean };
+export type FacetGroup = { name: string; legend?: string; facets: Facet[] };
 export type FilterRow = {
   key: string;
   href?: string;
@@ -18,7 +18,7 @@ const PAGE = 15;
 export default function FilterableTable({
   head, rows, groups = [], placeholder, empty,
 }: {
-  head: { label: string; hideNarrow?: boolean }[];
+  head: { label: string; hideNarrow?: boolean; numeric?: boolean }[];
   rows: FilterRow[];
   groups?: FacetGroup[];
   placeholder: string;
@@ -35,50 +35,75 @@ export default function FilterableTable({
 
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
   const here = Math.min(page, pages - 1);
+  const narrowed = needle !== "" || groups.some(({ name }) => picked[name]);
 
   return (
     <div className="space-y-4">
-      <input
-        type="search"
-        className="input input-sm w-full md:w-80"
-        placeholder={placeholder}
-        value={query}
-        onChange={(event) => { setQuery(event.target.value); setPage(0); }}
-      />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <input
+          type="search"
+          aria-label={`Search ${placeholder}`}
+          className="w-full rounded-field border border-base-300 bg-base-100 px-3 py-1.5 text-sm
+            placeholder:text-soft md:w-72"
+          placeholder={placeholder}
+          value={query}
+          onChange={(event) => { setQuery(event.target.value); setPage(0); }}
+        />
 
-      {groups.map((group) => (
-        <div key={group.name} className="flex flex-wrap gap-1.5">
-          {group.facets.map((facet) => {
-            const on = picked[group.name] === facet.key;
-            return (
-              <button
-                key={facet.key}
-                type="button"
-                onClick={() => {
-                  setPicked({ ...picked, [group.name]: on ? null : facet.key });
-                  setPage(0);
-                }}
-                className={`btn btn-xs ${on ? "btn-primary" : "btn-outline"}`}
-              >
-                {facet.label}
-                <span className="opacity-60">{facet.count}</span>
-              </button>
-            );
-          })}
-        </div>
-      ))}
+        {groups.map((group) => (
+          <fieldset key={group.name} className="flex flex-wrap items-center gap-1.5">
+            <legend className="sr-only">{group.legend ?? `Filter by ${group.name}`}</legend>
+            {group.facets.map((facet) => {
+              const on = picked[group.name] === facet.key;
+              return (
+                <button
+                  key={facet.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    setPicked({ ...picked, [group.name]: on ? null : facet.key });
+                    setPage(0);
+                  }}
+                  className={`rounded-field border px-2 py-1 text-xs transition-colors ${
+                    on
+                      ? "border-base-content bg-base-content text-base-100"
+                      : facet.quiet
+                        ? "border-base-300 text-soft hover:border-base-content hover:text-base-content"
+                        : "border-base-300 text-base-content hover:border-base-content"}`}
+                >
+                  {facet.label}
+                  <span className={`tnum ml-1.5 font-mono ${on ? "opacity-70" : "text-soft"}`}>
+                    {facet.count}
+                  </span>
+                </button>
+              );
+            })}
+          </fieldset>
+        ))}
+      </div>
 
-      <DataTable head={head} rows={shown.slice(here * PAGE, here * PAGE + PAGE)} empty={empty} />
+      <DataTable head={head} rows={shown.slice(here * PAGE, here * PAGE + PAGE)}
+                 empty={narrowed ? "Nothing matches that. Clear the search and filters to see the rest." : empty} />
 
       {pages > 1 && (
-        <div className="flex items-center gap-3 text-xs opacity-60">
-          <div className="join">
-            <button type="button" className="btn btn-xs join-item" disabled={here === 0}
-                    onClick={() => setPage(here - 1)}>‹ Prev</button>
-            <button type="button" className="btn btn-xs join-item" disabled={here === pages - 1}
-                    onClick={() => setPage(here + 1)}>Next ›</button>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1.5">
+            <button type="button" disabled={here === 0} onClick={() => setPage(here - 1)}
+                    className="rounded-field border border-base-300 px-2.5 py-1 text-xs
+                      transition-colors hover:border-base-content disabled:opacity-40
+                      disabled:hover:border-base-300">
+              Previous
+            </button>
+            <button type="button" disabled={here === pages - 1} onClick={() => setPage(here + 1)}
+                    className="rounded-field border border-base-300 px-2.5 py-1 text-xs
+                      transition-colors hover:border-base-content disabled:opacity-40
+                      disabled:hover:border-base-300">
+              Next
+            </button>
           </div>
-          <span>Page {here + 1} of {pages} · {shown.length} total</span>
+          <p aria-live="polite" className="tnum text-xs text-soft">
+            Page {here + 1} of {pages} · showing {shown.length} of {rows.length}
+          </p>
         </div>
       )}
     </div>

@@ -9,7 +9,7 @@ export const tracks = (columns: Column[], trailing = " auto") => ({
 });
 
 export default function FieldRow({
-  table, rowid, columns, values, what, stack, onDelete = true,
+  table, rowid, columns, values, what, stack, onDelete = true, labelled = true,
 }: {
   table: string;
   rowid: number;
@@ -18,6 +18,7 @@ export default function FieldRow({
   what?: string;
   stack?: boolean;
   onDelete?: boolean;
+  labelled?: boolean;
 }) {
   return (
     <div
@@ -26,15 +27,15 @@ export default function FieldRow({
     >
       {columns.map((column) => (
         <div key={column.name}>
-          <span className={`mb-1 block text-[11px] uppercase tracking-wide opacity-60
-            ${stack ? "" : "md:hidden"}`}>
+          <span className={`eyebrow mb-1 block ${labelled || stack ? "" : "md:hidden"}`}>
             {title(column)}
           </span>
-          <Field table={table} rowid={rowid} column={column} value={values[column.name] as string | number | null} />
+          <Field table={table} rowid={rowid} column={column}
+                 value={values[column.name] as string | number | null} />
         </div>
       ))}
       {onDelete && !stack && (
-        <div className="flex justify-end md:block">
+        <div className={`flex justify-end md:block ${labelled ? "md:pt-5" : ""}`}>
           <DeleteButton table={table} rowid={rowid} what={what} />
         </div>
       )}

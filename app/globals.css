@@ -1,12 +1,138 @@
 @import "tailwindcss";
-@plugin "daisyui" { themes: light --default, dark --prefersdark; }
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "readout";
+  default: true;
+  color-scheme: light;
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96.2% 0.003 255);
+  --color-base-300: oklch(89.5% 0.006 255);
+  --color-base-content: oklch(22% 0.012 260);
+  --color-primary: oklch(33% 0.032 252);
+  --color-primary-content: oklch(98% 0 0);
+  --color-secondary: oklch(52% 0.02 255);
+  --color-secondary-content: oklch(98% 0 0);
+  --color-accent: oklch(54% 0.118 62);
+  --color-accent-content: oklch(99% 0 0);
+  --color-neutral: oklch(22% 0.012 260);
+  --color-neutral-content: oklch(97% 0 0);
+  --color-info: oklch(52% 0.02 255);
+  --color-info-content: oklch(98% 0 0);
+  --color-success: oklch(46% 0.072 155);
+  --color-success-content: oklch(98% 0 0);
+  --color-warning: oklch(54% 0.118 62);
+  --color-warning-content: oklch(99% 0 0);
+  --color-error: oklch(45% 0.145 25);
+  --color-error-content: oklch(99% 0 0);
+  --radius-selector: 0.25rem;
+  --radius-field: 0.1875rem;
+  --radius-box: 0.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "night";
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: oklch(24.5% 0.009 260);
+  --color-base-200: oklch(20% 0.009 260);
+  --color-base-300: oklch(31.5% 0.013 260);
+  --color-base-content: oklch(92% 0.005 260);
+  --color-primary: oklch(84% 0.024 250);
+  --color-primary-content: oklch(20% 0.009 260);
+  --color-secondary: oklch(68% 0.018 255);
+  --color-secondary-content: oklch(20% 0.009 260);
+  --color-accent: oklch(77% 0.128 70);
+  --color-accent-content: oklch(20% 0.009 260);
+  --color-neutral: oklch(31.5% 0.013 260);
+  --color-neutral-content: oklch(92% 0.005 260);
+  --color-info: oklch(68% 0.018 255);
+  --color-info-content: oklch(20% 0.009 260);
+  --color-success: oklch(72% 0.09 155);
+  --color-success-content: oklch(20% 0.009 260);
+  --color-warning: oklch(77% 0.128 70);
+  --color-warning-content: oklch(20% 0.009 260);
+  --color-error: oklch(70% 0.145 22);
+  --color-error-content: oklch(20% 0.009 260);
+  --radius-selector: 0.25rem;
+  --radius-field: 0.1875rem;
+  --radius-box: 0.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-plex-condensed);
+  --color-soft: var(--soft);
+  --color-signal: var(--signal);
+}
+
+:root {
+  --soft: oklch(50% 0.018 258);
+  --signal: oklch(54% 0.118 62);
+}
+
+[data-theme="night"] {
+  --soft: oklch(70% 0.016 258);
+  --signal: oklch(77% 0.128 70);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --soft: oklch(70% 0.016 258);
+    --signal: oklch(77% 0.128 70);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="readout"] {
+    --soft: oklch(50% 0.018 258);
+    --signal: oklch(54% 0.118 62);
+  }
+}
+
+@layer base {
+  :where(table) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :where(:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@utility eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+@utility tnum {
+  font-variant-numeric: tabular-nums;
 }
 
 .rowgrid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
 @media (min-width: 768px) {
   .rowgrid { grid-template-columns: var(--tracks); align-items: start; gap: 0.5rem 0.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

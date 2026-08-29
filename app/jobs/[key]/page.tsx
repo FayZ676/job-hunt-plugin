@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   Badge, Card, DataTable, DefList, Label, Out, PageHeader, Prose, Score, Section, Stamp,
 } from "@/components/ui";
+import { shortDate } from "@/components/format";
 import { prospect } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -35,9 +36,10 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
         <DefList pairs={[
           ["Location", posting.location || (posting.remote ? "Remote" : "—")],
           ["Compensation", posting.compensation || "—"],
-          ["Posted", posting.posted_at || "—"],
-          ["First seen", posting.first_seen || "—"],
-          ["Source", `${posting.source || "—"}${posting.ats ? ` · ${posting.ats}` : ""}`],
+          ["Posted", shortDate(posting.posted_at)],
+          ["First seen", shortDate(posting.first_seen)],
+          ["Source", [posting.source, posting.ats].filter(Boolean)
+            .filter((name, index, all) => all.indexOf(name) === index).join(" · ") || "—"],
           ["Posting", <Out key="u" href={posting.url}>open</Out>],
           ["Apply", <Out key="a" href={posting.apply_url}>open</Out>],
           found.aliases.length > 0 && ["Also listed as", <Stamp key="x">{found.aliases.join(" · ")}</Stamp>],

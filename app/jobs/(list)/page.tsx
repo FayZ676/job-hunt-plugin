@@ -1,50 +1,58 @@
 import FilterableTable from "@/components/FilterableTable";
+import { shortDate, shortPay, shortPlace } from "@/components/format";
+import { ORDER, rankOf, reading } from "@/components/status";
 import { Badge, Out, Score, Stamp } from "@/components/ui";
 import { jobs, stats } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-const ORDER = ["shortlisted", "staged", "applied", "interviewing", "new", "scored",
-               "skipped", "rejected", "not_pursued", "closed"];
-
 export default function JobsPage() {
-  const rows = jobs();
   const counts = Object.fromEntries(stats().map((group) => [group.status ?? "", group.n]));
+  const rows = jobs().slice().sort((left, right) =>
+    rankOf(left.status) - rankOf(right.status) ||
+    (right.score ?? -1) - (left.score ?? -1) ||
+    (right.first_seen ?? "").localeCompare(left.first_seen ?? ""));
 
   return (
-    <>
-      <FilterableTable
-        placeholder="company, title or location"
-        empty="Nothing scanned yet. Run the job routine and they land here."
-        head={[
-          { label: "Company" }, { label: "Title" }, { label: "Score" }, { label: "Status" },
-          { label: "Location", hideNarrow: true }, { label: "Compensation", hideNarrow: true },
-          { label: "Seen", hideNarrow: true }, { label: "Resume", hideNarrow: true },
-        ]}
-        groups={[{
-          name: "status",
-          facets: ORDER.filter((status) => counts[status])
-            .map((status) => ({ key: status, label: status, count: counts[status] })),
-        }]}
-        rows={rows.map((job) => ({
-          key: job.key,
-          href: `/jobs/${encodeURIComponent(job.key)}`,
-          facets: job.status ? [job.status] : [],
-          haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
-          cells: [
-            <span key="c" className="font-medium hover:underline">{job.company}</span>,
-            job.title,
-            <Score key="s" value={job.score} />,
-            <Badge key="b">{job.status}</Badge>,
-            job.location || (job.remote ? "Remote" : "—"),
-            job.compensation || "—",
-            <Stamp key="t">{job.first_seen?.slice(0, 10)}</Stamp>,
-            job.resume
-              ? <Out key="r" href={`/asset/resume/${encodeURIComponent(job.key)}`}>open PDF</Out>
-              : "—",
-          ],
-        }))}
-      />
-    </>
+    <FilterableTable
+      placeholder="company, title or location"
+      empty="Nothing scanned yet. Run the job routine and openings land here."
+      head={[
+        { label: "Company" }, { label: "Title" }, { label: "Score", numeric: true },
+        { label: "Status" }, { label: "Location", hideNarrow: true },
+        { label: "Pay", hideNarrow: true, numeric: true },
+        { label: "Seen", hideNarrow: true }, { label: "Resume", hideNarrow: true },
+      ]}
+      groups={[{
+        name: "status",
+        legend: "Filter openings by status",
+        facets: ORDER.filter((status) => counts[status]).map((status) => ({
+          key: status,
+          label: reading(status).label,
+          count: counts[status],
+          quiet: reading(status).stage === "closed",
+        })),
+      }]}
+      rows={rows.map((job) => ({
+        key: job.key,
+        href: `/jobs/${encodeURIComponent(job.key)}`,
+        facets: job.status ? [job.status] : [],
+        haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
+        cells: [
+          <span key="c" className="font-medium">{job.company}</span>,
+          job.title,
+          <Score key="s" value={job.score} />,
+          <Badge key="b">{job.status}</Badge>,
+          shortPlace(job.location) || (job.remote ? "Remote" : "—"),
+          shortPay(job.compensation)
+            ? <span key="p" className="whitespace-nowrap">{shortPay(job.compensation)}</span>
+            : <span key="p" className="text-soft">—</span>,
+          <Stamp key="t">{shortDate(job.first_seen)}</Stamp>,
+          job.resume
+            ? <Out key="r" href={`/asset/resume/${encodeURIComponent(job.key)}`}>Résumé</Out>
+            : <span key="r" className="text-soft">—</span>,
+        ],
+      }))}
+    />
   );
 }

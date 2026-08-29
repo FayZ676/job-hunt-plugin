@@ -2,7 +2,7 @@ import Link from "next/link";
 import Tabs from "@/components/Tabs";
 import { PANELS, slugFor } from "./panels";
 import { VocabularyProvider } from "@/components/edit/Vocabulary";
-import { Card, Meter, PageHeader } from "@/components/ui";
+import { Meter, PageHeader } from "@/components/ui";
 import { answers, vocabularies } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -24,20 +24,25 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
       </PageHeader>
 
       {blocking.length > 0 && (
-        <Card className="mb-8 border-error bg-error/10">
-          <p className="text-sm font-medium">
-            {blocking.length} unanswered — a form asking for one of these stops rather than guesses.
-          </p>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs opacity-60">
+        <div className="mb-7 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-l-2
+          border-signal py-1 pl-3 text-sm">
+          <span className="font-medium">
+            {blocking.length === 1 ? "One answer is missing." : `${blocking.length} answers are missing.`}
+          </span>
+          <span className="text-soft">
+            A form asking for {blocking.length === 1 ? "it" : "one of them"} stops rather than guesses.
+          </span>
+          <span className="flex flex-wrap gap-x-3 gap-y-1">
             {blocking.map((answer) => (
-              <li key={`${answer.section}.${answer.field}`}>
-                <Link href={`/profile/${slugFor(answer.section)}`} className="link">
-                  {answer.section}.{answer.field}
-                </Link>
-              </li>
+              <Link key={`${answer.section}.${answer.field}`}
+                    href={`/profile/${slugFor(answer.section)}`}
+                    className="underline decoration-base-300 underline-offset-2
+                      hover:decoration-current">
+                {answer.field.replace(/_/g, " ")}
+              </Link>
             ))}
-          </ul>
-        </Card>
+          </span>
+        </div>
       )}
 
       <Tabs items={Object.entries(PANELS).map(([slug, panel]) => ({
