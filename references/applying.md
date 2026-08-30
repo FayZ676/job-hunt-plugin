@@ -21,14 +21,17 @@ submits.
 | **Greenhouse** | `job-boards.greenhouse.io/<slug>/jobs/<id>` | Career pages embed this in an iframe. Go to the canonical URL, from the `gh_jid` in the prospect key |
 | **Lever** | `jobs.lever.co/<slug>/<id>/apply` | Server-rendered and predictable, but **submission is gated by hCaptcha** |
 | **Workday** | `<company>.wd<N>.myworkdayjobs.com/…` | **Fully drivable.** Needs a per-employer account, then a five-step flow |
-| **iCIMS, Taleo, SmartRecruiters** | varies | Untested. Do not assume they are blocked — try one before writing them off |
-| **Indeed** (`indeed:`) | The row's `apply_url` | Often already the employer's own link; otherwise an `applystart` redirect to it. Follow it, then use the row above for whatever ATS you land on |
+| **Everything else** | The row's `apply_url` | iCIMS, SuccessFactors, Oracle Cloud, Rippling, SmartRecruiters, BambooHR, Eightfold and 40-odd more now arrive. Untested, one at a time: **do not assume any of them is blocked** — open it and look before writing it off |
 
-The prospect `key` prefix names the ATS: `ashby:`, `greenhouse:`, `lever:`, `manual:`, `indeed:`.
+The prospect `key` prefix names the ATS the posting came from — `ashby:`, `greenhouse:`,
+`lever.co:`, `workday:`, `icims:`, `manual:` — and `postings.ats` holds the same value. There are 54
+of them, so **read the prefix rather than expecting a short list.**
 
-**An Indeed posting is applied to through the employer's ATS, never through the aggregator.**
-Record the resolved URL as the application's `url`, not the listing link, and `INSERT` a Greenhouse,
-Lever or Ashby company into `companies` — found once by hand, fetched every morning after.
+**Every `apply_url` is the employer's own posting.** Nothing arrives through an aggregator any more,
+so there is no redirect to follow and no listing link to resolve.
+
+An ATS met for the first time is worth a note in this file once it is driven — that is how the table
+above earned its rows.
 
 **Wait for the form before snapshotting.** Ashby renders "Fetching application form" first, and a
 snapshot taken too early shows a page with no fields on it.
@@ -188,6 +191,5 @@ That is the one step that sets `applied`; it moves the resume into `submitted/` 
 - **Cover letter fields** are usually optional. Leave optional essay fields empty rather than filling
   them with something generic; a weak answer costs more than no answer.
 - **"How did you hear about us?"** — answer the company's job board, which is true.
-- **Login walls.** Some forms require an account before showing any fields — flag for the user.
-  An Indeed row whose `apply_url` never leaves indeed.com is one: stage what is reachable, flag the
-  rest.
+- **Login walls.** Some forms require an account before showing any fields — flag for the user, and
+  stage what is reachable.

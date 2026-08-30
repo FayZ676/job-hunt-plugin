@@ -6,8 +6,7 @@ already stored, rules on every row, and promotes the survivors.
 ## Contents
 
 - The filters — the verdicts in `cli/scan.ts` versus the patterns in the `filters` table
-- Source precedence — the rank that resolves an overlap without naming a source
-- Dedupe — the three checks, and where the collapsed siblings go
+- Dedupe — the two checks, and where the collapsed siblings go
 - Tuning — reading the drop counts, and querying what a verdict cost
 - Traps — a role appearing twice, "Remote" defeating the location filter, `--redo`
 
@@ -19,9 +18,11 @@ job-scan ingest
 and one that cannot state a fact leaves the default, so the filter reading it never trips. A new
 mechanism inherits every filter for free.
 
-Every row gets a `disposition`, so what a filter cost stays answerable after the run. Two are not
-drops — `kept` became a prospect, `upgraded` replaced a lower-ranked source on an existing one. Every
-other value names the filter that dropped the row.
+Every row gets a `disposition`, so what a filter cost stays answerable after the run. `kept` is the
+only one that is not a drop; every other value names the filter that dropped the row.
+
+**Part of this chain runs before the fetch.** The title and agency filters ride along in the search
+request, so a drop count near zero means the pushdown worked, not that the filter is dead.
 
 ```bash
 job-scan ingest --help      # every flag
@@ -33,35 +34,20 @@ job-scan dispositions   # every verdict, in order
 Two things share the word. `DISPOSITIONS` in `cli/scan.ts` names the **verdicts** — one per branch of
 the chain, and the same values `postings.disposition` stores. The `filters` **table** holds the
 **patterns** those branches match on, keyed by `kind`. Only four verdicts read the table; the rest
-rule on columns, dates, ranks and prior state, so neither describes the other.
+rule on columns, dates and prior state, so neither describes the other.
 
 `job-scan dispositions` prints the verdicts in the order the chain rules them, straight off the
 code that applies it — read it there rather than from a copy. The patterns live in
 `SELECT kind, pattern, note FROM filters`, so tuning is SQL, not a code change.
 
-## Source precedence
-
-Every source carries a rank in `sources.REGISTRY`: an employer's own board is authoritative (`0`), an
-aggregator is discovery (`1`). That number is how ingest resolves overlaps without naming a source.
-
-- **A lower-ranked copy of a covered company is dropped** as `covered`. Without this, every Indeed run
-  re-proposes roles the boards covered hours earlier.
-- **A better-ranked copy that arrives later takes the role over** — the score, the history and the
-  staged work move onto the better-ranked row, which becomes the prospect. The row it replaced is
-  ruled `upgraded` and points at it through `canonical_key`.
-
-So a company is discovered once by the aggregator and fetched from its own board every morning after.
-An upgrade only happens before application work starts; a `staged` or `applied` row is never
-disturbed.
-
 ## Dedupe
 
-Three checks, applied to all sources alike:
+Two checks:
 
 1. **The key**, against every row already kept or already pointing at one through `canonical_key`.
-2. **Source precedence**, as above.
-3. **Normalized company + title**, with names normalized past `Inc`/`LLC`/`Technologies`. Same-run
-   collisions collapse onto the better-ranked row; the siblings are ruled `duplicate` and point at it
+2. **Normalized company + title**, with names normalized past `Inc`/`LLC`/`Technologies`. One role
+   posted under several locations arrives as several rows; they collapse onto one, preferring a row
+   already kept and then a remote one. The siblings are ruled `duplicate` and point at the survivor
    through `canonical_key`, so they never resurface as new. Every location the role was listed under
    stays queryable: `SELECT location FROM postings WHERE canonical_key='<key>'`.
 

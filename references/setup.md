@@ -7,11 +7,12 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 ```bash
 CAREER=$(job-paths career)
 mkdir -p "$CAREER/resumes/submitted"
-job-q -f "$HOME/.claude/skills/job/sql/seed.sql"
+job-q "SELECT 1"
 ```
 
-That creates `$CAREER/job.db` — the schema applies on connect — and seeds companies on Greenhouse,
-Lever and Ashby plus a starting set of filters.
+The schema applies on connect, so any command creates `$CAREER/job.db`. It starts empty — there is
+no seed. The filters and the watchlist come out of the interview below, in their words, not from a
+starter list they would have to discover and correct.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
 NULL until answered: the profile is three single-row tables in `sql/profile.sql`, one per section,
@@ -41,13 +42,25 @@ every table. Cover:
 
 A `NULL` is not a failure — it is a hard stop later. Tell them which ones will block an application.
 
-**3. Tune the watchlist.** The seeded companies and title filters are AI- and ML-flavored. If they
-are hiring into a different field, rewrite both:
+**3. Write the filters.** `filters` is what `ingest` rules on, and `title_exclude`, `title_noise` and
+`agency_blocklist` are also pushed into the paid search, so a filter written here is credit not
+spent. Derive them from what they just told you — the field they work in, the titles they refuse,
+the countries they cannot work in:
 
 ```sql
-INSERT INTO filters(kind,pattern) VALUES('title_include','…');
-INSERT INTO companies(slug,ats,name,source) VALUES('slug','greenhouse','Name','manual');
-UPDATE companies SET active=0 WHERE slug='…';
+INSERT INTO filters(kind,pattern) VALUES('title_include','(?i)\b(ai|ml|llm|nlp|rag)\b');
+INSERT INTO filters(kind,pattern) VALUES('title_exclude','(?i)\b(intern|manager|director)\b');
+INSERT INTO filters(kind,pattern) VALUES('location_include','(?i)remote|united states');
+```
+
+**Keep `title_exclude` and `title_noise` as flat `\b(a|b|c)\b` alternations.** Those flatten into
+literal terms the search can exclude before charging for them; a character class or a quantifier
+cannot, and quietly falls back to being paid for.
+
+Companies are optional and fetch nothing on their own; they are who `job-scan watchlist` searches:
+
+```sql
+INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual');
 ```
 
 **4. Check the tooling.** The npm dependencies and the linked `job-*` commands are what fetching
@@ -60,10 +73,12 @@ command -v pdftoppm || echo "brew install poppler"
 [ -s "$HOME/.claude/skills/job/.env.local" ] || echo "APIFY_TOKEN=… needed in the skill's .env.local"
 ```
 
-The Apify token is the only paid piece, and only the Indeed pass uses it. It goes in `.env.local` in
-the skill directory, which is git-ignored and read by both the commands and the dashboard. Without
-it, `/job scan --no-indeed` still runs every watched board.
+**The Apify token is required, not optional** — it is the only way postings arrive. It goes in
+`.env.local` in the skill directory, which is git-ignored and read by both the commands and the
+dashboard.
 
-**5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. Sensible companies means the
-filters are tuned; nothing, or thousands, means another pass — the drop counts say which rule, and
-`job-scan ingest --redo` re-rules the same postings after each adjustment without fetching again.
+**5. Do a dry run.** `job-scan search --max 25`, then query `triage`. Keep the first run small: it
+is billed per job returned, and the point is to see whether the filters aim straight, not to fill
+the database. Sensible companies means they are tuned; nothing, or all noise, means another pass —
+the drop counts say which rule, and `job-scan ingest --redo` re-rules the same postings after each
+adjustment **without spending again**.

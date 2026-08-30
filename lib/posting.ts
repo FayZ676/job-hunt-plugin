@@ -6,7 +6,7 @@ import { TABLES, vocabulary } from "./schema.ts";
 export const POSTING_COLUMNS = [
   "key", "source", "company", "title", "ats", "url", "apply_url", "location", "remote",
   "compensation", "posted_at", "description", "comp_min", "comp_max", "comp_period",
-  "sponsored", "expired", "raw",
+  "expired", "raw",
 ] as const;
 
 const undeclared = POSTING_COLUMNS.filter((name) => !(name in TABLES.postings.shape));
@@ -57,7 +57,6 @@ export const Posting = z.object({
     const said = String(held ?? "").toUpperCase();
     return vocabulary(ddl(), "postings", "comp_period").includes(said) ? said : null;
   }, z.string().nullable()).default(null),
-  sponsored: flag.default(0),
   expired: flag.default(0),
   raw: maybeText.default(null),
 });

@@ -14,15 +14,15 @@ function checked(company: Company) {
   return { text: due ? `due — last ${shortDate(company.last_checked)}` : `${days}d ago`, due };
 }
 
-function headline(due: number, manual: number) {
+function headline(due: number, watched: number) {
   if (due === 0) {
-    return manual === 0
-      ? <>Every board is scanned for you.</>
-      : <>No board is due a check.</>;
+    return watched === 0
+      ? <>Nothing is on your watchlist.</>
+      : <>Nothing needs you. The search covers the rest.</>;
   }
   return <>
     <span className="tnum">{due}</span>
-    {due === 1 ? " board is" : " boards are"} due a look.
+    {due === 1 ? " company is" : " companies are"} due a look by hand.
   </>;
 }
 
@@ -38,18 +38,21 @@ export default function SourcesPage() {
 
   return (
     <>
-      <ScreenHead kicker="Sources" headline={headline(due.length, manual.length)}>
+      <ScreenHead kicker="Sources" headline={headline(due.length, automatic.length)}>
         <p className="mt-3 text-sm text-soft">
-          <span className="tnum font-mono">{automatic.length}</span> boards the scan reads on its
-          own · <span className="tnum font-mono">{manual.length}</span> you check by hand
+          Every posting comes from one search across 175,000 career sites, so a company need not be
+          listed here to be found. These are watched by name whatever the title:{" "}
+          <span className="tnum font-mono">{automatic.length}</span> searched
+          {manual.length > 0 &&
+            <> · <span className="tnum font-mono">{manual.length}</span> you check by hand</>}
           {paused > 0 && <> · <span className="tnum font-mono">{paused}</span> paused</>}
         </p>
       </ScreenHead>
 
       <Section
-        title="Boards you check by hand"
-        sub="No API to read, so the scan cannot see these. Open the careers page yourself on the
-             cadence you set."
+        title="Companies you check by hand"
+        sub="The search has never turned these up. Open the careers page yourself on the cadence
+             you set — and if the search starts finding them, delete the row."
       >
         <DataTable
           head={[
@@ -57,7 +60,7 @@ export default function SourcesPage() {
             { label: "Careers", hideNarrow: true },
             ...(paused > 0 ? [{ label: "Active" }] : []),
           ]}
-          empty="No boards are checked by hand."
+          empty="No companies are checked by hand."
           rows={manual
             .map((company) => ({ company, seen: checked(company) }))
             .sort((left, right) =>
@@ -84,19 +87,19 @@ export default function SourcesPage() {
       </Section>
 
       <Section
-        title="Boards the scan reads"
-        sub="These have an API behind them. Nothing here needs you."
+        title="Companies the search watches"
+        sub="Searched by name, so their openings arrive whatever the title. Nothing here needs you."
       >
         <FilterableTable
           placeholder="company"
-          empty="No automatic boards tracked yet."
+          empty="No companies are watched by name yet."
           head={[
-            { label: "Company" }, { label: "Source" },
+            { label: "Company" }, { label: "Board" },
             ...(paused > 0 ? [{ label: "Active" }] : []),
           ]}
           groups={[{
             name: "ats",
-            legend: "Filter boards by source",
+            legend: "Filter companies by where their board lives",
             facets: Object.keys(counts).sort((a, b) => counts[b] - counts[a])
               .map((ats) => ({ key: ats, label: ats, count: counts[ats] })),
           }]}

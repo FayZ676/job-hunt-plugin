@@ -1,7 +1,7 @@
 ---
 name: job
-description: Scans job boards for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "scan and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
-argument-hint: [setup|scan|indeed|resume <JD|url|key>|apply <key|url>|submit|ui|help]
+description: Searches every company career site for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "scan and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
+argument-hint: [setup|scan|watchlist|resume <JD|url|key>|apply <key|url>|submit|ui|help]
 ---
 
 # Job routine
@@ -34,8 +34,8 @@ Nothing below overrides these.
 | ---------- | ---- |
 | `/job setup` | First-run setup — `references/setup.md` |
 | `/job` | All five phases |
-| `/job scan` | Phases 1–2 (`--no-indeed` for watched boards only) |
-| `/job indeed` | The Indeed pass alone, merged into the day's prospects |
+| `/job scan` | Phases 1–2 |
+| `/job watchlist` | The watched-company search alone, merged into the day's prospects |
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
@@ -52,7 +52,7 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 
 | Phase | Module | Subcommands |
 | ----- | ------ | ----------- |
-| 1 — Fetch, then ingest | `cli/scan.ts` | `sources` `boards` `indeed` `ingest` `dispositions` |
+| 1 — Fetch, then ingest | `cli/scan.ts` | `source` `search` `watchlist` `ingest` `dispositions` |
 | 2 — Score | `cli/score.ts` | `triage` `rubric` `show` `set` `pending` |
 | 3 — Resume | `cli/resume.ts` | `spec` `build` |
 | 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
@@ -85,9 +85,9 @@ Every detail lives one level down, read when the phase that needs it starts.
 
 | File | Read before |
 | ---- | ----------- |
-| `references/setup.md` | First run — building `$CAREER`, the profile interview, tuning the watchlist |
-| `references/fetching.md` | Phase 1 — adding a company, the Indeed search, manual boards |
-| `references/ingesting.md` | Phase 1 — the filter chain, source precedence, dedupe, tuning |
+| `references/setup.md` | First run — building `$CAREER`, the profile interview, the filters |
+| `references/fetching.md` | Phase 1 — aiming the search, what the credit buys, the watchlist |
+| `references/ingesting.md` | Phase 1 — the filter chain, dedupe, tuning |
 | `references/resume.md` | Phase 3 — everything about building one: rules, checks, spec, build |
 | `references/applying.md` | Phases 4–5 — reaching each ATS's form, filling it, the traps, submitting |
 
@@ -96,7 +96,7 @@ Every detail lives one level down, read when the phase that needs it starts.
 ```bash
 $Q --schema                     # every table, view, CHECK and trigger
 job-scan dispositions            # every verdict the chain can rule, in order
-job-scan sources                 # each source's kind, rank, endpoint and quirk
+job-scan source                  # the search API behind every posting, and its quirks
 job-resume spec                  # the resume spec, and every section type
 ```
 
@@ -178,28 +178,21 @@ not exist means "none", not "never asked". `$Q --export` hands them the whole th
 
 ## Phase 1 — Fetch, then ingest
 
-Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothing. Both are free to
-re-run, and every source normalizes into the same columns, so one filter chain rules on all of them.
+Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothing. Ingest is free
+to re-run; **fetching is not.**
 
 ```bash
-job-scan boards                               # every watched board, in parallel
-job-scan indeed                               # Apify search, descriptions included
+job-scan search                               # preferred titles across every career site
+job-scan watchlist                            # every live job at the companies they watch
 job-scan ingest                               # postings -> prospects
 job-scan ingest --redo --no-location-filter   # re-rule stored rows, no network
 ```
 
 Flags and verdicts are `--help` and `job-scan dispositions` away; do not guess them.
 
-Indeed is a paid Apify search, **billed per listing**, so `--max` is a budget rather than a page size
-and it applies per query. It returns full descriptions with the search, so there is no second pass,
-and with no `--query` it searches your `title_preferred` rows.
-**Read `references/fetching.md` before running it.**
-
-Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a cadence; `manual_boards`
-lists what is due. Check those, `INSERT` finds into `postings` with `disposition='kept'` — a hand
-check has already done the filtering ingest would do — and set `last_checked`.
-When a find resolves to a supported ATS, `INSERT` it into `companies` — found by hand once, fetched
-every morning after.
+One paid Apify actor covers 175k career sites across 54 ATSes, **billed per job returned**, so
+`--max` is a budget and a second run costs a second time. `--file` replays a saved dataset for free.
+**Read `references/fetching.md` before spending on it.**
 
 ## Phase 2 — Score
 

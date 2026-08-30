@@ -1,8 +1,8 @@
 # job-hunt
 
-A Claude Code skill that runs a job search end to end: it scans company job boards for new
-openings, scores each one against a profile you never have to format, builds a tailored resume for
-the ones worth applying to, fills out the application form in the browser, and submits only what you
+A Claude Code skill that runs a job search end to end: it searches 175,000 company career sites for
+new openings, scores each one against a profile you never have to format, builds a tailored resume
+for the ones worth applying to, fills out the application form in the browser, and submits only what you
 approve.
 
 One command does the whole thing:
@@ -17,8 +17,7 @@ Five phases, in order.
 
 | Phase | What happens |
 |---|---|
-| **Scan** | Hits the Greenhouse, Lever, and Ashby APIs for every company you watch, plus an Indeed pass for employers nobody put on a list. Ships with a 137-company starter watchlist. Fetching and filtering are separate steps: everything a source returned lands in `postings` untouched, and one pass rules on each row; the ones
-it keeps are the prospects. |
+| **Scan** | One search across 175,000 company career sites on 54 ATSes — Greenhouse and Lever, but also Workday, iCIMS and SuccessFactors, where most large employers actually post. Every result is the employer's own posting, description attached; no aggregator, no gig spam. Because it bills per job returned, your title and agency filters are pushed into the request, so most of what you'd reject is never bought. Fetching and filtering stay separate steps: what came back lands in `postings` untouched, and one pass rules on each row; the ones it keeps are the prospects. |
 | **Score** | Triages on a cheap list with no descriptions, pulls full text only for the plausible ones, then scores 0–10 against your profile — citing the JD language that drove it. Everything is recorded, shortlisted or not, so nothing is reviewed twice. |
 | **Resume** | Builds a role-specific resume straight to PDF, selecting the bullets in your profile that match this posting. It never invents a number your profile doesn't have. |
 | **Stage** | Opens the application form and fills every field your profile answers. An unanswered field is a hard stop, not a guess. Screening questions and essays get drafted and flagged, never auto-accepted. Stops with a finger over the submit button. |
@@ -96,9 +95,10 @@ your phone number in it.
 
 - **Everything:** Node 22.18+ and `npm install ~/.claude/skills/job`. SQLite comes with it.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
-- **The Indeed pass:** an [Apify](https://apify.com) token, as `APIFY_TOKEN=…` in a `.env.local`
-  file in this directory. Billed per listing (from $3/1,000), and the free tier's monthly credit
-  covers a personal search. Skip it and the watched boards still work: `/job scan --no-indeed`.
+- **Searching:** an [Apify](https://apify.com) token, as `APIFY_TOKEN=…` in a `.env.local` file in
+  this directory. Billed per job returned (from $12/1,000, less on a paid Apify plan), and the free
+  tier's monthly credit covers a personal search — a daily pass runs a few tens of jobs. `--max` is
+  the budget; `--file` replays a saved run for free.
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).
 
@@ -110,8 +110,8 @@ You can start with just Node and add the rest before your first resume.
 |---|---|
 | `/job setup` | First-run setup |
 | `/job` | All five phases |
-| `/job scan` | Scan and score (`--no-indeed` for watched boards only) |
-| `/job indeed` | The Indeed pass on its own |
+| `/job scan` | Scan and score |
+| `/job watchlist` | Search the companies you watch, whatever the title |
 | `/job resume <JD, URL, or key>` | Build one resume |
 | `/job apply <key or URL>` | Build and stage one application, stopping before submit |
 | `/job submit` | Review and submit whatever is staged |
@@ -164,9 +164,10 @@ These are load-bearing, not decoration:
 
 ## Tuning it
 
-The seeded watchlist and title filters are tuned for AI and machine learning engineering roles. If
-you're searching in a different field, say so — the companies and filters are database rows, and
-Claude edits them for you.
+Setup writes your title and location filters from the interview, so they describe your search from
+the first run. If they drift, say so — they are database rows, and Claude edits them for you. Those
+filters are also what keeps the search cheap: the titles you exclude are excluded before you are
+billed for them.
 
 The highest-leverage thing you can do is correct the profile when a scan surfaces something you'd
 never apply to, or misses something you would. Its `search_criteria` rows are what every scoring

@@ -41,7 +41,6 @@ CREATE TABLE IF NOT EXISTS postings (
   compensation  TEXT,
   posted_at     TEXT CHECK (posted_at IS NULL OR datetime(posted_at) IS NOT NULL),
   description   TEXT,
-  sponsored     INTEGER NOT NULL DEFAULT 0 CHECK (sponsored IN (0,1)),
   expired       INTEGER NOT NULL DEFAULT 0 CHECK (expired IN (0,1)),
   comp_min      REAL CHECK (comp_min >= 0),
   comp_max      REAL CHECK (comp_max >= 0),
@@ -53,8 +52,8 @@ CREATE TABLE IF NOT EXISTS postings (
 
   ingested_on   TEXT CHECK (ingested_on IS date(ingested_on)),
   disposition   TEXT CHECK (disposition IS NULL OR disposition IN (
-                  'kept','upgraded','title','location','stale','seen','duplicate',
-                  'sponsored','expired','agency','noise','lowball','covered')),
+                  'kept','title','location','stale','seen','duplicate',
+                  'expired','agency','noise','lowball')),
   canonical_key TEXT REFERENCES postings(key) ON DELETE SET NULL,
 
   first_seen    TEXT CHECK (first_seen IS date(first_seen)),

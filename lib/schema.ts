@@ -42,15 +42,15 @@ export const POSTING_STATUS = z.enum([
 ]);
 
 export const DISPOSITION = z.enum([
-  "kept", "upgraded", "title", "location", "stale", "seen", "duplicate",
-  "sponsored", "expired", "agency", "noise", "lowball", "covered",
+  "kept", "title", "location", "stale", "seen", "duplicate",
+  "expired", "agency", "noise", "lowball",
 ]);
 
 const postings = z.object({
   key: text, source: text, ats: maybeText, company: text, title: text,
   url: maybeText, apply_url: maybeText, location: maybeText, remote: maybeInt,
   compensation: maybeText, posted_at: maybeText, description: maybeText,
-  sponsored: int, expired: int,
+  expired: int,
   comp_min: maybeReal, comp_max: maybeReal, comp_period: maybeText, raw: maybeText,
   first_fetched: text, last_fetched: text, ingested_on: maybeText,
   disposition: DISPOSITION.nullable(), canonical_key: maybeText,
