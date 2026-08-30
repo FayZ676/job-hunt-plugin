@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { ROOT } from "./root.ts";
-import { align } from "./schema.ts";
+import { align, prune } from "./schema.ts";
 
 export const CAREER = path.resolve(
   (process.env.JOB_CAREER_DIR || "~/data/job").replace(/^~(?=$|\/)/, os.homedir()),
@@ -31,6 +31,7 @@ export function connect(at: string = DB) {
   opened.pragma("foreign_keys = ON");
   const sql = ddl();
   opened.exec(sql);
+  prune(opened, sql);
   align(opened, sql);
   return opened;
 }

@@ -125,6 +125,16 @@ const enumerated = (shape: z.ZodType): string[] | null => {
   return inner instanceof z.ZodEnum ? inner.options.map(String) : null;
 };
 
+export function prune(database: Database, ddl: string) {
+  for (const [name, shape] of Object.entries(TABLES)) {
+    const declared = Object.keys(shape.shape);
+    const written = columns(ddl, name);
+    for (const column of database.pragma(`table_xinfo(${name})`) as Column[])
+      if (!declared.includes(column.name) && !written.includes(column.name))
+        database.exec(`ALTER TABLE ${name} DROP COLUMN ${column.name}`);
+  }
+}
+
 export function align(database: Database, ddl: string) {
   const wrong: string[] = [];
   for (const [name, shape] of Object.entries({ ...TABLES, ...VIEWS })) {
