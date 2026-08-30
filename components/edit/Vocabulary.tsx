@@ -2,9 +2,9 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
-export type Vocabularies = { kind: string[]; status: string[] };
+export type Vocabularies = { status: string[] };
 
-const Vocabulary = createContext<Vocabularies>({ kind: [], status: [] });
+const Vocabulary = createContext<Vocabularies>({ status: [] });
 
 export const useVocabulary = () => useContext(Vocabulary);
 

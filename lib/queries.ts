@@ -21,6 +21,7 @@ const singleton = <T extends Table>(table: T) =>
   one(withRowid(table), `SELECT rowid AS rowid, * FROM ${table}`) as Rowed<T>;
 
 export const identity = () => singleton("identity");
+export const scope = () => singleton("search_scope");
 export const experience = () =>
   one(VIEWS.experience, "SELECT clock_starts, years, relevant_years FROM experience")!;
 
@@ -28,7 +29,7 @@ export const options = (table: Table, column: string) => choices(ddl(), table, c
 
 export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
-export const criteria = () => listing("search_criteria", "ORDER BY kind, seq IS NULL, seq, value");
+export const titles = () => listing("search_titles", "ORDER BY seq IS NULL, seq, value");
 export const accounts = () => listing("accounts", "ORDER BY employer");
 
 export const jobs = () => rows(VIEWS.triage, "SELECT * FROM triage");
@@ -85,7 +86,4 @@ export function prospect(key: string): Prospect | null {
   };
 }
 
-export const vocabularies = () => ({
-  kind: options("search_criteria", "kind"),
-  status: options("projects", "status"),
-});
+export const vocabularies = () => ({ status: options("projects", "status") });

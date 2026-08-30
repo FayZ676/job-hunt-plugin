@@ -8,6 +8,7 @@ import { say } from "@/components/Toaster";
 import Adder from "@/components/edit/Adder";
 import Chips from "@/components/edit/Chips";
 import DeleteButton from "@/components/edit/DeleteButton";
+import { useReorder } from "@/components/edit/reorder";
 import Field from "@/components/edit/Field";
 import RecordList from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
@@ -64,33 +65,8 @@ function Dates({ table, rowid, values }: {
 }
 
 function Bullets({ project }: { project: Project }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
   const rows = project.bullets;
-
-  const move = async (from: number, to: number) => {
-    if (busy || to < 0 || to >= rows.length) return;
-    setBusy(true);
-    const order = rows.slice();
-    order.splice(to, 0, ...order.splice(from, 1));
-    for (const [place, bullet] of order.entries()) {
-      if (bullet.seq === place) continue;
-      const done = await answered(save("project_bullets", bullet.rowid, { seq: String(place) }));
-      if ("error" in done) { say(done.error, true); break; }
-    }
-    setBusy(false);
-    router.refresh();
-  };
-
-  const Move = ({ place, step, label }: { place: number; step: number; label: string }) => (
-    <button type="button" aria-label={label} title={label}
-            disabled={busy || place + step < 0 || place + step >= rows.length}
-            onClick={() => move(place, place + step)}
-            className="rounded-field px-1 text-soft transition-colors hover:bg-base-200
-              hover:text-base-content disabled:invisible">
-      {step < 0 ? "\u2191" : "\u2193"}
-    </button>
-  );
+  const { Grip, dropzone } = useReorder("project_bullets", rows);
 
   return (
     <section>
@@ -110,10 +86,10 @@ function Bullets({ project }: { project: Project }) {
           const line = editing("project_bullets", bullet.rowid,
                                bullet as unknown as Record<string, unknown>);
           return (
-            <li key={bullet.rowid}
+            <li key={bullet.rowid} {...dropzone(place)}
                 className="group/row flex items-start gap-2 border-b border-base-200 py-1">
-              <span className="tnum w-6 shrink-0 pt-1.5 text-right font-mono text-xs text-soft">
-                {place + 1}
+              <span className="shrink-0 pt-1.5">
+                <Grip place={place} what="this bullet" />
               </span>
               <div className="min-w-0 flex-1">
                 {line({ name: "text", label: "bullet", kind: "area", required: true, rows: 1,
@@ -121,8 +97,6 @@ function Bullets({ project }: { project: Project }) {
               </div>
               <span className="flex shrink-0 items-center pt-1 opacity-0 transition-opacity
                 group-hover/row:opacity-100 group-focus-within/row:opacity-100">
-                <Move place={place} step={-1} label="Move this bullet up" />
-                <Move place={place} step={1} label="Move this bullet down" />
                 <DeleteButton table="project_bullets" rowid={bullet.rowid} what="this bullet" />
               </span>
             </li>

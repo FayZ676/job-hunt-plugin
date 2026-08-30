@@ -112,17 +112,19 @@ CREATE TABLE IF NOT EXISTS project_links (
   url        TEXT NOT NULL CHECK (url LIKE 'http%://%.%')
 ) STRICT;
 
--- What is worth applying to. `kind` says how the scorer uses the row, and `seq`
--- says how much it counts: within a kind the rows run strongest first, so
--- moving a row up is the whole vocabulary for "this one matters more".
-CREATE TABLE IF NOT EXISTS search_criteria (
-  kind  TEXT NOT NULL CHECK (kind IN (
-          'title_preferred','title_acceptable','title_excluded','title_penalty',
-          'score_up','score_down','dealbreaker','brings','location_tier',
-          'experience_floor','level')),
-  value TEXT NOT NULL CHECK (trim(value) <> ''),
-  seq   INTEGER CHECK (seq >= 0),
-  PRIMARY KEY (kind, value)
+-- The rubric, as prose, because one reader reads it and typed columns only
+-- flatten the slopes it describes into walls.
+CREATE TABLE IF NOT EXISTS search_scope (
+  id                 INTEGER PRIMARY KEY CHECK (id = 1),
+  worth_applying_to  TEXT    CHECK (trim(worth_applying_to) <> '')
+) STRICT;
+INSERT OR IGNORE INTO search_scope(id) VALUES (1);
+
+-- The one thing that is genuinely a list, because it is a search query before it
+-- is a preference: the titles the paid search asks for, strongest first.
+CREATE TABLE IF NOT EXISTS search_titles (
+  value TEXT PRIMARY KEY CHECK (trim(value) <> ''),
+  seq   INTEGER CHECK (seq >= 0)
 ) STRICT;
 
 -- Which employer logins exist. Store where the password lives, not the password.

@@ -170,7 +170,7 @@ filters are also what keeps the search cheap: the titles you exclude are exclude
 billed for them.
 
 The highest-leverage thing you can do is correct the profile when a scan surfaces something you'd
-never apply to, or misses something you would. Its `search_criteria` rows are what every scoring
+never apply to, or misses something you would. Its search profile is what every scoring
 pass reads.
 
 ## Upgrading from earlier versions

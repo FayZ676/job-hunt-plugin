@@ -125,6 +125,8 @@
   font-variant-numeric: tabular-nums;
 }
 
+[data-over] { box-shadow: inset 0 2px 0 0 var(--color-primary); }
+
 .rowgrid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
 @media (min-width: 768px) {
   .rowgrid { grid-template-columns: var(--tracks); align-items: start; gap: 0.5rem 0.75rem; }

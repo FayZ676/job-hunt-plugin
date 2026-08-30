@@ -7,7 +7,7 @@ export type Column = {
   min?: number;
   step?: number;
   options?: (string | [string, string])[];
-  vocabulary?: "kind" | "status";
+  vocabulary?: "status";
   required?: boolean;
   blocking?: boolean;
   width?: string;
@@ -60,11 +60,6 @@ export const COLUMNS = {
   links: [
     { name: "label", required: true, width: "minmax(0,0.8fr)" },
     { name: "url", ...LINK, required: true, width: "minmax(0,2fr)" },
-  ],
-  criteria: [
-    { name: "kind", vocabulary: "kind", required: true, width: "minmax(0,1.1fr)" },
-    { name: "value", required: true, width: "minmax(0,2.4fr)" },
-    { name: "seq", label: "order", type: "number", min: 0, step: 1, width: "minmax(0,0.4fr)" },
   ],
   accounts: [
     { name: "employer", required: true, width: "minmax(0,1fr)" },

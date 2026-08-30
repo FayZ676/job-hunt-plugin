@@ -25,12 +25,6 @@ export const choices = (ddl: string, table: string, column: string) => {
   return options.length ? options : null;
 };
 
-export const CRITERION = z.enum([
-  "title_preferred", "title_acceptable", "title_excluded", "title_penalty",
-  "score_up", "score_down", "dealbreaker", "brings", "location_tier",
-  "experience_floor", "level",
-]);
-
 export const PROJECT_STATUS = z.enum(["shipped", "in_progress", "discontinued"]);
 export const CADENCE = z.enum(["Weekly", "Monthly", "Quarterly"]);
 export const TIER = z.enum(["identity", "policy", "judgment"]);
@@ -86,7 +80,8 @@ export const TABLES = {
   project_technologies: z.object({ project_id: int, technology: text }),
   project_metrics: z.object({ project_id: int, metric: text }),
   project_links: z.object({ project_id: int, label: text, url: text }),
-  search_criteria: z.object({ kind: CRITERION, value: text, seq: maybeInt }),
+  search_scope: z.object({ id: int, worth_applying_to: maybeText }),
+  search_titles: z.object({ value: text, seq: maybeInt }),
   accounts: z.object({
     employer: text, system: maybeText, portal_url: maybeText, login_email: maybeText,
     password_location: maybeText, created: maybeText,

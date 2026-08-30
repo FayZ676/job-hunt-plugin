@@ -24,7 +24,7 @@ applies is money already spent.** Every filter that can be pushed into the reque
 
 | Local filter | Rides along as | Note |
 | ------------ | -------------- | ---- |
-| `title_preferred` | `titleSearch` | |
+| `title` criteria | `titleSearch` | |
 | `title_exclude`, `title_noise` | `titleExclusionSearch` | the regex alternations are flattened into literal terms; a pattern with no closing `\b` becomes a `:*` prefix match |
 | `agency_blocklist` | `organizationExclusionSearch` | alongside the API's own `removeAgency` |
 | `max_age_days` | `--since` | |
@@ -42,13 +42,13 @@ not survive it**: those jobs are bought and then dropped. Fix the disagreement i
 the other; do not pay for it twice a week.
 
 ```bash
-job-scan search                                  # title_preferred rows, US, last 7 days
+job-scan search                                  # the title criteria, US, last 7 days
 job-scan search --remote --since 24h --max 100   # a daily pass
 job-scan search --title "AI Engineer" --location "Oregon, United States"
 job-scan watchlist --max 100                     # every live job at every active company
 ```
 
-With no `--title`, the titles are the `title_preferred` rows — the same vocabulary the scorer uses,
+With no `--title`, the titles are the `title` criteria rows — the same vocabulary the scorer uses,
 so discovery and scoring cannot drift apart. A parenthetical is stripped and anything over five
 words is dropped, because those rows are written for the scorer to read, not for a search box.
 

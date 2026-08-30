@@ -215,7 +215,7 @@ function warnUnkeepable(database: Database, titles: string[]) {
   if (!doomed.length) return;
   console.log("these titles cannot survive title_include, so every job they return is " +
     `paid for and then dropped: ${doomed.join(", ")}`);
-  console.log("  drop them from title_preferred, or widen title_include\n");
+  console.log("  drop them from the title criteria, or widen title_include\n");
 }
 
 async function fetched(database: Database, aim: sources.Search, what: string) {
@@ -236,12 +236,12 @@ spend(program
     let titles: string[] = options.title;
     if (!titles.length)
       titles = (database.prepare(
-        "SELECT value FROM search_criteria WHERE kind='title_preferred' ORDER BY seq, value")
+        "SELECT value FROM search_titles ORDER BY seq IS NULL, seq, value")
         .all() as { value: string }[])
         .map((row) => searchable(row.value))
         .filter((value) => value && value.split(/\s+/).length <= 5);
     if (!titles.length)
-      fail("no titles: pass --title, or add title_preferred rows to search_criteria");
+      fail("no titles: pass --title, or add rows to search_titles");
 
     const locations = options.location.length ? options.location : ["United States"];
     warnUnkeepable(database, titles);

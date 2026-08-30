@@ -204,15 +204,15 @@ job-score set <key> --score 9 --reason "the JD language that drove it, quoted"
 job-score pending               # what is still unscored
 ```
 
-Triage against `search_criteria`, pull descriptions for the plausible ones, then score, citing the JD
-language that drove it. **The criteria carry no numbers**: `kind` says how the scorer uses a row and
-its position within that kind says how much it counts, strongest first. Nothing is added up — the
-score is a judgement the ordered lists inform.
+Triage against the rubric, pull descriptions for the plausible ones, then score, citing the JD
+language that drove it. **The rubric carries no numbers**: `worth_applying_to` is prose and says in
+its own words what counts for how much and what is a hard stop, and `search_titles` runs strongest
+first. Nothing is added up — the score is a judgement the rubric informs.
 
 **Anything you score must have had its description read** — scoring off a title is the failure this
 phase exists to prevent; a "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer"
-req that is really data plumbing. **Apply dealbreakers first**, a hard zero regardless of how well the
-rest reads. **Score every prospect, including the ones you skip** — `job-score pending` is what is left, and
+req that is really data plumbing. **Apply the rubric's hard stops first**, a zero regardless of how
+well the rest reads. **Score every prospect, including the ones you skip** — `job-score pending` is what is left, and
 an unscored row stays `new` and comes back tomorrow. Where a score turns on something still `NULL`, score on a stated assumption and
 say so in `reason`.
 

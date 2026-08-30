@@ -10,7 +10,7 @@ const program = new Command("job-score").description(
 
   job-score triage                        the cheap list: no descriptions, on purpose
   job-score triage --status new
-  job-score rubric                        search_criteria, what scoring reads
+  job-score rubric                        the search profile, what scoring reads
   job-score show KEY [KEY ...]            full text, for survivors only
   job-score set KEY --score 9 --reason "the JD language that drove it, quoted"
   job-score pending                       what is still unscored and will come back tomorrow
@@ -39,10 +39,15 @@ program
   .option("--db <path>")
   .action(guard((options) => {
     const database = open(options.db);
-    const criteria = database
-      .prepare("SELECT kind, value FROM search_criteria ORDER BY kind, seq IS NULL, seq, value")
-      .all() as { kind: string; value: string }[];
-    for (const row of criteria) console.log(`${row.kind.padEnd(18)}  ${row.value}`);
+    const scope = database
+      .prepare("SELECT worth_applying_to FROM search_scope WHERE id=1")
+      .get() as { worth_applying_to: string | null };
+    console.log(`${scope.worth_applying_to ?? "(nothing written down)"}\n`);
+    const titles = database
+      .prepare("SELECT value FROM search_titles ORDER BY seq IS NULL, seq, value")
+      .all() as { value: string }[];
+    console.log("Titles, strongest first:");
+    for (const row of titles) console.log(`- ${row.value}`);
   }));
 
 program
