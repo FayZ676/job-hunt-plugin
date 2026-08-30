@@ -13,3 +13,6 @@ const upward = (from: string | undefined) => {
 
 export const ROOT =
   [import.meta.dirname, process.cwd()].map(upward).find(Boolean) ?? process.cwd();
+
+const ENV_FILE = path.join(ROOT, ".env.local");
+if (fs.existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);

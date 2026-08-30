@@ -91,7 +91,7 @@ program
       fail("--reason cannot be empty: name the JD language that drove the score");
     if (!(row.description ?? "").trim())
       fail(`${key} has no description — scoring off a title is what this phase exists to ` +
-        "prevent. Attach one first: job-scan descriptions --file <descs.json>");
+        "prevent. Re-fetch the source: every source now carries its description");
 
     database.prepare("UPDATE postings SET score=?, reason=? WHERE key=?")
       .run(score, options.reason.trim(), key);

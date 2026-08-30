@@ -1,13 +1,27 @@
 ## Making Code Changes
 
-1. Before making any change, tell me your plan or idea first in as few words as possible.
+Before any change, state the plan in as few words as possible.
+
+## Prompt files vs. code
+
+`SKILL.md` and `references/*.md` are prompts, read by a model that already has the code. A line
+earns its place only if the model would **act differently** because of it.
+
+Cut it when the code prevents, refuses or reports the situation — an error message is documentation
+of last resort. Cut internals the model never calls, and anything already said in another file, a
+`--help`, or a thrown error.
+
+Keep judgment the code cannot make, and anything whose failure is silent rather than loud.
+
+Found one instance? Sweep every prompt file for its class before calling it done, including the
+file just edited.
 
 ## Code Comments
 Don't ever add code comments. Write code that is self documenting.
 
 ## Worktrees
 
-Don't ever make changes in a worktree. Always work directly in the repository.
+Never work in a worktree. Always work directly in the repository.
 
 ## Git: never commit, never push
 

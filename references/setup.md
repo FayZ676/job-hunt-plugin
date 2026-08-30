@@ -17,17 +17,12 @@ Lever and Ashby plus a starting set of filters.
 NULL until answered: the profile is three single-row tables in `sql/profile.sql`, one per section,
 and the columns are the schema — not something an interview or the dashboard adds to. They talk;
 you answer with `job-profile set <section>.<name> <value>`, which names the table and the column —
-one answer per call, and a name that is not declared is refused rather than filed as a new field.
-If a form genuinely asks something no column covers, `ALTER TABLE` it into `sql/profile.sql` and add
+one answer per call. If a form genuinely asks something no column covers, `ALTER TABLE` it into `sql/profile.sql` and add
 it to `lib/schema.ts`; it then appears in the dashboard on the next connect.
 
-**Answers are typed, and the type is the column.** The tables are `STRICT` and each column carries a
-CHECK: a yes-or-no is INTEGER `0` or `1`, a date is `YYYY-MM-DD`, a time is `HH:MM`, a count is a
-non-negative number, and a choice is one of the words its CHECK lists — so an interview answer of
-"two weeks after an offer" is `identity.notice_period 2_weeks`, not a sentence in
-`identity.earliest_start`. `job-profile set` refuses anything else and says what the column
-takes; the dashboard reads the same declaration and renders a date picker, a yes/no or the list.
-Give a column a new shape or a new choice there and both halves follow.
+**Translate the answer into the column's shape**, rather than filing the sentence they said: "two
+weeks after an offer" is `identity.notice_period 2_weeks`, not prose in `identity.earliest_start`.
+A column given a new shape or a new choice updates both the CLI and the dashboard.
 
 Never hand them a file to edit, and never make the first pass a form — the interview is a
 conversation. Afterwards they revise themselves in the dashboard, whose Profile page writes every
@@ -62,7 +57,12 @@ and scoring run on; Typst and Poppler are only for the resume build.
 command -v job-scan || echo 'npm install --prefix "$HOME/.claude/skills/job" && npm link --prefix "$HOME/.claude/skills/job"'
 command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
+[ -s "$HOME/.claude/skills/job/.env.local" ] || echo "APIFY_TOKEN=… needed in the skill's .env.local"
 ```
+
+The Apify token is the only paid piece, and only the Indeed pass uses it. It goes in `.env.local` in
+the skill directory, which is git-ignored and read by both the commands and the dashboard. Without
+it, `/job scan --no-indeed` still runs every watched board.
 
 **5. Do a dry run.** `/job scan --no-indeed`, then query `triage`. Sensible companies means the
 filters are tuned; nothing, or thousands, means another pass — the drop counts say which rule, and

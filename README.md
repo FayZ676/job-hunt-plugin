@@ -96,6 +96,9 @@ your phone number in it.
 
 - **Everything:** Node 22.18+ and `npm install ~/.claude/skills/job`. SQLite comes with it.
 - **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
+- **The Indeed pass:** an [Apify](https://apify.com) token, as `APIFY_TOKEN=…` in a `.env.local`
+  file in this directory. Billed per listing (from $3/1,000), and the free tier's monthly credit
+  covers a personal search. Skip it and the watched boards still work: `/job scan --no-indeed`.
 - **Filling application forms:** a browser MCP server such as
   [Playwright MCP](https://github.com/microsoft/playwright-mcp).
 

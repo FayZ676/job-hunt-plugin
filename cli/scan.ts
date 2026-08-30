@@ -8,7 +8,7 @@ import { POSTING_COLUMNS, Posting } from "../lib/posting.ts";
 import { vocabulary } from "../lib/schema.ts";
 import * as sources from "../lib/sources.ts";
 import {
-  MAX_DESCRIPTION_CHARS, ageDays, compilePatterns, matchesAny, norm, normCompany,
+  ageDays, compilePatterns, matchesAny, norm, normCompany,
 } from "../lib/text.ts";
 import { fail, guard } from "./kit.ts";
 
@@ -214,8 +214,8 @@ const program = new Command("job-scan").description(
   job-scan sources                          the registry: kind, rank, endpoint
   job-scan boards                           every active board, in parallel
   job-scan boards --company Anthropic       one board, for testing a new slug
-  job-scan harvest --source indeed --file harvest.json
-  job-scan descriptions --file descs.json   descriptions for rows ingest kept
+  job-scan indeed                           Apify search on your preferred titles
+  job-scan indeed --query "AI engineer" --location Remote --max 50
   job-scan ingest                           postings into prospects, no network
   job-scan ingest --redo --no-location-filter
   job-scan dispositions                     every verdict, in the order ruled`);
@@ -266,59 +266,54 @@ program
   }));
 
 program
-  .command("harvest")
-  .description("load a browser harvest into the raw layer")
-  .requiredOption("--source <name>")
-  .requiredOption("--file <path>")
+  .command("indeed")
+  .description("search Indeed through Apify, descriptions included")
+  .option("--query <text>", "repeatable; defaults to your preferred titles", collect, [])
+  .option("--location <where>", "", "Remote")
+  .option("--country <code>", "", "US")
+  .option("--max <n>", "listings per query -- this is the bill", Number, 50)
+  .option("--workers <n>", "", Number, 3)
+  .option("--file <path>", "replay a saved Apify dataset instead of spending credit")
   .option("--db <path>")
   .action(guard(async (options) => {
-    const entry = sources.REGISTRY[options.source];
-    if (!entry || entry.kind !== "harvest") {
-      const harvests = Object.entries(sources.REGISTRY)
-        .filter(([, held]) => held.kind === "harvest").map(([name]) => name);
-      fail(`unknown harvest source '${options.source}'. known: ${harvests.join(", ")}`);
+    const database = open(options.db);
+    if (options.file) {
+      const payload = JSON.parse(fs.readFileSync(options.file, "utf8"));
+      const replayed = sources.fromApify(Array.isArray(payload) ? payload : payload.items ?? []);
+      console.log(`REPLAYED ${replayed.length} indeed postings (${store(database, replayed)} new)`);
+      return nextStep(database);
     }
-    const database = open(options.db);
-    const postings = await (entry.fetch as (path: string) => Promise<Posting[]>)(options.file);
-    const fresh = store(database, postings);
-    console.log(`FETCHED ${postings.length} ${options.source} postings (${fresh} new)`);
-    nextStep(database);
-  }));
 
-program
-  .command("descriptions")
-  .description("attach descriptions fetched for kept postings")
-  .requiredOption("--file <path>")
-  .option("--source <name>", "prefix for bare ids in the file", "indeed")
-  .option("--db <path>")
-  .action(guard((options) => {
-    const database = open(options.db);
-    const payload = JSON.parse(fs.readFileSync(options.file, "utf8"));
-    const items: any[] = Array.isArray(payload) ? payload : payload.descriptions ?? [];
+    let queries: string[] = options.query;
+    if (!queries.length)
+      queries = (database.prepare(
+        "SELECT value FROM search_criteria WHERE kind='title_preferred' ORDER BY seq, value")
+        .all() as { value: string }[]).map((row) => row.value);
+    if (!queries.length)
+      fail("no queries: pass --query, or add title_preferred rows to search_criteria");
 
-    let filled = 0;
-    let missing = 0;
-    const update = database.prepare(
-      "UPDATE postings SET description=?," +
-      "  last_seen=CASE WHEN disposition='kept' THEN date('now') ELSE last_seen END" +
-      " WHERE key=?");
-    database.transaction(() => {
-      for (const item of items) {
-        let key = item.key || item.jobkey;
-        if (!key) continue;
-        if (!String(key).includes(":")) key = `${options.source}:${key}`;
-        const text = String(item.description || "").slice(0, MAX_DESCRIPTION_CHARS);
-        if (!text) { missing += 1; continue; }
-        filled += update.run(text, key).changes;
+    const failures: [string, string][] = [];
+    const fetched: Posting[] = [];
+    await pooled(queries, options.workers, async (query) => {
+      try {
+        fetched.push(...await (sources.REGISTRY.indeed.fetch as
+          (search: sources.Search) => Promise<Posting[]>)({
+            query, location: options.location, country: options.country, max: options.max,
+          }));
+      } catch (error) {
+        failures.push([query, error instanceof Error
+          ? `${error.name}: ${error.message}` : String(error)]);
       }
-    })();
+    });
 
-    const { n } = database.prepare(
-      "SELECT COUNT(*) n FROM postings WHERE disposition='kept'" +
-      " AND (description IS NULL OR description='')").get() as { n: number };
-    console.log(`attached ${filled} descriptions`);
-    if (missing) console.log(`${missing} entries carried no description text`);
-    if (n) console.log(`warning: ${n} prospects still have none`);
+    const fresh = store(database, fetched);
+    console.log(
+      `FETCHED ${fetched.length} indeed postings from ${queries.length} queries (${fresh} new)`);
+    if (failures.length) {
+      console.log("\nqueries that failed:");
+      for (const [query, error] of failures) console.log(`  - ${query}: ${error}`);
+    }
+    nextStep(database);
   }));
 
 program

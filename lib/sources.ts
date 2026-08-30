@@ -1,5 +1,6 @@
-import fs from "node:fs";
+import path from "node:path";
 
+import { ROOT } from "./root.ts";
 import { MAX_DESCRIPTION_CHARS, htmlToText, toIso } from "./text.ts";
 import { posting, type Posting } from "./posting.ts";
 
@@ -34,7 +35,7 @@ export const ENDPOINT: Record<string, string> = {
   greenhouse: "https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true",
   lever: "https://api.lever.co/v0/postings/{slug}?mode=json",
   ashby: "https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true",
-  indeed: "browser harvest, loaded from a file -- no endpoint",
+  indeed: "https://api.apify.com/v2/acts/misceres~indeed-scraper/run-sync-get-dataset-items",
 };
 
 export const QUIRK: Record<string, string> = {
@@ -47,7 +48,10 @@ export const QUIRK: Record<string, string> = {
   ashby:
     "best payload: descriptionPlain needs no HTML handling, isRemote is a real boolean, " +
     "compensation bands come back. isListed:false normalizes to expired",
-  indeed: "navigate, never fetch() -- see references/fetching.md for the harvest",
+  indeed:
+    "a paid Apify actor, billed per listing, so `--max` is a budget and not a page size. " +
+    "Descriptions arrive with the search, so there is no second pass. It never states `sponsored`, " +
+    "so that filter cannot rule on an Indeed row",
 };
 
 const clipped = (text: string) => text.slice(0, MAX_DESCRIPTION_CHARS);
@@ -145,63 +149,120 @@ async function ashby(company: Company): Promise<Posting[]> {
   });
 }
 
-const grouped = (amount: number) =>
-  Math.round(amount).toLocaleString("en-US", { maximumFractionDigits: 0 });
+export type Search = { query: string; location: string; country: string; max: number };
 
-async function indeed(harvestPath: string): Promise<Posting[]> {
-  const payload = JSON.parse(fs.readFileSync(harvestPath, "utf8"));
-  let cards: Json[];
-  if (Array.isArray(payload)) cards = payload;
-  else {
-    const blocks: Json[] = payload.results ?? [];
-    cards = blocks.length
-      ? blocks.flatMap((block) => block.rows ?? [])
-      : (payload.rows ?? []);
-  }
+const APIFY_ACTOR = "misceres~indeed-scraper";
+const APIFY_RUN = `https://api.apify.com/v2/acts/${APIFY_ACTOR}/run-sync-get-dataset-items`;
 
-  return cards
-    .filter((card) => card.jobkey)
-    .map((card) => {
-      const salary = card.extractedSalary ?? {};
-      const remote = card.remoteWorkModel?.type ?? "";
-      const location = card.formattedLocation ?? "";
-      const low = salary.min;
-      const high = salary.max;
-      const unit = String(salary.type ?? "").toLowerCase();
-      const stated = low || high
-        ? (low && high ? `${grouped(low)}-${grouped(high)} ${unit}` : `${grouped(low || high)} ${unit}`).trim()
-        : null;
+function apifyToken(): string {
+  const held = process.env.APIFY_TOKEN?.trim();
+  if (!held)
+    throw new Error(
+      "APIFY_TOKEN is not set. Get a token from apify.com/settings/integrations and put " +
+      `APIFY_TOKEN=… in ${path.join(ROOT, ".env.local")}; job-scan boards runs without one`);
+  return held;
+}
+
+const PERIOD: Record<string, string> = {
+  hour: "HOURLY", day: "DAILY", week: "WEEKLY", month: "MONTHLY", year: "YEARLY",
+};
+
+function statedPay(salary: string | null) {
+  const said = String(salary ?? "");
+  const unit = /\b(hour|day|week|month|year)/i.exec(said);
+  const period = unit ? PERIOD[unit[1].toLowerCase()] : null;
+  const amounts = [...said.matchAll(/([\d,]+(?:\.\d+)?)/g)]
+    .map((found) => Number(found[1].replace(/,/g, "")))
+    .filter((amount) => Number.isFinite(amount) && amount > 0);
+  if (!amounts.length) return { min: null, max: null, period };
+  const low = Math.min(...amounts);
+  const high = Math.max(...amounts);
+  if (/\bup to\b/i.test(said)) return { min: null, max: high, period };
+  if (/\bfrom\b|\bstarting at\b/i.test(said)) return { min: low, max: null, period };
+  return { min: low, max: high, period };
+}
+
+const SPAN: Record<string, number> = {
+  hour: 3600e3, day: 86400e3, week: 7 * 86400e3, month: 30 * 86400e3,
+};
+
+function postedIso(item: Json): string | null {
+  const dated = toIso(item.postingDateParsed ?? item.datePublished ?? null);
+  if (dated) return dated;
+  const said = String(item.postedAt ?? "").toLowerCase();
+  if (!said) return null;
+  if (/just posted|today/.test(said)) return toIso(new Date().toISOString());
+  const ago = /(\d+)\+?\s*(hour|day|week|month)/.exec(said);
+  if (!ago) return null;
+  return toIso(new Date(Date.now() - Number(ago[1]) * SPAN[ago[2]]).toISOString());
+}
+
+export function fromApify(items: Json[]): Posting[] {
+  return items
+    .filter((item) => item.id && !item.error)
+    .map((item) => {
+      const location = String(item.location ?? "").trim();
+      const title = String(item.positionName ?? "");
+      const pay = statedPay(item.salary ?? null);
+      const written = String(item.description ?? "").trim()
+        || htmlToText(String(item.descriptionHTML ?? ""));
       return posting({
-        key: `indeed:${card.jobkey}`,
+        key: `indeed:${item.id}`,
         source: "indeed",
         ats: null,
-        company: card.company ?? "",
-        title: card.title,
-        url: VIEWJOB + card.jobkey,
-        apply_url: `${APPLYSTART}${card.jobkey}&from=vj`,
+        company: item.company ?? "",
+        title,
+        url: item.url ?? VIEWJOB + item.id,
+        apply_url: item.externalApplyLink ?? `${APPLYSTART}${item.id}&from=vj`,
         location,
-        remote: Boolean(remote) || String(location).toLowerCase().includes("remote"),
-        compensation: stated,
-        comp_min: low,
-        comp_max: high,
-        comp_period: String(salary.type ?? "").toUpperCase() || null,
-        sponsored: Boolean(card.sponsored),
-        expired: Boolean(card.expired),
-        posted_at: toIso(card.pubDate),
-        raw: JSON.stringify(card),
+        remote: /remote/i.test(location) || /remote/i.test(title),
+        compensation: item.salary ?? null,
+        comp_min: pay.min,
+        comp_max: pay.max,
+        comp_period: pay.period,
+        expired: Boolean(item.isExpired),
+        posted_at: postedIso(item),
+        description: written ? clipped(written) : null,
+        raw: JSON.stringify(item),
       });
     });
 }
 
+async function indeed(search: Search): Promise<Posting[]> {
+  const token = apifyToken();
+  const answered = await fetch(APIFY_RUN, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "User-Agent": USER_AGENT,
+    },
+    body: JSON.stringify({
+      position: search.query,
+      location: search.location,
+      country: search.country,
+      maxItemsPerSearch: search.max,
+      parseCompanyDetails: false,
+      saveOnlyUniqueItems: true,
+    }),
+    signal: AbortSignal.timeout(300000),
+  });
+  if (!answered.ok)
+    throw new Error(
+      `HTTP ${answered.status} ${answered.statusText}: ${(await answered.text()).slice(0, 200)}`);
+  const items = await answered.json();
+  return fromApify(Array.isArray(items) ? items : []);
+}
+
 type Entry =
   | { fetch: (company: Company) => Promise<Posting[]>; kind: "board"; rank: number }
-  | { fetch: (path: string) => Promise<Posting[]>; kind: "harvest"; rank: number };
+  | { fetch: (search: Search) => Promise<Posting[]>; kind: "search"; rank: number };
 
 export const REGISTRY: Record<string, Entry> = {
   greenhouse: { fetch: greenhouse, kind: "board", rank: 0 },
   lever: { fetch: lever, kind: "board", rank: 0 },
   ashby: { fetch: ashby, kind: "board", rank: 0 },
-  indeed: { fetch: indeed, kind: "harvest", rank: 1 },
+  indeed: { fetch: indeed, kind: "search", rank: 1 },
 };
 
 const listed = (held: Record<string, unknown>) => Object.keys(held).sort().join(",");

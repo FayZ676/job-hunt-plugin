@@ -44,7 +44,7 @@ code that applies it — read it there rather than from a copy. The patterns liv
 Every source carries a rank in `sources.REGISTRY`: an employer's own board is authoritative (`0`), an
 aggregator is discovery (`1`). That number is how ingest resolves overlaps without naming a source.
 
-- **A lower-ranked copy of a covered company is dropped** as `covered`. Without this, every harvest
+- **A lower-ranked copy of a covered company is dropped** as `covered`. Without this, every Indeed run
   re-proposes roles the boards covered hours earlier.
 - **A better-ranked copy that arrives later takes the role over** — the score, the history and the
   staged work move onto the better-ranked row, which becomes the prospect. The row it replaced is

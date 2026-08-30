@@ -52,7 +52,7 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 
 | Phase | Module | Subcommands |
 | ----- | ------ | ----------- |
-| 1 — Fetch, then ingest | `cli/scan.ts` | `sources` `boards` `harvest` `descriptions` `ingest` `dispositions` |
+| 1 — Fetch, then ingest | `cli/scan.ts` | `sources` `boards` `indeed` `ingest` `dispositions` |
 | 2 — Score | `cli/score.ts` | `triage` `rubric` `show` `set` `pending` |
 | 3 — Resume | `cli/resume.ts` | `spec` `build` |
 | 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
@@ -79,12 +79,6 @@ That puts every phase on `PATH` as `job-scan`, `job-score`, `job-resume`, `job-s
 one of them takes `--help`. The same install serves `/job ui`. Node 22.18 or newer runs the
 TypeScript directly, so there is nothing to build.
 
-**The phase modules refuse what the invariants forbid**, so the rule is enforced rather than
-remembered: `job-score set` will not score a prospect whose description is empty, `job-stage add`
-will not stage one with no built resume and derives `blocked` from any field left empty, and
-`job-submit record` will not mark `applied` without the confirmation text or move the resume
-separately from the status change.
-
 ## Reference files
 
 Every detail lives one level down, read when the phase that needs it starts.
@@ -92,7 +86,7 @@ Every detail lives one level down, read when the phase that needs it starts.
 | File | Read before |
 | ---- | ----------- |
 | `references/setup.md` | First run — building `$CAREER`, the profile interview, tuning the watchlist |
-| `references/fetching.md` | Phase 1 — adding a company, the Indeed harvest, manual boards |
+| `references/fetching.md` | Phase 1 — adding a company, the Indeed search, manual boards |
 | `references/ingesting.md` | Phase 1 — the filter chain, source precedence, dedupe, tuning |
 | `references/resume.md` | Phase 3 — everything about building one: rules, checks, spec, build |
 | `references/applying.md` | Phases 4–5 — reaching each ATS's form, filling it, the traps, submitting |
@@ -149,11 +143,8 @@ row impossible to write. Three behaviors it encodes and you must not fight:
 The filesystem holds only built PDFs: `$CAREER/resumes/`, moved to `submitted/` when an application
 goes out.
 
-**Every column says what it holds.** Each table is `STRICT`, so the declared type is enforced by the
-database rather than by whoever wrote the INSERT, and a CHECK beside each column says what that type
-allows — a flag is `0`/`1`, a date is `YYYY-MM-DD`, a career date may be a year or a year and month,
-a timestamp is what `datetime()` reads, a choice lists its words. **The profile answers out of one
-single-row table** — `identity`, which carries contact details, work authorization, when you could
+**Every column says what it holds**, and `$Q --schema` is where it says it. **The profile answers
+out of one single-row table** — `identity`, which carries contact details, work authorization, when you could
 start, the compensation floor and the optional EEO answers — one column per question a form can ask, so
 `<section>.<name>` is a table and a column. `experience` answers the same way but is a view: the totals count themselves off
 `employers`, so a stored number cannot go stale or disagree with the resume. `lib/schema.ts` reads those declarations for both the dashboard's
@@ -192,16 +183,17 @@ re-run, and every source normalizes into the same columns, so one filter chain r
 
 ```bash
 job-scan boards                               # every watched board, in parallel
-job-scan harvest --source indeed --file <harvest.json>
+job-scan indeed                               # Apify search, descriptions included
 job-scan ingest                               # postings -> prospects
 job-scan ingest --redo --no-location-filter   # re-rule stored rows, no network
 ```
 
 Flags and verdicts are `--help` and `job-scan dispositions` away; do not guess them.
 
-The Indeed harvest is the one source a browser has to collect. **Read `references/fetching.md`
-before running it.** Its descriptions arrive after ingest, for kept rows only:
-`job-scan descriptions --file <descs.json>`.
+Indeed is a paid Apify search, **billed per listing**, so `--max` is a budget rather than a page size
+and it applies per query. It returns full descriptions with the search, so there is no second pass,
+and with no `--query` it searches your `title_preferred` rows.
+**Read `references/fetching.md` before running it.**
 
 Companies on Workday, iCIMS and the like are rows with `ats='manual'` and a cadence; `manual_boards`
 lists what is due. Check those, `INSERT` finds into `postings` with `disposition='kept'` — a hand
@@ -291,8 +283,7 @@ job-submit record <key> --confirmation "what the confirmation page said"
 ```
 
 That sets `applied` and moves the resume's `.pdf` and `.json` into `$CAREER/resumes/submitted/` in one
-step, because the status change and the file move go together. It refuses a `blocked` application and
-refuses an empty `--confirmation`.
+step, because the status change and the file move go together.
 
 ## Recording a rejection
 
@@ -304,6 +295,5 @@ job-submit rejected <key> --note "3 days, no interview — resume screen"
 
 That records the rejection and **deletes that resume's `.pdf` and `.json` from
 `$CAREER/resumes/submitted/`** — the record still says an application went out, and the dead document
-is gone. It re-checks each file afterwards, because **a synced folder can re-materialize a deleted
-file**, and names any that survived. Note the shape in `--note` — days from submission, and whether
-any interview stage happened.
+is gone. Note the shape in `--note` — days from submission, and whether any interview stage
+happened.

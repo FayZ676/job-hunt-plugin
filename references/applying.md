@@ -22,11 +22,11 @@ submits.
 | **Lever** | `jobs.lever.co/<slug>/<id>/apply` | Server-rendered and predictable, but **submission is gated by hCaptcha** |
 | **Workday** | `<company>.wd<N>.myworkdayjobs.com/…` | **Fully drivable.** Needs a per-employer account, then a five-step flow |
 | **iCIMS, Taleo, SmartRecruiters** | varies | Untested. Do not assume they are blocked — try one before writing them off |
-| **Harvested** (`indeed:`) | `indeed.com/applystart?jk=<jobkey>&from=vj` | Redirects to the employer's real application page. Resolve it, then follow the row above for whatever ATS you land on |
+| **Indeed** (`indeed:`) | The row's `apply_url` | Often already the employer's own link; otherwise an `applystart` redirect to it. Follow it, then use the row above for whatever ATS you land on |
 
 The prospect `key` prefix names the ATS: `ashby:`, `greenhouse:`, `lever:`, `manual:`, `indeed:`.
 
-**A harvested posting is applied to through the employer's ATS, never through the aggregator.**
+**An Indeed posting is applied to through the employer's ATS, never through the aggregator.**
 Record the resolved URL as the application's `url`, not the listing link, and `INSERT` a Greenhouse,
 Lever or Ashby company into `companies` — found once by hand, fetched every morning after.
 
@@ -111,10 +111,8 @@ job-stage add <key> \
   --field 'Why this company?|…|judgment|needs-review'
 ```
 
-`job-stage add` refuses a prospect with no built resume, refuses a screenshot that is not on disk,
-and derives `ready` or `blocked` from the fields — a value left empty blocks the application and
-names itself in `blocked_on`. `job-profile answers` and `job-profile missing` are where the identity and
-policy answers come from, and which of them are still `NULL`.
+`job-profile answers` and `job-profile missing` are where the identity and policy answers come from,
+and which of them are still `NULL`.
 
 **Then stop.** Do not click Submit, Apply, Continue, or Next in Phase 4. On a multi-page form, stop
 at the end of the first page and record the page count.
@@ -178,8 +176,7 @@ job-submit record <key> \
   --confirmation "Thank you for applying — confirmation #A12"
 ```
 
-That is the one step that sets `applied`; it moves the resume into `submitted/` with it, and refuses
-an application still `blocked`.
+That is the one step that sets `applied`; it moves the resume into `submitted/` with it.
 
 ## Traps
 
@@ -192,5 +189,5 @@ an application still `blocked`.
   them with something generic; a weak answer costs more than no answer.
 - **"How did you hear about us?"** — answer the company's job board, which is true.
 - **Login walls.** Some forms require an account before showing any fields — flag for the user.
-  Indeed Apply (`indeedApplyEnabled` with no company site) is one: stage what is reachable, flag the
+  An Indeed row whose `apply_url` never leaves indeed.com is one: stage what is reachable, flag the
   rest.

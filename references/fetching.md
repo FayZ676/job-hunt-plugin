@@ -10,7 +10,7 @@ source's kind, rank, endpoint and the quirk that bites when it goes quiet:
 | Mechanism | Sources | How |
 | --------- | ------- | --- |
 | **Board API** | Greenhouse, Lever, Ashby | Public JSON, one request per board, fetched in parallel |
-| **Browser harvest** | Indeed | A browser collects it, because Indeed throttles `fetch()` but not navigation |
+| **Paid search** | Indeed | The Apify actor `misceres/indeed-scraper`, billed per listing |
 | **By hand** | Workday, iCIMS, Taleo, SmartRecruiters, BambooHR | No public board; checked on a cadence |
 
 Adding a source is one entry in `sources.REGISTRY` — a function returning `Posting` objects, a
@@ -20,9 +20,9 @@ which source a row came from. The registry lives in `lib/sources.ts`, and `cli/s
 ## Contents
 
 - Boards — running the fetch, adding a company
-- Browser harvest — why navigation and not `fetch()`, search, saving, loading, descriptions
+- Indeed search — what it is for, and how to aim it
 - Manual boards — the ATSes with no public JSON, and their cadence
-- Traps — 429s, `window.mosaic` undefined, a board that fails every morning
+- Traps — an empty search, a board that fails every morning
 
 ## Boards
 
@@ -54,94 +54,24 @@ job-scan ingest
 A slug that 404s is wrong, or the company is on an ATS with no public board. Those go in as manual
 boards instead.
 
-## Browser harvest
+## Indeed search
 
 Indeed is a **discovery layer**, not a new place to apply: the boards watch companies already chosen,
-and this answers what they cannot — *who is hiring that isn't on the list at all.* Once the harvest
-is read, an Indeed row is a posting like any other.
-
-### Navigate, never fetch
-
-Getting this wrong is what makes Indeed look unusable.
-
-**Navigate to each search URL like a person would.** Indeed serves those requests without complaint;
-what it throttles is `fetch()`/XHR against the same URLs — same session, same cookies, but no
-navigation fingerprint, no referer chain, no page assets. Measured in one session: `urllib` blocked
-at request 2, in-page `fetch()` returned 14 × 429 out of 16, and `page.goto()` returned 200 on all 40
-navigations *while `fetch` from the same page was still 403*.
-
-No query budget to ration, no rotation scheme to maintain. Keep the pacing human anyway — a little
-jitter and a scroll per page — but that is politeness, not a workaround.
-
-### 1. Search
-
-For each query, `page.goto` the search URL, then read the results out of the page's own data — no
-HTML parsing, because the payload is already there:
-
-```js
-window.mosaic.providerData['mosaic-provider-jobcards']
-      .metaData.mosaicProviderJobCardsModel.results
-```
-
-Keep per card: `jobkey`, `company`, `title`, `formattedLocation`, `pubDate` (epoch ms), `sponsored`,
-`expired`, `indeedApplyEnabled`, `remoteWorkModel.type`, `extractedSalary`. **`jobkey` is a stable
-per-posting id**, which is what makes Indeed dedupable at all. Keys are `indeed:<jobkey>`.
-
-Navigation wipes page variables, so **accumulate across queries in `localStorage`** — same origin, so
-it survives every `goto`:
-
-```js
-const store = JSON.parse(localStorage.getItem('__jobHarvest') || '{"results":[]}');
-store.results.push({query, location, rows});
-localStorage.setItem('__jobHarvest', JSON.stringify(store));
-```
-
-**Do not paginate.** `&start=10` is the one request shape that still draws a block, and page 2 of a
-narrow query is worth less than page 1 of a different one. More queries, one page each.
-
-### 2. Onto disk without spending context
-
-The harvest is ~90KB. Do not read it through the model to write it out. The Playwright process has no
-filesystem access, but a blob download does:
-
-```js
-const [download] = await Promise.all([
-  page.waitForEvent('download', {timeout: 20000}),
-  page.evaluate(() => {
-    const blob = new Blob([localStorage.getItem('__jobHarvest')], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'indeed-raw.json';
-    document.body.appendChild(a); a.click();
-  })
-]);
-await download.saveAs('…/indeed-raw.json');
-```
-
-Same trick for the descriptions file. Nothing large ever passes through the conversation.
-
-### 3. Load it into the raw layer
+and this answers what they cannot — *who is hiring that isn't on the list at all.* Once a row is
+stored, an Indeed posting is a posting like any other.
 
 ```bash
-job-scan harvest --source indeed --file <harvest.json>
+job-scan indeed                                     # your title_preferred rows, Remote, 50 each
+job-scan indeed --query "AI engineer" --max 25
+job-scan indeed --query "AI engineer" --query "ML engineer" --location "Austin, TX"
 ```
 
-Parses the harvest into `postings`, including the facts only this source states — `sponsored`,
-`expired`, and the salary band it extracted — into the same columns every source uses, so the same
-filters judge them. Then run `job-scan ingest` as for any other source.
+With no `--query`, the queries are your `title_preferred` rows, strongest first — the same
+vocabulary the scorer uses, so discovery and scoring cannot drift apart.
 
-### 4. Descriptions, for kept rows only
-
-The search cards carry a truncated `snippet` that is **not good enough to score on**, so descriptions
-are fetched after ingest, for survivors only. Navigate to `/viewjob?jk=<jobkey>` for each, read
-`#jobDescriptionText` plus `#salaryInfoAndJobType`, accumulate in `localStorage`, and save the same
-way. **Cap each at ~4,000 characters** — full ones run 9,000–14,500, and the cap is what keeps two
-dozen of them affordable.
-
-```bash
-job-scan descriptions --file <descs.json>
-```
-
-Attaches them to the rows ingest kept and warns about any prospect still without one.
+Descriptions come back with the search, so there is nothing to fetch afterwards. `--max` is a
+per-query budget of billed listings, not a page size — the default is a sane spend, so raise it
+deliberately or not at all.
 
 ## Manual boards
 
@@ -163,7 +93,7 @@ automatically.
 
 This list matters because the watchlist skews toward venture-backed product companies — that is who
 uses the three supported ATSes. Banks, insurers, health systems, manufacturers and large regional
-employers are on Workday or iCIMS, so leaving them out biases the whole search. A harvest **widens**
+employers are on Workday or iCIMS, so leaving them out biases the whole search. Indeed **widens**
 coverage without guaranteeing it for any employer; where one shows real coverage of a manual board,
 cut that board's cadence.
 
@@ -174,8 +104,5 @@ to dedupe against.
 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
-| 429s or 403s from a harvest | Using `fetch()` instead of navigating | Navigate. This is the one mistake that makes Indeed look rate-limited |
-| Blocked even while navigating | `&start=` pagination, or a prior `fetch` run poisoned the session | Drop pagination; a poisoned session clears on its own |
-| `window.mosaic` undefined | Read ran before the page settled, or the response was a block page | Check the navigation status, then wait and re-read |
+| A query returns nothing | Too narrow a `--query`/`--location` pair | Widen one of them; an empty search costs nothing |
 | A board fails every morning | Company moved ATS, or the slug is wrong | Fix the slug or deactivate the company |
-| Comp band looks absurd | `extractedSalary` is inferred, not stated | Trust `#salaryInfoAndJobType` on the JD page over the card |
