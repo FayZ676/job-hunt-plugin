@@ -60,7 +60,7 @@ export const TABLES = {
     authorized_in_country_of_residence: maybeInt,
     legal_right_to_work_without_sponsorship: maybeInt,
     requires_sponsorship_now_or_future: maybeInt, over_18: maybeInt,
-    earliest_start: maybeText, earliest_daily_start: maybeText, notice_period: maybeText,
+    earliest_daily_start: maybeText, notice_period: maybeText,
     employment_type: maybeText, remote_preference: maybeText, willing_to_relocate: maybeInt,
     compensation_floor: maybeInt, compensation_currency: maybeText,
     gender: maybeText, race_ethnicity: maybeText, hispanic_or_latino: maybeText,
@@ -82,10 +82,6 @@ export const TABLES = {
   project_links: z.object({ project_id: int, label: text, url: text }),
   search_scope: z.object({ id: int, worth_applying_to: maybeText }),
   search_titles: z.object({ value: text, seq: maybeInt }),
-  accounts: z.object({
-    employer: text, system: maybeText, portal_url: maybeText, login_email: maybeText,
-    password_location: maybeText, created: maybeText,
-  }),
   companies: z.object({
     slug: text, ats: text, name: text, active: int, added_on: maybeText,
     source: maybeText, careers_url: maybeText, cadence: CADENCE.nullable(),

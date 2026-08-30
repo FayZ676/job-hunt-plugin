@@ -30,7 +30,6 @@ export const options = (table: Table, column: string) => choices(ddl(), table, c
 export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
 export const titles = () => listing("search_titles", "ORDER BY seq IS NULL, seq, value");
-export const accounts = () => listing("accounts", "ORDER BY employer");
 
 export const jobs = () => rows(VIEWS.triage, "SELECT * FROM triage");
 export const stats = () => rows(VIEWS.stats, "SELECT status, n FROM stats");

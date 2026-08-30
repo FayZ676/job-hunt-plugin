@@ -9,7 +9,7 @@ submits.
 - Filling — field types, Yes/No shapes, typeaheads, stale refs, resume upload
 - Before you stop — the required-field re-check and the screenshot
 - Lever specifics — hCaptcha, the hidden resume input, the EEO reveal
-- Workday specifics — accounts, the five-step flow, mid-flow required fields
+- Workday specifics — the per-employer account, the five-step flow, mid-flow required fields
 - Submitting — Phase 5 only, and what counts as a confirmation
 - Traps — published bands, application limits, cover letters, login walls
 
@@ -117,6 +117,10 @@ job-stage add <key> \
 `job-profile answers` and `job-profile missing` are where the identity and policy answers come from,
 and which of them are still `NULL`.
 
+**A start date is computed, not stored.** No employer is `current` and they can start at once;
+otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier
+application — the answer moves with the day the form is asked.
+
 **Then stop.** Do not click Submit, Apply, Continue, or Next in Phase 4. On a multi-page form, stop
 at the end of the first page and record the page count.
 
@@ -147,8 +151,7 @@ password (8+ chars, mixed case, numeric, special) and a privacy checkbox, then a
 link. That link is single-use; "Invalid Token" means the user already clicked it — just sign in.
 
 **Never invent, generate, or store a password.** Ask the user to create one in their password
-manager, and record only the pointer in the `accounts` table — which accounts exist and where each
-password lives, never the password.
+manager.
 
 **Apply Manually** starts five steps: My Information, My Experience, Application Questions, Voluntary
 Disclosures, Review. `Save and Continue` advances and does not submit; only `Submit` on step 5 does.

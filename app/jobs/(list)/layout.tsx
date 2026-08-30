@@ -9,7 +9,6 @@ export const dynamic = "force-dynamic";
 const TABS = [
   { href: "/jobs", label: "Openings" },
   { href: "/jobs/criteria", label: "Criteria" },
-  { href: "/jobs/accounts", label: "Accounts" },
 ];
 
 function headline(waiting: number, ready: number) {

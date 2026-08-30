@@ -22,7 +22,8 @@ one answer per call. If a form genuinely asks something no column covers, `ALTER
 it to `lib/schema.ts`; it then appears in the dashboard on the next connect.
 
 **Translate the answer into the column's shape**, rather than filing the sentence they said: "two
-weeks after an offer" is `identity.notice_period 2_weeks`, not prose in `identity.earliest_start`.
+weeks after an offer" is `identity.notice_period 2_weeks`. There is no start-date column — notice
+and whether an employer is still `current` are what a start date gets computed from.
 A column given a new shape or a new choice updates both the CLI and the dashboard.
 
 Never hand them a file to edit, and never make the first pass a form — the interview is a

@@ -61,11 +61,4 @@ export const COLUMNS = {
     { name: "label", required: true, width: "minmax(0,0.8fr)" },
     { name: "url", ...LINK, required: true, width: "minmax(0,2fr)" },
   ],
-  accounts: [
-    { name: "employer", required: true, width: "minmax(0,1fr)" },
-    { name: "system", width: "minmax(0,0.8fr)" },
-    { name: "login_email", label: "login", ...EMAIL, width: "minmax(0,1.2fr)" },
-    { name: "password_location", label: "password lives", width: "minmax(0,1.2fr)" },
-    { name: "portal_url", label: "portal", ...LINK, width: "minmax(0,1.2fr)" },
-  ],
 } satisfies Record<string, Column[]>;

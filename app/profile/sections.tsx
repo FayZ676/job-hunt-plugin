@@ -36,7 +36,6 @@ const GROUPS: () => Group[] = () => [
   {
     label: "When you could start, and what you would take",
     fields: [
-      { name: "earliest_start", type: "date" },
       { name: "earliest_daily_start", type: "time" },
       choice("notice_period"),
       choice("employment_type"),

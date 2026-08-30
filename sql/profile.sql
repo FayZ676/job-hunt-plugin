@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS identity (
   requires_sponsorship_now_or_future       INTEGER CHECK (requires_sponsorship_now_or_future IN (0,1)),
   over_18                                  INTEGER CHECK (over_18 IN (0,1)),
 
-  earliest_start        TEXT    CHECK (earliest_start IS date(earliest_start)),
   earliest_daily_start  TEXT    CHECK (earliest_daily_start GLOB '[0-2][0-9]:[0-5][0-9]'
                                        AND earliest_daily_start <= '23:59'),
   notice_period         TEXT    CHECK (notice_period IN (
@@ -127,15 +126,7 @@ CREATE TABLE IF NOT EXISTS search_titles (
   seq   INTEGER CHECK (seq >= 0)
 ) STRICT;
 
--- Which employer logins exist. Store where the password lives, not the password.
-CREATE TABLE IF NOT EXISTS accounts (
-  employer          TEXT PRIMARY KEY,
-  system            TEXT,
-  portal_url        TEXT CHECK (portal_url LIKE 'http%://%.%'),
-  login_email       TEXT CHECK (login_email LIKE '_%@_%._%'),
-  password_location TEXT,
-  created           TEXT CHECK (created IS date(created))
-) STRICT;
+DROP TABLE IF EXISTS accounts;
 
 -- The totals a form asks for as a number rather than a story, counted off
 -- `employers` rather than stored: a written-down total is wrong by one every
@@ -176,7 +167,7 @@ CREATE VIEW IF NOT EXISTS answers AS
              'legal_right_to_work_without_sponsorship', legal_right_to_work_without_sponsorship,
              'requires_sponsorship_now_or_future', requires_sponsorship_now_or_future,
              'over_18', over_18,
-             'earliest_start', earliest_start, 'earliest_daily_start', earliest_daily_start,
+             'earliest_daily_start', earliest_daily_start,
              'notice_period', notice_period, 'employment_type', employment_type,
              'remote_preference', remote_preference, 'willing_to_relocate', willing_to_relocate,
              'compensation_floor', compensation_floor,

@@ -11,7 +11,7 @@ const WRITABLE = new Set<Table>([
   "identity",
   "education", "employers", "projects", "project_bullets",
   "project_technologies", "project_metrics", "project_links",
-  "search_scope", "search_titles", "accounts",
+  "search_scope", "search_titles",
 ]);
 
 export type Saved = { rowid: number } | { error: string };
