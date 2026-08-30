@@ -1,7 +1,7 @@
 ---
 name: job
 description: Searches every company career site for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "scan and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
-argument-hint: [setup|scan|watchlist|resume <JD|url|key>|apply <key|url>|submit|ui|help]
+argument-hint: [setup|scan|resume <JD|url|key>|apply <key|url>|submit|ui|help]
 ---
 
 # Job routine
@@ -35,7 +35,6 @@ Nothing below overrides these.
 | `/job setup` | First-run setup — `references/setup.md` |
 | `/job` | All five phases |
 | `/job scan` | Phases 1–2 |
-| `/job watchlist` | The watched-company search alone, merged into the day's prospects |
 | `/job resume <JD, URL, or key>` | Phase 3 for one role |
 | `/job apply <key or URL>` | Phases 3–4 for one role, stopping before submit |
 | `/job submit` | Phase 5 over whatever is already staged |
@@ -52,7 +51,7 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 
 | Phase | Module | Subcommands |
 | ----- | ------ | ----------- |
-| 1 — Fetch, then ingest | `cli/scan.ts` | `source` `search` `watchlist` `ingest` `dispositions` |
+| 1 — Fetch, then ingest | `cli/scan.ts` | `search` `ingest` `dispositions` |
 | 2 — Score | `cli/score.ts` | `triage` `rubric` `show` `set` `pending` |
 | 3 — Resume | `cli/resume.ts` | `spec` `build` |
 | 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
@@ -86,7 +85,7 @@ Every detail lives one level down, read when the phase that needs it starts.
 | File | Read before |
 | ---- | ----------- |
 | `references/setup.md` | First run — building `$CAREER`, the profile interview, the filters |
-| `references/fetching.md` | Phase 1 — aiming the search, what the credit buys, the watchlist |
+| `references/fetching.md` | Phase 1 — aiming the search, what the credit buys |
 | `references/ingesting.md` | Phase 1 — the filter chain, dedupe, tuning |
 | `references/resume.md` | Phase 3 — everything about building one: rules, checks, spec, build |
 | `references/applying.md` | Phases 4–5 — reaching each ATS's form, filling it, the traps, submitting |
@@ -96,13 +95,12 @@ Every detail lives one level down, read when the phase that needs it starts.
 ```bash
 $Q --schema                     # every table, view, CHECK and trigger
 job-scan dispositions            # every verdict the chain can rule, in order
-job-scan source                  # the search API behind every posting, and its quirks
 job-resume spec                  # the resume spec, and every section type
 ```
 
 ## Storage
 
-One convention: `$CAREER/job.db` — postings, prospects, companies, filters, staged applications,
+One convention: `$CAREER/job.db` — postings, prospects, filters, staged applications,
 history, and the user's whole profile are rows in it.
 
 **`$CAREER` is a fixed absolute directory, so `/job` runs identically from anywhere.** Ask the skill
@@ -153,7 +151,7 @@ on the next connect.
 
 **Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves
 `127.0.0.1:8765` — every job opening on its full application with each drafted essay and flagged
-field, the whole profile with its `NULL`s called out, and the watchlist. **The Profile page
+field, and the whole profile with its `NULL`s called out. **The Profile page
 writes.** Every box on it saves the moment it loses focus, and emptying one sets `NULL` — the user
 correcting their own answers is the one thing they should never need you for. Everything a phase
 decides — postings, scores, staged forms — is read-only there: `lib/actions.ts` names the profile
@@ -183,7 +181,6 @@ to re-run; **fetching is not.**
 
 ```bash
 job-scan search                               # preferred titles across every career site
-job-scan watchlist                            # every live job at the companies they watch
 job-scan ingest                               # postings -> prospects
 job-scan ingest --redo --no-location-filter   # re-rule stored rows, no network
 ```
@@ -252,7 +249,7 @@ Attach the PDF, screenshot the completed form, then record it:
 ```bash
 job-profile answers   # what the profile answers
 job-profile missing   # every NULL, each one a hard stop
-job-stage add <key> --url <apply-url> --ats ashby --screenshot <png> \
+job-stage add <key> --url <apply-url> --screenshot <png> \
   --field 'Do you have the legal right to work without sponsorship?|Yes|policy' \
   --field 'Tell us about an AI product you built…|…|judgment|needs-review'
 ```

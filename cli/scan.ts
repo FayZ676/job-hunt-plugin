@@ -165,19 +165,12 @@ function collapse(rows: Posting[], pinned: Set<string>) {
 const program = new Command("job-scan").description(
   `Phase 1 — fetch postings, then rule on them. Two steps, and they stay separate.
 
-  job-scan source                           the one search API: endpoint, quirks
   job-scan search                           your preferred titles across every career site
   job-scan search --title "AI Engineer" --location "Oregon, United States"
   job-scan search --remote --since 24h      only what a remote worker can hold
-  job-scan watchlist                        every live job at the companies you watch
   job-scan ingest                           postings into prospects, no network
   job-scan ingest --redo --no-location-filter
   job-scan dispositions                     every verdict, in the order ruled`);
-
-program
-  .command("source")
-  .description("print the search API behind every posting: endpoint, quirks")
-  .action(() => sources.describe());
 
 const spend = (command: Command) => command
   .option("--location <where>", "repeatable; 'City, State, Country', spelled out", collect, [])
@@ -247,29 +240,9 @@ spend(program
     warnUnkeepable(database, titles);
     const spared = unwanted(database);
     await fetched(database, {
-      titles, organizations: [], locations, ...spared, remote: Boolean(options.remote),
+      titles, locations, ...spared, remote: Boolean(options.remote),
       since: since(options.since), max: options.max,
     }, `for ${titles.length} titles`);
-  }));
-
-spend(program
-  .command("watchlist")
-  .description("every live job at the companies you watch, whatever the title"))
-  .action(guard(async (options) => {
-    const database = open(options.db);
-    if (options.file) return replay(database, options.file);
-
-    const organizations = (database.prepare(
-      "SELECT DISTINCT name FROM companies WHERE active=1 ORDER BY name")
-      .all() as { name: string }[]).map((row) => row.name);
-    if (!organizations.length)
-      fail("no companies are active — add some, or run job-scan search instead");
-
-    await fetched(database, {
-      titles: [], organizations, locations: options.location,
-      notTitles: unwanted(database).notTitles, notOrganizations: [],
-      remote: Boolean(options.remote), since: since(options.since), max: options.max,
-    }, `at ${organizations.length} watched companies`);
   }));
 
 program
@@ -289,7 +262,6 @@ program
   .command("ingest")
   .description("derive prospects from the raw layer; fetches nothing")
   .option("--redo", "rule again on postings already dispositioned, without re-fetching")
-  .option("--source <name>", "limit to these sources", collect, [])
   .option("--include-seen", "ignore what is already in prospects")
   .option("--no-location-filter", "see what the location rule is costing")
   .option("--max-age-days <n>", "override the stored age limit for one run", Number)
@@ -310,13 +282,9 @@ program
     });
 
     const where = options.redo ? "WHERE disposition IS NOT 'kept'" : "WHERE disposition IS NULL";
-    let rows = (database.prepare(
+    const rows = (database.prepare(
       `SELECT ${POSTING_COLUMNS.join(",")} FROM postings ${where}`).all() as unknown[])
       .map((row) => Posting.parse(row));
-    if (options.source.length) {
-      const wanted = new Set(options.source.map((held: string) => held.toLowerCase()));
-      rows = rows.filter((row) => wanted.has(row.source.toLowerCase()));
-    }
     if (!rows.length)
       return console.log("nothing pending in postings — fetch first, or pass --redo");
 
@@ -368,16 +336,6 @@ program
     if (dropped.length)
       console.log("dropped: " + dropped.map(([name, n]) => `${name} ${n}`).join(" | "));
 
-    const unknown = database.prepare(
-      "SELECT company, COUNT(*) n FROM postings WHERE disposition='kept' " +
-      "AND ingested_on=date('now') AND lower(company) NOT IN " +
-      "(SELECT lower(name) FROM companies) GROUP BY company ORDER BY n DESC")
-      .all() as { company: string; n: number }[];
-    if (unknown.length) {
-      console.log("\ncompanies not on the watchlist:");
-      for (const row of unknown)
-        console.log(`  ${String(row.n).padStart(2)}  ${row.company}`);
-    }
     const { n } = database.prepare(
       "SELECT COUNT(*) n FROM postings WHERE disposition IS NULL").get() as { n: number };
     if (n) console.log(`\n${n} postings still pending`);

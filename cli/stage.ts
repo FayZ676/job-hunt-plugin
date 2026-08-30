@@ -34,7 +34,7 @@ const collect = (value: string, held: string[]) => [...held, value];
 const program = new Command("job-stage").description(
   `Phase 4 — fill the form, record it, and stop with a finger over the button.
 
-  job-stage add KEY --url URL --ats ashby --screenshot shot.png
+  job-stage add KEY --url URL --screenshot shot.png
       --field 'Legal right to work without sponsorship?|Yes|policy'
       --field 'Tell us about an AI product you built|…|judgment|needs-review'
   job-stage show KEY                     every field staged for one application
@@ -49,7 +49,6 @@ program
   .description("record a filled form; status is derived from the fields")
   .argument("<key>")
   .requiredOption("--url <url>", "the apply URL the form was filled at")
-  .requiredOption("--ats <ats>")
   .requiredOption("--screenshot <path>", "the completed form, captured")
   .option("--field <label|value|tier[|flag]>", "", collect, [])
   .option("--blocked-on <what>", "what is missing, when the block is not an empty field")
@@ -81,10 +80,10 @@ program
 
     database.transaction(() => {
       database.prepare(
-        "INSERT INTO staged(key,url,ats,screenshot,status,blocked_on) VALUES(?,?,?,?,?,?) " +
-        "ON CONFLICT(key) DO UPDATE SET url=excluded.url, ats=excluded.ats," +
+        "INSERT INTO staged(key,url,screenshot,status,blocked_on) VALUES(?,?,?,?,?) " +
+        "ON CONFLICT(key) DO UPDATE SET url=excluded.url," +
         "  screenshot=excluded.screenshot, status=excluded.status, blocked_on=excluded.blocked_on")
-        .run(key, options.url, options.ats, screenshot, status, blockedOn);
+        .run(key, options.url, screenshot, status, blockedOn);
       database.prepare("DELETE FROM staged_fields WHERE key=?").run(key);
       const insert = database.prepare(
         "INSERT INTO staged_fields(key,label,value,tier,flag) VALUES(?,?,?,?,?)");
@@ -108,13 +107,13 @@ program
   .action(guard((key: string, options) => {
     const database = open(options.db);
     const row = database.prepare(
-      "SELECT s.key, p.company, p.title, s.url, s.ats, s.status, s.blocked_on, s.screenshot," +
+      "SELECT s.key, p.company, p.title, s.url, s.status, s.blocked_on, s.screenshot," +
       "       p.resume FROM staged s JOIN prospects p ON p.key=s.key WHERE s.key=?")
       .get(key) as any;
     if (!row) fail(`nothing staged for '${key}'`);
     console.log(`${row.company} — ${row.title}  [${row.key}]  ${row.status}`);
     if (row.blocked_on) console.log(`  blocked_on: ${row.blocked_on}`);
-    console.log(`  ${row.ats || "?"}  ${row.url || ""}`);
+    console.log(`  ${row.url || ""}`);
     console.log(`  resume     ${row.resume}`);
     console.log(`  screenshot ${row.screenshot}\n`);
     printRows(database.prepare(
@@ -129,7 +128,7 @@ program
   .option("--db <path>")
   .action(guard((options) => {
     printRows(open(options.db).prepare(
-      "SELECT s.key, p.company, p.title, p.score, s.ats, s.status, p.status AS prospect, " +
+      "SELECT s.key, p.company, p.title, p.score, s.status, p.status AS prospect, " +
       "       s.blocked_on FROM staged s JOIN prospects p ON p.key=s.key " +
       "ORDER BY s.status, p.score DESC").all() as Record<string, unknown>[], options.json);
   }));

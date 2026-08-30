@@ -26,7 +26,6 @@ export const choices = (ddl: string, table: string, column: string) => {
 };
 
 export const PROJECT_STATUS = z.enum(["shipped", "in_progress", "discontinued"]);
-export const CADENCE = z.enum(["Weekly", "Monthly", "Quarterly"]);
 export const TIER = z.enum(["identity", "policy", "judgment"]);
 export const STAGED_STATUS = z.enum(["ready", "blocked"]);
 
@@ -41,8 +40,8 @@ export const DISPOSITION = z.enum([
 ]);
 
 const postings = z.object({
-  key: text, source: text, ats: maybeText, company: text, title: text,
-  url: maybeText, apply_url: maybeText, location: maybeText, remote: maybeInt,
+  key: text, source: text, company: text, title: text,
+  url: maybeText, location: maybeText, remote: maybeInt,
   compensation: maybeText, posted_at: maybeText, description: maybeText,
   expired: int,
   comp_min: maybeReal, comp_max: maybeReal, comp_period: maybeText, raw: maybeText,
@@ -82,14 +81,9 @@ export const TABLES = {
   project_links: z.object({ project_id: int, label: text, url: text }),
   search_scope: z.object({ id: int, worth_applying_to: maybeText }),
   search_titles: z.object({ value: text, seq: maybeInt }),
-  companies: z.object({
-    slug: text, ats: text, name: text, active: int, added_on: maybeText,
-    source: maybeText, careers_url: maybeText, cadence: CADENCE.nullable(),
-    last_checked: maybeText,
-  }),
   events: z.object({ id: int, key: text, at: text, status: maybeText, note: maybeText }),
   staged: z.object({
-    key: text, url: maybeText, ats: maybeText, screenshot: maybeText,
+    key: text, url: maybeText, screenshot: maybeText,
     status: STAGED_STATUS.nullable(), blocked_on: maybeText,
   }),
   staged_fields: z.object({
@@ -100,9 +94,9 @@ export const TABLES = {
 
 export const VIEWS = {
   prospects: postings.pick({
-    key: true, company: true, title: true, url: true, apply_url: true, location: true,
+    key: true, company: true, title: true, url: true, location: true,
     remote: true, compensation: true, posted_at: true, first_seen: true, last_seen: true,
-    source: true, ats: true, description: true, score: true, reason: true, resume: true,
+    source: true, description: true, score: true, reason: true, resume: true,
     status: true,
   }),
   triage: postings.pick({

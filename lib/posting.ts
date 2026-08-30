@@ -4,7 +4,7 @@ import { ddl } from "./db.ts";
 import { TABLES, vocabulary } from "./schema.ts";
 
 export const POSTING_COLUMNS = [
-  "key", "source", "company", "title", "ats", "url", "apply_url", "location", "remote",
+  "key", "source", "company", "title", "url", "location", "remote",
   "compensation", "posted_at", "description", "comp_min", "comp_max", "comp_period",
   "expired", "raw",
 ] as const;
@@ -40,9 +40,7 @@ export const Posting = z.object({
   source: text,
   company: text.refine((held) => held.length > 0, { message: "company cannot be blank" }),
   title: text.refine((held) => held.length > 0, { message: "title cannot be blank" }),
-  ats: maybeText.default(null),
   url: maybeText.default(null),
-  apply_url: maybeText.default(null),
   location: z.preprocess(
     (held) => (held === null || held === undefined ? "" : held),
     text,

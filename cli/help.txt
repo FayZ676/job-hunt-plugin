@@ -7,7 +7,6 @@ commands:
   (none)                      run all five phases: scan, score, resume, stage, submit
   setup                       first-run setup: create $CAREER, build the profile, set the filters
   scan                        scan and score only
-  watchlist                   search the companies you watch, merged into the day's prospects
   resume <JD, URL, or key>    build one tailored resume as a PDF
   apply <key or URL>          build and stage one application, stopping before submit
   submit                      review what is staged and submit only what you name

@@ -13,17 +13,9 @@ export const SINCE = ["1h", "24h", "7d", "6m"] as const;
 export type Since = (typeof SINCE)[number];
 
 export type Search = {
-  titles: string[]; notTitles: string[];
-  organizations: string[]; notOrganizations: string[];
+  titles: string[]; notTitles: string[]; notOrganizations: string[];
   locations: string[]; remote: boolean; since: Since; max: number;
 };
-
-const QUIRK =
-  "one paid Apify actor over 175k company career sites on 54 ATSes, billed per job RETURNED, " +
-  "so every filter it can apply itself is money saved -- titles and locations belong in the " +
-  "request, not only in ingest. `limit` is a budget, not a page size. Locations need the exact " +
-  "'City, State, Country' phrasing in English, no abbreviations. It never returns a paid " +
-  "placement, and it only returns live jobs";
 
 function token(): string {
   const held = process.env.APIFY_TOKEN?.trim();
@@ -76,11 +68,9 @@ export function fromApify(items: Json[]): Posting[] {
       return posting({
         key: `${source}:${item.id}`,
         source,
-        ats: source,
         company: item.organization,
         title: item.title,
         url: item.url,
-        apply_url: item.url,
         location,
         remote: REMOTE.has(item.ai_work_arrangement) || /remote/i.test(location),
         compensation: band(item),
@@ -112,7 +102,6 @@ export async function search(aim: Search): Promise<Posting[]> {
       ...(aim.remote ? { aiWorkArrangementFilter: [...REMOTE] } : {}),
       ...some("titleSearch", aim.titles),
       ...some("titleExclusionSearch", aim.notTitles),
-      ...some("organizationSearch", aim.organizations),
       ...some("organizationExclusionSearch", aim.notOrganizations),
       ...some("locationSearch", aim.locations),
     }),
@@ -123,9 +112,4 @@ export async function search(aim: Search): Promise<Posting[]> {
       `HTTP ${answered.status} ${answered.statusText}: ${(await answered.text()).slice(0, 200)}`);
   const items = await answered.json();
   return fromApify(Array.isArray(items) ? items : []);
-}
-
-export function describe() {
-  const at = `https://apify.com/${ACTOR.replace("~", "/")}`;
-  console.log(`career sites  [one paid search, every ATS]\n  ${at}\n  ${QUIRK}\n`);
 }

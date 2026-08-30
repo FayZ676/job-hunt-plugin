@@ -7,7 +7,6 @@ const LINKS = [
   ["/profile", "Profile"],
   ["/jobs", "Jobs"],
   ["/criteria", "Search Criteria"],
-  ["/sources", "Sources"],
   ["/help", "Help"],
 ];
 

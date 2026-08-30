@@ -11,7 +11,7 @@ job-q "SELECT 1"
 ```
 
 The schema applies on connect, so any command creates `$CAREER/job.db`. It starts empty — there is
-no seed. The filters and the watchlist come out of the interview below, in their words, not from a
+no seed. The filters come out of the interview below, in their words, not from a
 starter list they would have to discover and correct.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
@@ -64,12 +64,6 @@ INSERT INTO filters(kind,pattern) VALUES('location_include','(?i)remote|united s
 **Keep `title_exclude` and `title_noise` as flat `\b(a|b|c)\b` alternations.** Those flatten into
 literal terms the search can exclude before charging for them; a character class or a quantifier
 cannot, and quietly falls back to being paid for.
-
-Companies are optional and fetch nothing on their own; they are who `job-scan watchlist` searches:
-
-```sql
-INSERT INTO companies(slug,ats,name,source) VALUES('anthropic','greenhouse','Anthropic','manual');
-```
 
 **4. Check the tooling.** The npm dependencies and the linked `job-*` commands are what fetching
 and scoring run on; Typst and Poppler are only for the resume build.

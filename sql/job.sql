@@ -6,18 +6,7 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS companies (
-  slug         TEXT NOT NULL,
-  ats          TEXT NOT NULL,
-  name         TEXT NOT NULL,
-  active       INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
-  added_on     TEXT DEFAULT (date('now')) CHECK (added_on IS date(added_on)),
-  source       TEXT,
-  careers_url  TEXT CHECK (careers_url LIKE 'http%://%.%'),
-  cadence      TEXT CHECK (cadence IS NULL OR cadence IN ('Weekly','Monthly','Quarterly')),
-  last_checked TEXT CHECK (last_checked IS date(last_checked)),
-  PRIMARY KEY (ats, slug)
-) STRICT;
+DROP TABLE IF EXISTS companies;
 
 CREATE TABLE IF NOT EXISTS filters (
   kind    TEXT NOT NULL CHECK (kind IN (
@@ -31,11 +20,9 @@ CREATE TABLE IF NOT EXISTS filters (
 CREATE TABLE IF NOT EXISTS postings (
   key           TEXT PRIMARY KEY,
   source        TEXT NOT NULL,
-  ats           TEXT,
   company       TEXT NOT NULL,
   title         TEXT NOT NULL,
   url           TEXT CHECK (url LIKE 'http%://%.%'),
-  apply_url     TEXT CHECK (apply_url LIKE 'http%://%.%'),
   location      TEXT,
   remote        INTEGER CHECK (remote IN (0,1)),
   compensation  TEXT,
@@ -88,7 +75,6 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS staged (
   key        TEXT PRIMARY KEY REFERENCES postings(key) ON DELETE CASCADE,
   url        TEXT CHECK (url LIKE 'http%://%.%'),
-  ats        TEXT,
   screenshot TEXT,
   status     TEXT CHECK (status IN ('ready','blocked')),
   blocked_on TEXT
@@ -163,8 +149,8 @@ END;
 DROP VIEW IF EXISTS prospects;
 
 CREATE VIEW prospects AS
-  SELECT key, company, title, url, apply_url, location, remote, compensation,
-         posted_at, first_seen, last_seen, source, ats, description,
+  SELECT key, company, title, url, location, remote, compensation,
+         posted_at, first_seen, last_seen, source, description,
          score, reason, resume, status
   FROM postings WHERE disposition = 'kept';
 
@@ -181,10 +167,3 @@ DROP VIEW IF EXISTS stats;
 CREATE VIEW stats AS
   SELECT status, COUNT(*) AS n FROM postings
   WHERE disposition = 'kept' GROUP BY status ORDER BY n DESC;
-
-DROP VIEW IF EXISTS manual_boards;
-
-CREATE VIEW manual_boards AS
-  SELECT name, slug, cadence, last_checked, careers_url
-  FROM companies WHERE active=1 AND ats='manual'
-  ORDER BY CASE cadence WHEN 'Weekly' THEN 1 WHEN 'Monthly' THEN 2 ELSE 3 END, name;

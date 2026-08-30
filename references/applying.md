@@ -21,13 +21,13 @@ submits.
 | **Greenhouse** | `job-boards.greenhouse.io/<slug>/jobs/<id>` | Career pages embed this in an iframe. Go to the canonical URL, from the `gh_jid` in the prospect key |
 | **Lever** | `jobs.lever.co/<slug>/<id>/apply` | Server-rendered and predictable, but **submission is gated by hCaptcha** |
 | **Workday** | `<company>.wd<N>.myworkdayjobs.com/…` | **Fully drivable.** Needs a per-employer account, then a five-step flow |
-| **Everything else** | The row's `apply_url` | iCIMS, SuccessFactors, Oracle Cloud, Rippling, SmartRecruiters, BambooHR, Eightfold and 40-odd more now arrive. Untested, one at a time: **do not assume any of them is blocked** — open it and look before writing it off |
+| **Everything else** | The row's `url` | iCIMS, SuccessFactors, Oracle Cloud, Rippling, SmartRecruiters, BambooHR, Eightfold and 40-odd more now arrive. Untested, one at a time: **do not assume any of them is blocked** — open it and look before writing it off |
 
 The prospect `key` prefix names the ATS the posting came from — `ashby:`, `greenhouse:`,
-`lever.co:`, `workday:`, `icims:`, `manual:` — and `postings.ats` holds the same value. There are 54
+`lever.co:`, `workday:`, `icims:` — and `postings.source` holds the same value. There are 54
 of them, so **read the prefix rather than expecting a short list.**
 
-**Every `apply_url` is the employer's own posting.** Nothing arrives through an aggregator any more,
+**Every `url` is the employer's own posting.** Nothing arrives through an aggregator any more,
 so there is no redirect to follow and no listing link to resolve.
 
 An ATS met for the first time is worth a note in this file once it is driven — that is how the table
@@ -109,7 +109,7 @@ Then record the application, one `--field` per answer:
 
 ```bash
 job-stage add <key> \
-  --url <apply-url> --ats ashby --screenshot <png> \
+  --url <apply-url> --screenshot <png> \
   --field 'Work authorization|Yes|policy' \
   --field 'Why this company?|…|judgment|needs-review'
 ```

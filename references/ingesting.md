@@ -76,7 +76,6 @@ job-scan ingest --redo
 | Prospects fine, scores wrong | `search_criteria`, not filters |
 | Too few prospects | check the `location` and `stale` counts first; it is usually location |
 | Shortlist fills with staffing firms | `agency_blocklist` is stale — add the names; they repeat daily |
-| Same company never has anything | `UPDATE companies SET active=0 WHERE slug='…'` |
 
 **Tune the blocklist as you go.** When a run surfaces a reposter, add it — the list is the main thing
 between an aggregator and a shortlist full of staffing firms. An entry judges the listings, not the
@@ -86,7 +85,7 @@ employer; a company that starts posting directly comes off it.
 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
-| A role appears twice | Precedence dedupe missed | The company is on the watchlist under a different name — reconcile the spelling |
+| A role appears twice | Precedence dedupe missed | The index spells the company differently on each row — reconcile the spelling |
 | A foreign role survives the location filter | The location says only "Remote" | Not catchable mechanically; the description read at scoring is the backstop |
 | Nothing pending | Every posting already has a disposition | `--redo` re-rules them, or fetch again |
 | A filter change seems to do nothing | Rows were already decided | `--redo`; without it only pending rows are considered |

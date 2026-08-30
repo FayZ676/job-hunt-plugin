@@ -72,7 +72,7 @@ put it somewhere else.
 
 It holds your profile — identity, the answers application forms ask for, your employers and
 projects, and what you're looking for — alongside every posting ever fetched, every prospect derived
-from one, the companies you watch, your filters, staged applications, and the history of each role. You never edit it by hand: tell
+from one, your filters, staged applications, and the history of each role. You never edit it by hand: tell
 Claude about a job you had, paste a resume, upload a CV, and it writes the rows. You talk; the data
 stays consistent. There are no per-day scan files — a scan updates the database, and a question
 about your search is a query. Because the raw layer is kept, "what did that filter cost me?" is also
@@ -111,7 +111,6 @@ You can start with just Node and add the rest before your first resume.
 | `/job setup` | First-run setup |
 | `/job` | All five phases |
 | `/job scan` | Scan and score |
-| `/job watchlist` | Search the companies you watch, whatever the title |
 | `/job resume <JD, URL, or key>` | Build one resume |
 | `/job apply <key or URL>` | Build and stage one application, stopping before submit |
 | `/job submit` | Review and submit whatever is staged |
@@ -128,8 +127,8 @@ yourself, which is the part worth your attention.
 ```
 
 That serves a local page on `127.0.0.1`: the jobs, each one opening on its full application with
-every drafted essay and flagged field in it, your whole profile with its unanswered fields called
-out, and the watchlist.
+every drafted essay and flagged field in it, and your whole profile with its unanswered fields
+called out.
 
 **The Profile page is editable.** Every box on it — your answers, your employers and projects, the
 bullets a resume draws on, your search criteria — saves

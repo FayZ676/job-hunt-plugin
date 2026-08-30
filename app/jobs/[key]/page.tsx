@@ -38,10 +38,8 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
           ["Compensation", posting.compensation || "—"],
           ["Posted", shortDate(posting.posted_at)],
           ["First seen", shortDate(posting.first_seen)],
-          ["Source", [posting.source, posting.ats].filter(Boolean)
-            .filter((name, index, all) => all.indexOf(name) === index).join(" · ") || "—"],
+          ["Source", posting.source || "—"],
           ["Posting", <Out key="u" href={posting.url}>open</Out>],
-          ["Apply", <Out key="a" href={posting.apply_url}>open</Out>],
           found.aliases.length > 0 && ["Also listed as", <Stamp key="x">{found.aliases.join(" · ")}</Stamp>],
         ]} />
       </Card>
@@ -57,7 +55,6 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
           <Card className="mb-4">
             <DefList pairs={[
               ["Form status", <Badge key="s">{staged.status}</Badge>],
-              ["ATS", staged.ats || "—"],
               ["Apply URL", <Out key="u" href={staged.url}>open</Out>],
               staged.blocked_on !== null &&
                 ["Blocked on", <span key="b" className="text-error">{staged.blocked_on}</span>],

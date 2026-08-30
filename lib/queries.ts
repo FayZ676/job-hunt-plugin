@@ -33,7 +33,6 @@ export const titles = () => listing("search_titles", "ORDER BY seq IS NULL, seq,
 
 export const jobs = () => rows(VIEWS.triage, "SELECT * FROM triage");
 export const stats = () => rows(VIEWS.stats, "SELECT status, n FROM stats");
-export const companies = () => rows(TABLES.companies, "SELECT * FROM companies ORDER BY ats, name");
 
 export function career(): Employer[] {
   const bullets = listing("project_bullets", "ORDER BY project_id, seq IS NULL, seq, rowid");
@@ -62,7 +61,6 @@ const ANSWER = TABLES.staged_fields.omit({ key: true });
 const EVENT = TABLES.events.pick({ at: true, status: true, note: true });
 
 export type Job = z.infer<typeof VIEWS.triage>;
-export type Company = z.infer<typeof TABLES.companies>;
 export type Posting = z.infer<typeof VIEWS.prospects>;
 export type Prospect = {
   posting: Posting;
@@ -78,7 +76,7 @@ export function prospect(key: string): Prospect | null {
   return {
     posting,
     events: rows(EVENT, "SELECT at, status, note FROM events WHERE key=? ORDER BY id", [key]),
-    staged: one(STAGED, "SELECT url, ats, screenshot, status, blocked_on FROM staged WHERE key=?", [key]),
+    staged: one(STAGED, "SELECT url, screenshot, status, blocked_on FROM staged WHERE key=?", [key]),
     fields: rows(ANSWER, "SELECT label, value, tier, flag FROM staged_fields WHERE key=? ORDER BY rowid", [key]),
     aliases: rows(z.object({ key: z.string() }),
                   "SELECT key FROM postings WHERE canonical_key=?", [key]).map((row) => row.key),
