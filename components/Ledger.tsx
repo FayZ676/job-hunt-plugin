@@ -88,7 +88,7 @@ export default function Ledger({
           {rows.map((row) => (
             <tr key={row.key} {...row.zone}
                 onClick={row.href ? follow(row.href) : undefined}
-                className={`group/row border-b border-base-200 last:border-0
+                className={`ledgerrow group/row border-b border-base-200 last:border-0
                   ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}>
               <td className={`${pad} pl-3 pr-0 align-top`}>
                 <span className="flex h-5 items-center"><Mark on={row.mark} /></span>

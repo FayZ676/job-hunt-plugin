@@ -9,8 +9,8 @@ import Mark from "./Mark";
 type Item = { href: string; label: string; icon: LucideIcon };
 
 const WORK: Item[] = [
-  { href: "/profile", label: "Profile", icon: User },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 const ASIDE: Item[] = [{ href: "/help", label: "Help", icon: CircleHelp }];

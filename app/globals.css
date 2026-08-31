@@ -152,7 +152,8 @@
   gap: 0.125rem 1.5rem;
 }
 
-.sheetrow .quietbox { margin-block: -0.25rem; }
+.sheetrow .quietbox,
+.ledgerrow .quietbox { margin-block: -0.25rem; }
 
 .twist { transition: transform 0.12s ease; }
 details[open] > summary .twist { transform: rotate(90deg); }

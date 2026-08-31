@@ -2,6 +2,9 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { GripVertical } from "lucide-react";
+
+import Glyph from "@/components/Glyph";
 
 import { answered } from "./answered";
 import { say } from "@/components/Toaster";
@@ -53,10 +56,10 @@ export function useReorder(table: string, rows: { rowid: number; seq?: unknown }
         event.preventDefault();
         move(place, place + step);
       }}
-      className="cursor-grab select-none px-1 leading-none text-soft transition-colors
+      className="flex cursor-grab select-none px-1 text-soft transition-colors
         hover:text-base-content active:cursor-grabbing"
     >
-      ⠿
+      <Glyph icon={GripVertical} />
     </span>
   );
 
