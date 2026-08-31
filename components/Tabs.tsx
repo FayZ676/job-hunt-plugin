@@ -27,7 +27,7 @@ export default function Tabs({ items, label = "Views" }: { items: Tab[]; label?:
             {icon}
             {text}
             {missing > 0 && (
-              <span className="tnum rounded-selector bg-signal px-1.5 py-px text-[11px]
+              <span className="tnum rounded-selector bg-signal px-1.5 py-px text-micro
                 font-semibold text-accent-content">
                 {missing}
                 <span className="sr-only"> unanswered</span>

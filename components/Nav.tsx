@@ -51,7 +51,7 @@ export default function Nav({ db }: { db: string }) {
         md:items-stretch md:gap-0 md:px-3 md:py-7">
         <p className="flex shrink-0 items-center gap-2 md:mb-6 md:px-2.5">
           <Mark size={18} />
-          <span className="font-display text-[0.8125rem] font-semibold uppercase
+          <span className="font-display text-mini font-semibold uppercase
             tracking-[0.14em]">Job</span>
         </p>
 
@@ -62,7 +62,7 @@ export default function Nav({ db }: { db: string }) {
         <div className="md:mt-auto md:space-y-8">
           <Links items={ASIDE} here={here} />
 
-          <p className="hidden break-all px-2.5 font-mono text-[10px] leading-relaxed text-soft
+          <p className="hidden break-all px-2.5 font-mono text-micro leading-relaxed text-soft
             md:block">
             <span className="eyebrow mb-1 block">Database</span>
             {db}

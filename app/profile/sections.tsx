@@ -1,6 +1,6 @@
 import Field from "@/components/edit/Field";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
-import { Disclosure, Sheet, Stack, type Band, type Note } from "@/components/ui";
+import { Disclosure, Sheet, Split, Stack, type Band, type Note } from "@/components/ui";
 import { identity, options } from "@/lib/web/queries";
 
 type Group = { label?: string; note?: string; fields: Column[] };
@@ -75,25 +75,23 @@ export function Identity() {
   const [reach, ...asked] = GROUPS();
 
   return (
-    <div className="@container">
-      <div className="grid items-start gap-4 @5xl:grid-cols-[minmax(0,1fr)_31rem]">
-        <Sheet label="10rem" bands={[band(reach)]} />
+    <Split rail={
+      <>
+        <Sheet bands={asked.map(band)} />
 
-        <div className="space-y-4">
-          <Sheet bands={asked.map(band)} />
-
-          <Stack>
-            <Disclosure
-              summary="Demographics"
-              aside={<span className="hidden text-xs text-soft @2xl:block">
-                Optional on most forms.
-              </span>}
-            >
-              <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
-            </Disclosure>
-          </Stack>
-        </div>
-      </div>
-    </div>
+        <Stack>
+          <Disclosure
+            summary="Demographics"
+            aside={<span className="hidden text-xs text-soft @2xl:block">
+              Optional on most forms.
+            </span>}
+          >
+            <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
+          </Disclosure>
+        </Stack>
+      </>
+    }>
+      <Sheet label="10rem" bands={[band(reach)]} />
+    </Split>
   );
 }

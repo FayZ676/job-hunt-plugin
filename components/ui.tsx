@@ -3,7 +3,7 @@ import Glyph from "./Glyph";
 import { reading } from "./status";
 
 export const ScreenHead = ({ kicker, headline, children }:
-  { kicker: string; headline: ReactNode; children?: ReactNode }) => (
+  { kicker: ReactNode; headline: ReactNode; children?: ReactNode }) => (
   <header className="mb-6">
     <p className="eyebrow">{kicker}</p>
     <p className="mt-2 max-w-3xl font-display text-xl font-medium leading-snug md:text-2xl">
@@ -15,7 +15,7 @@ export const ScreenHead = ({ kicker, headline, children }:
 
 export const Section = ({ title, sub, children, aside }:
   { title?: string; sub?: ReactNode; children: ReactNode; aside?: ReactNode }) => (
-  <section className="mb-9">
+  <section className="mb-8">
     {(title || sub || aside) && (
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
@@ -29,18 +29,38 @@ export const Section = ({ title, sub, children, aside }:
   </section>
 );
 
-export const Card = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={`rounded-box border border-base-300 bg-base-100 p-4 md:p-5 ${className}`}>
+export const Split = ({ children, rail, pinned }:
+  { children: ReactNode; rail?: ReactNode; pinned?: boolean }) => (
+  <div className="@container">
+    <div className="grid items-start gap-x-6 gap-y-8 @5xl:grid-cols-[minmax(0,1fr)_28rem]
+      [&>div>section]:mb-0">
+      <div className="order-2 flex min-w-0 flex-col gap-8 @5xl:order-1">{children}</div>
+      {rail && (
+        <div className={`order-1 flex flex-col gap-8 @5xl:order-2
+          ${pinned ? "@5xl:sticky @5xl:top-6" : ""}`}>
+          {rail}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+export const Card = ({ children, readout, className = "" }:
+  { children: ReactNode; readout?: boolean; className?: string }) => (
+  <div className={`${readout
+    ? "border-y border-base-300 py-4"
+    : "rounded-box border border-base-300 bg-base-100 p-4 md:p-5"} ${className}`}>
     {children}
   </div>
 );
 
 export const Empty = ({ children }: { children: ReactNode }) => (
-  <p className="px-3 py-3 text-sm text-soft">{children}</p>
+  <p className="px-3 py-2.5 text-sm text-soft">{children}</p>
 );
 
 export const Prose = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={`whitespace-pre-wrap break-words text-sm leading-relaxed ${className}`}>
+  <div className={`max-w-[72ch] whitespace-pre-wrap break-words text-sm leading-relaxed
+    ${className}`}>
     {children}
   </div>
 );
@@ -104,29 +124,33 @@ const BandHead = ({ label, note }: { label: string; note?: string }) => (
   </div>
 );
 
-export const Sheet = ({ bands, flush, label }: {
+export const Sheet = ({ bands, flush, readout, label }: {
   bands: (Band | false | null | undefined)[];
   flush?: boolean;
+  readout?: boolean;
   label?: string;
 }) => (
   <div style={label ? { "--label": label } as CSSProperties : undefined}
        className={flush
     ? ""
-    : "overflow-hidden rounded-box border border-base-300 bg-base-100"}>
+    : readout
+      ? "border-y border-base-300"
+      : "overflow-hidden rounded-box border border-base-300 bg-base-100"}>
     {bands.filter((band): band is Band => Boolean(band)).map((band, place) => (
       <section key={band.label ?? place}>
         {band.label && <BandHead label={band.label} note={band.note} />}
         <dl className="divide-y divide-base-200">
           {kept(band.notes).map((note, index) => (
-            <div key={index} className={`sheetrow px-3 py-2 ${note.flag ? "bg-error/10" : ""}`}>
-              <dt className="flex items-baseline gap-1.5 pt-1 text-sm text-soft">
+            <div key={index} className={`sheetrow py-1.5 ${readout ? "" : "px-3"}
+              ${note.flag ? "bg-error/10" : ""}`}>
+              <dt className="flex items-baseline gap-1.5 py-1 text-sm text-soft">
                 <span className="self-center"><Mark on={note.mark} /></span>
                 <span className="min-w-0">
                   {note.label}
                   {note.flag && <span className="block text-xs text-error">{note.flag}</span>}
                 </span>
               </dt>
-              <dd className="min-w-0 break-words pt-1 text-sm">{note.value}</dd>
+              <dd className="min-w-0 break-words py-1 text-sm">{note.value}</dd>
             </div>
           ))}
         </dl>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import type { MouseEvent, ReactNode } from "react";
 import { Empty, Mark } from "./ui";
 
 export type LedgerColumn = {
@@ -36,8 +37,16 @@ export default function Ledger({
   dense?: boolean;
   headless?: boolean;
 }) {
+  const router = useRouter();
   const pad = dense ? "py-1" : "py-2.5";
   const span = 2 + head.length + (grip ? 1 : 0) + (action ? 1 : 0);
+
+  const follow = (href: string) => (event: MouseEvent<HTMLTableRowElement>) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+    if ((event.target as HTMLElement).closest("a, button, input, select, textarea, label")) return;
+    if (!window.getSelection()?.isCollapsed) return;
+    router.push(href);
+  };
 
   return (
     <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100">
@@ -78,8 +87,9 @@ export default function Ledger({
 
           {rows.map((row) => (
             <tr key={row.key} {...row.zone}
+                onClick={row.href ? follow(row.href) : undefined}
                 className={`group/row border-b border-base-200 last:border-0
-                  ${row.href ? "transition-colors hover:bg-base-200" : ""}`}>
+                  ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}>
               <td className={`${pad} pl-3 pr-0 align-top`}>
                 <span className="flex h-5 items-center"><Mark on={row.mark} /></span>
               </td>

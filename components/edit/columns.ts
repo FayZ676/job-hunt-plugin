@@ -27,9 +27,9 @@ export const LINK = { type: "url", pattern: "https?://.+\\..+", placeholder: "ht
 
 export const COLUMNS = {
   education: [
-    { name: "degree", required: true, width: "40%" },
+    { name: "degree", required: true, width: "45%" },
     { name: "institution", width: "40%" },
-    { name: "finished", label: "year", ...WHEN, width: "20%" },
+    { name: "finished", label: "year", ...WHEN, width: "15%" },
   ],
   employers: [
     { name: "name", label: "employer", required: true },

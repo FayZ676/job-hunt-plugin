@@ -38,7 +38,7 @@ export default function Adder({ table, columns, seed = {}, label, hint }: {
   if (!open)
     return (
       <button type="button" onClick={() => setOpen(true)}
-              className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-sm text-soft
+              className="flex w-full items-center gap-1.5 px-3 py-2.5 text-left text-sm text-soft
                 transition-colors hover:bg-base-200 hover:text-base-content">
         <span aria-hidden className="font-mono">+</span>{label}
       </button>

@@ -1,6 +1,7 @@
 import CareerEditor from "./CareerEditor";
 import { Identity } from "./sections";
 import RecordList, { type Record_ } from "@/components/edit/RecordList";
+import { Split } from "@/components/ui";
 import { COLUMNS, type Column } from "@/components/edit/columns";
 import { career, education, experience } from "@/lib/web/queries";
 import type { Table } from "@/lib/core/schema";
@@ -13,7 +14,9 @@ type Panel = {
 };
 
 const records = (table: Table, columns: Column[], rows: Record_[], what: string, add: string) => (
-  <RecordList table={table} columns={columns} rows={rows} what={what} addLabel={add} />
+  <Split>
+    <RecordList table={table} columns={columns} rows={rows} what={what} addLabel={add} />
+  </Split>
 );
 
 export const PANELS: Record<string, Panel> = {

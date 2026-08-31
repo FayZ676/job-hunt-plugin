@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { ROOT } from "@/lib/core/root";
-import Ledger from "@/components/Ledger";
 import { Card, Prose, ScreenHead, Section, Sheet } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +62,7 @@ export default function HelpPage() {
     return (
       <>
         <ScreenHead kicker="Help" headline="Job commands" />
-        <Card><Prose className="font-mono text-xs">{raw}</Prose></Card>
+        <Card readout><Prose className="font-mono text-xs">{raw}</Prose></Card>
       </>
     );
   }
@@ -77,7 +76,7 @@ export default function HelpPage() {
       </ScreenHead>
 
       <Section title="Commands">
-        <Sheet bands={[{
+        <Sheet readout bands={[{
           notes: manual.commands.map(({ call, does }) => ({
             label: (
               <span className="font-mono text-sm text-base-content">
@@ -92,14 +91,11 @@ export default function HelpPage() {
 
       {manual.notes.length > 0 && (
         <Section title="Worth knowing">
-          <Ledger
-            headless
-            head={[{ label: "Note" }]}
-            rows={manual.notes.map((note) => ({
-              key: note,
-              cells: [<span key="n" className="leading-relaxed">{marked(note)}</span>],
-            }))}
-          />
+          <Card readout>
+            <div className="space-y-2 text-sm leading-relaxed">
+              {manual.notes.map((note) => <p key={note}>{marked(note)}</p>)}
+            </div>
+          </Card>
         </Section>
       )}
     </>

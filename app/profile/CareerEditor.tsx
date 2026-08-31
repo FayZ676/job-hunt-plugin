@@ -7,7 +7,7 @@ import DeleteButton from "@/components/edit/DeleteButton";
 import Field from "@/components/edit/Field";
 import RecordList from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
-import { Disclosure, Sheet, Stack, Stamp, type Note } from "@/components/ui";
+import { Disclosure, Empty, Sheet, Stack, Stamp, type Note } from "@/components/ui";
 import {
   lengthLabel, monthsBetween, spanLabel, today, when, type When,
 } from "@/components/format";
@@ -194,7 +194,7 @@ function EmployerPanel({ employer }: { employer: Employer }) {
           <Stack foot={<Adder table="projects" columns={COLUMNS.projects}
                               seed={{ employer_id: String(employer.rowid) }} label="Add project" />}>
             {employer.projects.length === 0 && (
-              <p className="px-3 py-3 text-sm text-soft">No projects here yet.</p>
+              <Empty>No projects here yet.</Empty>
             )}
             {employer.projects.map((project) => (
               <ProjectPanel key={project.rowid} project={project} />
@@ -273,12 +273,12 @@ export default function CareerEditor({ employers, experience }: {
 
   return (
     <div className="space-y-4">
-      <Sheet bands={[{ notes: summary }]} />
+      <Sheet readout bands={[{ notes: summary }]} />
 
       <Stack foot={<Adder table="employers" columns={COLUMNS.employers} label="Add an employer"
                           hint="Where you worked, what you were called, and when" />}>
         {ordered.length === 0 && (
-          <p className="px-3 py-3 text-sm text-soft">No employers yet.</p>
+          <Empty>No employers yet.</Empty>
         )}
         {ordered.map((employer) => {
           const start = opened(employer);
