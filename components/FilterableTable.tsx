@@ -3,7 +3,9 @@
 import { useState, type ReactNode } from "react";
 import Ledger, { type LedgerColumn } from "./Ledger";
 
-export type Facet = { key: string; label: string; count: number; quiet?: boolean };
+export type Facet = {
+  key: string; label: string; count: number; quiet?: boolean; icon?: ReactNode;
+};
 export type FacetGroup = { name: string; legend?: string; facets: Facet[] };
 export type FilterRow = {
   key: string;
@@ -65,15 +67,17 @@ export default function FilterableTable({
                     setPicked({ ...picked, [group.name]: on ? null : facet.key });
                     setPage(0);
                   }}
-                  className={`rounded-field border px-2 py-1 text-xs transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded-field border px-2 py-1
+                    text-xs transition-colors ${
                     on
                       ? "border-base-content bg-base-content text-base-100"
                       : facet.quiet
                         ? "border-base-300 text-soft hover:border-base-content hover:text-base-content"
                         : "border-base-300 text-base-content hover:border-base-content"}`}
                 >
+                  {facet.icon}
                   {facet.label}
-                  <span className={`tnum ml-1.5 font-mono ${on ? "opacity-70" : "text-soft"}`}>
+                  <span className={`tnum font-mono ${on ? "opacity-70" : "text-soft"}`}>
                     {facet.count}
                   </span>
                 </button>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Glyph from "./Glyph";
 import { reading } from "./status";
 
 export const ScreenHead = ({ kicker, headline, children }:
@@ -58,8 +59,14 @@ const STAGE_TEXT: Record<string, string> = {
 
 export const Badge = ({ children }: { children: string | null | undefined }) => {
   if (!children) return null;
-  const { label, stage } = reading(children);
-  return <span className={`whitespace-nowrap text-xs ${STAGE_TEXT[stage]}`}>{label}</span>;
+  const { label, stage, icon } = reading(children);
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs
+      ${STAGE_TEXT[stage]}`}>
+      <Glyph icon={icon} className={stage === "waiting" ? "text-signal" : ""} />
+      {label}
+    </span>
+  );
 };
 
 export const Score = ({ value }: { value: number | null }) => (

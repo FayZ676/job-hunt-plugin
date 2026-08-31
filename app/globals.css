@@ -75,23 +75,27 @@
   --font-display: var(--font-plex-condensed);
   --color-soft: var(--soft);
   --color-signal: var(--signal);
+  --color-blip: var(--blip);
 }
 
 :root {
   --soft: oklch(50% 0.018 258);
   --signal: oklch(54% 0.118 62);
+  --blip: oklch(52% 0.12 205);
   --label: 13rem;
 }
 
 [data-theme="night"] {
   --soft: oklch(70% 0.016 258);
   --signal: oklch(77% 0.128 70);
+  --blip: oklch(74% 0.11 205);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --soft: oklch(70% 0.016 258);
     --signal: oklch(77% 0.128 70);
+    --blip: oklch(74% 0.11 205);
   }
 }
 
@@ -99,6 +103,7 @@
   [data-theme="readout"] {
     --soft: oklch(50% 0.018 258);
     --signal: oklch(54% 0.118 62);
+    --blip: oklch(52% 0.12 205);
   }
 }
 

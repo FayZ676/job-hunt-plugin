@@ -2,31 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Briefcase, CircleHelp, SlidersHorizontal, User, type LucideIcon } from "lucide-react";
+import Glyph from "./Glyph";
+import Mark from "./Mark";
 
-const WORK = [
-  ["/profile", "Profile"],
-  ["/jobs", "Jobs"],
-  ["/criteria", "Search Criteria"],
+type Item = { href: string; label: string; icon: LucideIcon };
+
+const WORK: Item[] = [
+  { href: "/profile", label: "Profile", icon: User },
+  { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/criteria", label: "Search Criteria", icon: SlidersHorizontal },
 ];
 
-const ASIDE = [["/help", "Help"]];
+const ASIDE: Item[] = [{ href: "/help", label: "Help", icon: CircleHelp }];
 
-function Links({ items, here }: { items: string[][]; here: string }) {
+function Links({ items, here }: { items: Item[]; here: string }) {
   return (
     <ul className="flex min-w-0 gap-1 overflow-x-auto md:block md:space-y-0.5">
-      {items.map(([href, label]) => {
+      {items.map(({ href, label, icon }) => {
         const active = here.startsWith(href);
         return (
           <li key={href}>
             <Link
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`block whitespace-nowrap rounded-field px-2.5 py-1.5 text-sm
-                transition-colors ${
+              className={`flex items-center gap-2 whitespace-nowrap rounded-field px-2.5 py-1.5
+                text-sm transition-colors ${
                 active
                   ? "bg-base-200 font-medium text-base-content"
                   : "text-soft hover:bg-base-200 hover:text-base-content"}`}
             >
+              <Glyph icon={icon} />
               {label}
             </Link>
           </li>
@@ -44,7 +50,11 @@ export default function Nav({ db }: { db: string }) {
            md:border-b-0 md:border-r">
       <div className="flex items-center gap-4 px-4 py-3 md:sticky md:top-0 md:h-dvh md:flex-col
         md:items-stretch md:gap-0 md:px-3 md:py-7">
-        <p className="eyebrow shrink-0 md:mb-6 md:px-2.5">Job</p>
+        <p className="flex shrink-0 items-center gap-2 md:mb-6 md:px-2.5">
+          <Mark size={18} />
+          <span className="font-display text-[0.8125rem] font-semibold uppercase
+            tracking-[0.14em]">Job</span>
+        </p>
 
         <div className="min-w-0 flex-1 md:flex-none">
           <Links items={WORK} here={here} />

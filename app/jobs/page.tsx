@@ -1,6 +1,7 @@
 import FilterableTable from "@/components/FilterableTable";
 import { shortDate, shortPay, shortPlace } from "@/components/format";
 import { ORDER, rankOf, reading } from "@/components/status";
+import Glyph from "@/components/Glyph";
 import { Badge, Out, Score, ScreenHead, Stamp } from "@/components/ui";
 import { jobs, stats } from "@/lib/queries";
 
@@ -55,6 +56,7 @@ export default function JobsPage() {
             label: reading(status).label,
             count: counts[status],
             quiet: reading(status).stage === "closed",
+            icon: <Glyph icon={reading(status).icon} />,
           })),
         }]}
         rows={rows.map((job) => ({
