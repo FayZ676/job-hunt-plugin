@@ -1,7 +1,7 @@
 import Field from "@/components/edit/Field";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
 import { Disclosure, Sheet, Stack, type Note } from "@/components/ui";
-import { identity, options } from "@/lib/queries";
+import { identity, options } from "@/lib/web/queries";
 
 type Group = { label?: string; note?: string; fields: Column[] };
 

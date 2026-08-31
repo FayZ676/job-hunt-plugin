@@ -5,8 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 
-import { open } from "../lib/db.ts";
-import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES, build, type Density } from "../lib/typst.ts";
+import { open } from "../lib/core/db.ts";
+import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES, build, type Density } from "../lib/core/typst.ts";
 import { fail, guard } from "./kit.ts";
 
 const SPEC_HELP = (types: string) =>

@@ -2,7 +2,7 @@ import Field from "@/components/edit/Field";
 import RecordList, { type Record_ } from "@/components/edit/RecordList";
 import type { Column } from "@/components/edit/columns";
 import { Card, ScreenHead, Section } from "@/components/ui";
-import { scope, titles } from "@/lib/queries";
+import { scope, titles } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
 

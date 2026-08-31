@@ -1,8 +1,8 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { Command } from "commander";
 
-import { open } from "../lib/db.ts";
-import { printRows } from "../lib/table.ts";
+import { open } from "../lib/core/db.ts";
+import { printRows } from "../lib/core/table.ts";
 import { fail, guard } from "./kit.ts";
 
 const program = new Command("job-score").description(

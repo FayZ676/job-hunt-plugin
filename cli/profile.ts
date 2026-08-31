@@ -1,9 +1,9 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { Command } from "commander";
 
-import { ddl, open } from "../lib/db.ts";
-import { columns, sections, takes } from "../lib/schema.ts";
-import { printRows } from "../lib/table.ts";
+import { ddl, open } from "../lib/core/db.ts";
+import { columns, sections, takes } from "../lib/core/schema.ts";
+import { printRows } from "../lib/core/table.ts";
 import { fail, guard } from "./kit.ts";
 
 const FIELDS = () =>

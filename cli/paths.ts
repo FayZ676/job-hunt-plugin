@@ -1,5 +1,5 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { PATHS } from "../lib/db.ts";
+import { PATHS } from "../lib/core/db.ts";
 
 const requested = process.argv.slice(2).length ? process.argv.slice(2) : ["career"];
 const unknown = requested.find((name) => !(name in PATHS));

@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { z } from "zod";
 
-import { db } from "./db.ts";
-import { TABLES, type Table } from "./schema.ts";
+import { db } from "../core/db.ts";
+import { TABLES, type Table } from "../core/schema.ts";
 
 const WRITABLE = new Set<Table>([
   "identity",

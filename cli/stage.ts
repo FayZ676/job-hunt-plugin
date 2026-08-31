@@ -4,9 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 
-import { ddl, open } from "../lib/db.ts";
-import { vocabulary } from "../lib/schema.ts";
-import { printRows } from "../lib/table.ts";
+import { ddl, open } from "../lib/core/db.ts";
+import { vocabulary } from "../lib/core/schema.ts";
+import { printRows } from "../lib/core/table.ts";
 import { fail, guard } from "./kit.ts";
 
 const CLOSED = ["applied", "rejected", "closed"];

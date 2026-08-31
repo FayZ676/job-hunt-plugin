@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { CAREER, one } from "@/lib/db";
+import { CAREER, one } from "@/lib/core/db";
 
 const FROM = { resume: "postings", screenshot: "staged" } as const;
 

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { ROOT } from "@/lib/root";
+import { ROOT } from "@/lib/core/root";
 import Ledger from "@/components/Ledger";
 import { Card, Prose, ScreenHead, Section, Sheet } from "@/components/ui";
 

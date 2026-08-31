@@ -57,15 +57,18 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 | 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
 | 5 — Review and submit | `cli/submit.ts` | `review` `record` `rejected` |
 
-**One app, one language.** `lib/` holds everything both halves share — `schema.ts` (the typed
-mirror of the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`,
-`posting.ts`, `sources.ts`, `typst.ts` — and `sql/` sits under neither: `job.sql` and `profile.sql`
+**One app, one language.** `lib/` is three groups. `lib/core/` is what everything shares —
+`schema.ts` (the typed mirror of the SQL, and what a column takes), `db.ts` (paths and connect),
+`text.ts`, `table.ts`, `posting.ts`, `sources.ts`, `typst.ts`. `lib/phases/` is the phase logic,
+one file per `cli/` module and named the same: **`lib/phases/x.ts` decides and returns a value,
+`cli/x.ts` parses argv and prints it**, so a page and a command can call the one function.
+`lib/web/` is the dashboard's own half. `sql/` sits under none of them: `job.sql` and `profile.sql`
 are applied on every connect, from a page or a phase, so neither side owns the file that defines
 both.
 
 **The pages under `app/` are the only thing that writes the profile.** A page reads the rows it
-renders through `lib/queries.ts`, and a server action in `lib/actions.ts` writes the one column it
-was given. Everything under `components/edit/` writes and everything beside it only displays, so
+renders through `lib/web/queries.ts`, and a server action in `lib/web/actions.ts` writes the one
+column it was given. Everything under `components/edit/` writes and everything beside it only displays, so
 what can reach the database is the part of the tree you can point at.
 
 ```bash
@@ -145,7 +148,7 @@ goes out.
 out of one single-row table** — `identity`, which carries contact details, work authorization, when you could
 start, the compensation floor and the optional EEO answers — one column per question a form can ask, so
 `<section>.<name>` is a table and a column. `experience` answers the same way but is a view: the totals count themselves off
-`employers`, so a stored number cannot go stale or disagree with the resume. `lib/schema.ts` reads those declarations for both the dashboard's
+`employers`, so a stored number cannot go stale or disagree with the resume. `lib/core/schema.ts` reads those declarations for both the dashboard's
 controls and the CLI's errors, so there is one copy and not two, and a field added in SQL arrives in both
 on the next connect.
 
@@ -154,7 +157,7 @@ on the next connect.
 field, and the whole profile with its `NULL`s called out. **The Profile page
 writes.** Every box on it saves the moment it loses focus, and emptying one sets `NULL` — the user
 correcting their own answers is the one thing they should never need you for. Everything a phase
-decides — postings, scores, staged forms — is read-only there: `lib/actions.ts` names the profile
+decides — postings, scores, staged forms — is read-only there: `lib/web/actions.ts` names the profile
 tables it may write and refuses every other one, because the invariants that make those writes
 safe live here, not in a web page.
 

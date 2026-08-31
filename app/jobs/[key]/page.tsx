@@ -6,7 +6,7 @@ import {
 } from "@/components/ui";
 import { shortDate } from "@/components/format";
 import { reading } from "@/components/status";
-import { prospect } from "@/lib/queries";
+import { prospect } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
 

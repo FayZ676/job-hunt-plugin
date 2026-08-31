@@ -11,7 +11,7 @@ import { Disclosure, Sheet, Stack, Stamp, type Note } from "@/components/ui";
 import {
   lengthLabel, monthsBetween, spanLabel, today, when, type When,
 } from "@/components/format";
-import type { Employer, Project } from "@/lib/queries";
+import type { Employer, Project } from "@/lib/web/queries";
 
 type Experience = { clock_starts: string | null; years: number | null; relevant_years: number | null };
 

@@ -3,7 +3,7 @@ import { shortDate, shortPay, shortPlace } from "@/components/format";
 import { ORDER, rankOf, reading } from "@/components/status";
 import Glyph from "@/components/Glyph";
 import { Badge, Out, Score, ScreenHead, Stamp } from "@/components/ui";
-import { jobs, stats } from "@/lib/queries";
+import { jobs, stats } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { remove } from "@/lib/actions";
+import { remove } from "@/lib/web/actions";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 

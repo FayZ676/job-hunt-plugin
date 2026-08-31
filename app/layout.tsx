@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
 import Nav from "@/components/Nav";
 import Toaster from "@/components/Toaster";
-import { DB } from "@/lib/db";
+import { DB } from "@/lib/core/db";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({

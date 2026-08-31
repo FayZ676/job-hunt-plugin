@@ -1,4 +1,4 @@
-import { open } from "../lib/db.ts";
+import { open } from "../lib/core/db.ts";
 
 export function fail(message: string): never {
   console.error(message);

@@ -3,7 +3,7 @@ import Tabs from "@/components/Tabs";
 import { PANELS, slugFor } from "./panels";
 import { VocabularyProvider } from "@/components/edit/Vocabulary";
 import { ScreenHead } from "@/components/ui";
-import { answers, vocabularies } from "@/lib/queries";
+import { answers, vocabularies } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
 

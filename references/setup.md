@@ -19,7 +19,7 @@ NULL until answered: the profile is three single-row tables in `sql/profile.sql`
 and the columns are the schema — not something an interview or the dashboard adds to. They talk;
 you answer with `job-profile set <section>.<name> <value>`, which names the table and the column —
 one answer per call. If a form genuinely asks something no column covers, `ALTER TABLE` it into `sql/profile.sql` and add
-it to `lib/schema.ts`; it then appears in the dashboard on the next connect.
+it to `lib/core/schema.ts`; it then appears in the dashboard on the next connect.
 
 **Translate the answer into the column's shape**, rather than filing the sentence they said: "two
 weeks after an offer" is `identity.notice_period 2_weeks`. There is no start-date column — notice

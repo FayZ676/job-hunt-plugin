@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 
-import { SUBMITTED, open } from "../lib/db.ts";
-import { printRows } from "../lib/table.ts";
+import { SUBMITTED, open } from "../lib/core/db.ts";
+import { printRows } from "../lib/core/table.ts";
 import { fail, guard } from "./kit.ts";
 
 const absolute = (held: string) => path.resolve(held.replace(/^~(?=$|\/)/, os.homedir()));
