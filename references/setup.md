@@ -43,7 +43,10 @@ every table. Cover:
   those relate**, which is the judgement a list cannot hold. Keep the slopes they describe: "7+
   years only when the rest is a bullseye" is the answer, not a number. **Name the hard stops as
   hard stops** in the prose, or they read as a strong dislike. **A rule a pattern could decide is
-  a `filters` row** — a country, a title they never take, an agency name.
+  a `filters` row** — a country, a title they never take, an agency name. **A fact `identity`
+  already holds is not rubric material** — where they live, remote preference, relocation,
+  employment type, the floor. `job-score rubric` prints those above the prose, so restating them
+  only gives the two a chance to disagree.
 - **Their experience.** The longest part and the one that matters most: `employers` → `projects` is
   **the only source a resume may draw from**, so a thin profile produces thin resumes. Offer to read
   a resume, CV, or LinkedIn export and draft it for them to correct.

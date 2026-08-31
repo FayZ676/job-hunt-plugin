@@ -17,6 +17,32 @@ const program = new Command("job-score").description(
 
 A score sets the status by the threshold in settings, so the two cannot disagree.`);
 
+type Standing = {
+  location: string | null;
+  remote_preference: string | null;
+  willing_to_relocate: number | null;
+  employment_type: string | null;
+  compensation_floor: number | null;
+  compensation_currency: string | null;
+  requires_sponsorship_now_or_future: number | null;
+  legal_right_to_work_without_sponsorship: number | null;
+};
+
+const said = (value: string) => value.replace(/_/g, " ");
+
+const standing = (row: Standing | undefined) => [
+  row?.location && `Based in ${row.location}.`,
+  row?.remote_preference && `Wants ${said(row.remote_preference)} work.`,
+  row?.willing_to_relocate === 0 && "Will not relocate for a role.",
+  row?.willing_to_relocate === 1 && "Open to relocating.",
+  row?.employment_type && `Wants ${said(row.employment_type)} roles.`,
+  row?.compensation_floor
+    && `Will not go below ${row.compensation_floor} ${row.compensation_currency ?? ""}.`.trim(),
+  row?.requires_sponsorship_now_or_future === 0
+    && row?.legal_right_to_work_without_sponsorship === 1
+    && "Needs no visa sponsorship, now or later.",
+].filter((line): line is string => Boolean(line));
+
 program
   .command("triage")
   .description("the triage view: no descriptions, on purpose")
@@ -35,10 +61,18 @@ program
 
 program
   .command("rubric")
-  .description("the criteria scoring reads, strongest first within each kind")
+  .description("everything scoring reads: standing profile facts, the rubric, then titles")
   .option("--db <path>")
   .action(guard((options) => {
     const database = open(options.db);
+    const held = standing(database
+      .prepare("SELECT * FROM identity WHERE id=1")
+      .get() as Standing | undefined);
+    if (held.length) {
+      console.log("From the profile, and not up for debate:");
+      for (const line of held) console.log(`- ${line}`);
+      console.log("");
+    }
     const scope = database
       .prepare("SELECT worth_applying_to FROM search_scope WHERE id=1")
       .get() as { worth_applying_to: string | null };
