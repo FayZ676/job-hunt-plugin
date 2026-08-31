@@ -1,6 +1,6 @@
 import Field from "@/components/edit/Field";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
-import { Disclosure, Sheet, Stack, type Note } from "@/components/ui";
+import { Disclosure, Sheet, Stack, type Band, type Note } from "@/components/ui";
 import { identity, options } from "@/lib/web/queries";
 
 type Group = { label?: string; note?: string; fields: Column[] };
@@ -70,25 +70,30 @@ const noted = (row: Record<string, unknown>) => (column: Column): Note => {
 export function Identity() {
   const row = held();
   const note = noted(row);
+  const band = (group: Group): Band =>
+    ({ label: group.label, note: group.note, notes: group.fields.map(note) });
+  const [reach, ...asked] = GROUPS();
 
   return (
-    <div className="space-y-4">
-      <Sheet bands={GROUPS().map((group) => ({
-        label: group.label,
-        note: group.note,
-        notes: group.fields.map(note),
-      }))} />
+    <div className="@container">
+      <div className="grid items-start gap-4 @5xl:grid-cols-[minmax(0,1fr)_31rem]">
+        <Sheet label="10rem" bands={[band(reach)]} />
 
-      <Stack>
-        <Disclosure
-          summary="Demographics"
-          aside={<span className="hidden text-xs text-soft sm:block">
-            Optional on most forms. Answer only what you want reported.
-          </span>}
-        >
-          <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
-        </Disclosure>
-      </Stack>
+        <div className="space-y-4">
+          <Sheet bands={asked.map(band)} />
+
+          <Stack>
+            <Disclosure
+              summary="Demographics"
+              aside={<span className="hidden text-xs text-soft @2xl:block">
+                Optional on most forms.
+              </span>}
+            >
+              <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
+            </Disclosure>
+          </Stack>
+        </div>
+      </div>
     </div>
   );
 }

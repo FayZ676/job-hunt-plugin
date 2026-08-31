@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Glyph from "./Glyph";
 import { reading } from "./status";
 
@@ -104,11 +104,13 @@ const BandHead = ({ label, note }: { label: string; note?: string }) => (
   </div>
 );
 
-export const Sheet = ({ bands, flush }: {
+export const Sheet = ({ bands, flush, label }: {
   bands: (Band | false | null | undefined)[];
   flush?: boolean;
+  label?: string;
 }) => (
-  <div className={flush
+  <div style={label ? { "--label": label } as CSSProperties : undefined}
+       className={flush
     ? ""
     : "overflow-hidden rounded-box border border-base-300 bg-base-100"}>
     {bands.filter((band): band is Band => Boolean(band)).map((band, place) => (
