@@ -1,5 +1,6 @@
 import Field from "@/components/edit/Field";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
+import { Disclosure, Sheet, Stack, type Note } from "@/components/ui";
 import { identity, options } from "@/lib/queries";
 
 type Group = { label?: string; note?: string; fields: Column[] };
@@ -48,74 +49,46 @@ const GROUPS: () => Group[] = () => [
   },
 ];
 
-const OPTIONAL: () => Group = () => ({
-  fields: [
-    choice("gender"),
-    choice("race_ethnicity"),
-    choice("hispanic_or_latino"),
-    choice("veteran_status"),
-    choice("disability_status"),
-  ],
-});
+const OPTIONAL = [
+  "gender", "race_ethnicity", "hispanic_or_latino", "veteran_status", "disability_status",
+];
 
-function Row({ column, value }: { column: Column; value: unknown }) {
-  const answer = (value ?? null) as string | number | null;
-  const missing = answer === null;
-  return (
-    <div className="grid grid-cols-1 items-center gap-x-6 gap-y-0.5 px-4 py-1.5
-      sm:grid-cols-[13rem_minmax(0,1fr)]">
-      <label className="flex items-center gap-1.5 text-sm text-soft">
-        <span aria-hidden className={`size-1.5 shrink-0 rounded-full
-          ${missing ? "bg-signal" : "bg-transparent"}`} />
-        {title(column)}
-        {missing && <span className="sr-only">— needs an answer</span>}
-      </label>
+const noted = (row: Record<string, unknown>) => (column: Column): Note => {
+  const answer = (row[column.name] ?? null) as string | number | null;
+  return {
+    label: title(column),
+    mark: answer === null,
+    value: (
       <Field table="identity" rowid={1} value={answer}
-             column={{ ...column, quiet: true, blocking: true, label: title(column),
+             column={{ ...column, blocking: true, label: title(column),
                        className: column.options ? "max-w-64" : "max-w-xl",
                        placeholder: column.placeholder ?? "—" }} />
-    </div>
-  );
-}
-
-const Heading = ({ label, note }: { label: string; note?: string }) => (
-  <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-y border-base-200
-    bg-base-200 px-4 py-2 first:border-t-0">
-    <h3 className="eyebrow">{label}</h3>
-    {note && <p className="text-xs text-soft">{note}</p>}
-  </div>
-);
+    ),
+  };
+};
 
 export function Identity() {
   const row = held();
-  return (
-    <div className="overflow-hidden rounded-box border border-base-300 bg-base-100">
-      {GROUPS().map((group) => (
-        <section key={group.label}>
-          {group.label && <Heading label={group.label} note={group.note} />}
-          <div className="divide-y divide-base-200 py-1">
-            {group.fields.map((column) => (
-              <Row key={column.name} column={column} value={row[column.name]} />
-            ))}
-          </div>
-        </section>
-      ))}
+  const note = noted(row);
 
-      <details className="group border-t border-base-200">
-        <summary className="flex cursor-pointer list-none items-baseline gap-2 bg-base-200 px-4 py-2
-          transition-colors hover:bg-base-300 [&::-webkit-details-marker]:hidden">
-          <span aria-hidden className="text-soft transition-transform group-open:rotate-90">›</span>
-          <h3 className="eyebrow">Demographics</h3>
-          <p className="ml-auto text-xs text-soft">
+  return (
+    <div className="space-y-4">
+      <Sheet bands={GROUPS().map((group) => ({
+        label: group.label,
+        note: group.note,
+        notes: group.fields.map(note),
+      }))} />
+
+      <Stack>
+        <Disclosure
+          summary="Demographics"
+          aside={<span className="hidden text-xs text-soft sm:block">
             Optional on most forms. Answer only what you want reported.
-          </p>
-        </summary>
-        <div className="divide-y divide-base-200 py-1">
-          {OPTIONAL().fields.map((column) => (
-            <Row key={column.name} column={column} value={row[column.name]} />
-          ))}
-        </div>
-      </details>
+          </span>}
+        >
+          <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
+        </Disclosure>
+      </Stack>
     </div>
   );
 }

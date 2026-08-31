@@ -1,286 +1,211 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { save } from "@/lib/actions";
-import { answered } from "@/components/edit/answered";
-import { say } from "@/components/Toaster";
+import { Fragment } from "react";
 import Adder from "@/components/edit/Adder";
 import Chips from "@/components/edit/Chips";
 import DeleteButton from "@/components/edit/DeleteButton";
-import { useReorder } from "@/components/edit/reorder";
 import Field from "@/components/edit/Field";
 import RecordList from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
+import { Disclosure, Sheet, Stack, Stamp, type Note } from "@/components/ui";
 import {
-  lengthLabel, monthsBetween, spanLabel, today, when, whenLabel, type When,
+  lengthLabel, monthsBetween, spanLabel, today, when, type When,
 } from "@/components/format";
-import type { Bullet, Employer, Project } from "@/lib/queries";
+import type { Employer, Project } from "@/lib/queries";
 
 type Experience = { clock_starts: string | null; years: number | null; relevant_years: number | null };
 
-const BULLET_TARGET = 5;
-
 const editing = (table: string, rowid: number, values: Record<string, unknown>) =>
   (column: Column) => (
-    <Field table={table} rowid={rowid} column={{ quiet: true, ...column }}
+    <Field table={table} rowid={rowid} column={column}
            value={(values[column.name] ?? null) as string | number | null} />
   );
 
-const Inline = ({ width, children }: { width: string; children: React.ReactNode }) => (
-  <span className={`inline-block ${width}`}>{children}</span>
-);
+const held = (row: unknown) => row as unknown as Record<string, unknown>;
 
-function BulletMark({ count }: { count: number }) {
-  if (count === 0)
-    return <span className="whitespace-nowrap text-xs text-signal">no bullets yet</span>;
-  return (
-    <span className="flex shrink-0 items-center gap-1.5 text-xs text-soft">
-      <span aria-hidden className="flex gap-px">
-        {Array.from({ length: BULLET_TARGET }, (_, slot) => (
-          <span key={slot} className={`h-2.5 w-[3px] ${
-            slot < Math.min(count, BULLET_TARGET) ? "bg-base-content" : "bg-base-300"}`} />
-        ))}
-      </span>
-      <span className="tnum">{count}</span>
-      <span className="sr-only">bullets</span>
-    </span>
-  );
-}
-
-function Dates({ table, rowid, values }: {
+const Span = ({ table, rowid, values }: {
   table: string; rowid: number; values: Record<string, unknown>;
-}) {
+}) => {
   const edit = editing(table, rowid, values);
   const mono = "font-mono text-xs";
   return (
-    <>
-      <Inline width="w-24">{edit({ name: "start", label: "start", className: mono,
-                                   placeholder: "2024-06" })}</Inline>
+    <span className="flex items-baseline gap-2">
+      <span className="w-24">{edit({ name: "start", label: "start", className: mono,
+                                     placeholder: "2024-06" })}</span>
       <span aria-hidden className="text-soft">–</span>
-      <Inline width="w-24">{edit({ name: "finish", label: "finish", className: mono,
-                                   placeholder: values.current ? "now" : "2025-03" })}</Inline>
-    </>
+      <span className="w-24">{edit({ name: "finish", label: "finish", className: mono,
+                                     placeholder: values.current ? "now" : "2025-03" })}</span>
+    </span>
   );
-}
+};
 
-function Bullets({ project }: { project: Project }) {
-  const rows = project.bullets;
-  const { Grip, dropzone } = useReorder("project_bullets", rows);
-
-  return (
-    <section>
-      <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-4">
-        <h5 className="eyebrow">Bullets</h5>
-        <p className="text-xs text-soft">A tailored resume draws on these sentences and no others.</p>
-      </div>
-
-      {rows.length === 0 && (
-        <p className="py-2 text-sm text-soft">
-          Nothing here yet. Until this project has a bullet, no resume can use it.
-        </p>
-      )}
-
-      <ol>
-        {rows.map((bullet: Bullet, place: number) => {
-          const line = editing("project_bullets", bullet.rowid,
-                               bullet as unknown as Record<string, unknown>);
-          return (
-            <li key={bullet.rowid} {...dropzone(place)}
-                className="group/row flex items-start gap-2 border-b border-base-200 py-1">
-              <span className="shrink-0 pt-1.5">
-                <Grip place={place} what="this bullet" />
-              </span>
-              <div className="min-w-0 flex-1">
-                {line({ name: "text", label: "bullet", kind: "area", required: true, rows: 1,
-                        placeholder: "What you did, and what came of it" })}
-              </div>
-              <span className="flex shrink-0 items-center pt-1 opacity-0 transition-opacity
-                group-hover/row:opacity-100 group-focus-within/row:opacity-100">
-                <DeleteButton table="project_bullets" rowid={bullet.rowid} what="this bullet" />
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-
-      <Adder table="project_bullets" columns={[COLUMNS.bullets[0]]}
-             seed={{ project_id: String(project.rowid) }} label="Add bullet" />
-    </section>
-  );
-}
+const Trash = ({ table, rowid, what, says }: {
+  table: string; rowid: number; what: string; says: string;
+}) => (
+  <div className="mt-6 flex items-center gap-2 text-xs text-soft">
+    <DeleteButton table={table} rowid={rowid} what={what} />
+    {says}
+  </div>
+);
 
 function ProjectPanel({ project }: { project: Project }) {
   const seed = { project_id: String(project.rowid) };
-  const edit = editing("projects", project.rowid, project as unknown as Record<string, unknown>);
-  const start = when(project.start);
-  const finish = when(project.finish);
-  const dates = spanLabel(start, finish, false);
+  const values = held(project);
+  const edit = editing("projects", project.rowid, values);
+  const dates = spanLabel(when(project.start), when(project.finish), false);
+  const bullets = project.bullets.length;
 
   return (
-    <details className="group border-b border-base-200 last:border-0">
-      <summary className="-mx-2 flex cursor-pointer list-none items-baseline gap-3 rounded-field
-        px-2 py-2.5 transition-colors hover:bg-base-200 [&::-webkit-details-marker]:hidden">
-        <span aria-hidden
-              className="shrink-0 text-soft transition-transform group-open:rotate-90">›</span>
-        <span className="min-w-0 flex-1 truncate font-medium">{project.name}</span>
-        {dates && <span className="tnum hidden font-mono text-xs text-soft sm:block">{dates}</span>}
-        <BulletMark count={project.bullets.length} />
-      </summary>
+    <Disclosure
+      mark={bullets === 0}
+      summary={project.name}
+      aside={
+        <span className="flex shrink-0 items-baseline gap-4">
+          {dates && <Stamp>{dates}</Stamp>}
+          <span className={`tnum text-xs ${bullets === 0 ? "text-signal" : "text-soft"}`}>
+            {bullets} bullet{bullets === 1 ? "" : "s"}
+          </span>
+        </span>
+      }
+    >
+      <div className="space-y-6">
+        <Sheet bands={[{
+          notes: [
+            { label: "Project", value: edit({ name: "name", required: true,
+                                              className: "font-medium max-w-md" }) },
+            { label: "Status", value: <span className="block max-w-48">
+                {edit({ name: "status", vocabulary: "status" })}
+              </span> },
+            { label: "Ran", value: <Span table="projects" rowid={project.rowid} values={values} /> },
+            { label: "What it was", value: edit({ name: "summary", kind: "area",
+                label: "what it was", placeholder: "One sentence on what this project was." }) },
+          ],
+        }]} />
 
-      <div className="space-y-7 pb-7 pl-5 pr-1 pt-3">
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          <label className="block">
-            <span className="eyebrow block">Project</span>
-            <Inline width="w-56">{edit({ name: "name", required: true,
-                                         className: "font-medium" })}</Inline>
-          </label>
-          <label className="block">
-            <span className="eyebrow block">Status</span>
-            <Inline width="w-36">{edit({ name: "status", vocabulary: "status" })}</Inline>
-          </label>
-          <div>
-            <span className="eyebrow block">Ran</span>
-            <Dates table="projects" rowid={project.rowid}
-                   values={project as unknown as Record<string, unknown>} />
-          </div>
-        </div>
-
-        <div>
-          <h5 className="eyebrow mb-1">What it was</h5>
-          {edit({ name: "summary", kind: "area", label: "what it was",
-                  placeholder: "One sentence on what this project was." })}
-        </div>
-
-        <Bullets project={project} />
         <section>
-          <h5 className="eyebrow mb-2">Technologies</h5>
-          <Chips table="project_technologies" column="technology" rows={project.technologies}
-                 seed={seed} placeholder="add one, then enter" />
-          <p className="mt-1.5 text-xs text-soft">
-            What a job description is matched against.
-          </p>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
+            <h5 className="eyebrow">Bullets</h5>
+            <p className="text-xs text-soft">
+              A tailored resume draws on these sentences and no others.
+            </p>
+          </div>
+          <RecordList
+            table="project_bullets"
+            columns={[COLUMNS.bullets[0]]}
+            rows={project.bullets}
+            seed={seed}
+            what="this bullet"
+            addLabel="Add bullet"
+            empty="Nothing here yet. Until this project has a bullet, no resume can use it."
+            ordered
+          />
         </section>
 
-        <div className="grid gap-7 md:grid-cols-2">
-          <section>
-            <h5 className="eyebrow mb-2">Metrics</h5>
-            <RecordList table="project_metrics" columns={COLUMNS.metrics} rows={project.metrics}
-                        seed={seed} what="this metric" addLabel="Add metric"
-                        empty="Numbers you can stand behind land hardest on a resume." />
-          </section>
-          <section>
-            <h5 className="eyebrow mb-2">Links</h5>
-            <RecordList table="project_links" columns={COLUMNS.links} rows={project.links}
-                        seed={seed} what="this link" addLabel="Add link" />
-          </section>
-        </div>
+        <section>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
+            <h5 className="eyebrow">Technologies</h5>
+            <p className="text-xs text-soft">What a job description is matched against.</p>
+          </div>
+          <Chips table="project_technologies" column="technology" rows={project.technologies}
+                 seed={seed} placeholder="add one, then enter" />
+        </section>
+
+        <section>
+          <h5 className="eyebrow mb-2">Metrics</h5>
+          <RecordList table="project_metrics" columns={COLUMNS.metrics} rows={project.metrics}
+                      seed={seed} what="this metric" addLabel="Add metric"
+                      empty="Numbers you can stand behind land hardest on a resume." />
+        </section>
+
+        <section>
+          <h5 className="eyebrow mb-2">Links</h5>
+          <RecordList table="project_links" columns={COLUMNS.links} rows={project.links}
+                      seed={seed} what="this link" addLabel="Add link" />
+        </section>
 
         <section>
           <h5 className="eyebrow mb-2">Notes to yourself</h5>
-          <div className="space-y-1">
-            {edit({ name: "shared_with", label: "shared with",
-                    placeholder: "Who else worked on it" })}
-            {edit({ name: "notes", kind: "area",
-                    placeholder: "Anything worth remembering when this comes up in an interview" })}
-          </div>
+          <Sheet bands={[{
+            notes: [
+              { label: "Shared with", value: edit({ name: "shared_with", label: "shared with",
+                  placeholder: "Who else worked on it" }) },
+              { label: "Notes", value: edit({ name: "notes", kind: "area",
+                  placeholder: "Anything worth remembering when this comes up in an interview" }) },
+            ],
+          }]} />
         </section>
 
-        <div className="flex items-center gap-2 border-t border-base-200 pt-4 text-xs text-soft">
-          <DeleteButton table="projects" rowid={project.rowid} what={project.name} />
-          Delete this project and everything under it.
-        </div>
+        <Trash table="projects" rowid={project.rowid} what={project.name}
+               says="Delete this project and everything under it." />
       </div>
-    </details>
+    </Disclosure>
   );
 }
 
-function EmployerBlock({ employer, gap }: { employer: Employer; gap: string | null }) {
-  const held = employer as unknown as Record<string, unknown>;
-  const edit = editing("employers", employer.rowid, held);
+function EmployerPanel({ employer }: { employer: Employer }) {
+  const values = held(employer);
+  const edit = editing("employers", employer.rowid, values);
   const start = when(employer.start);
-  const finish = when(employer.finish);
   const current = employer.current === 1;
-  const length = start ? lengthLabel(monthsBetween(start, current ? today() : finish ?? start)) : null;
-  const bullets = employer.projects.reduce((sum, project) => sum + project.bullets.length, 0);
+  const finish = when(employer.finish);
+  const length = start
+    ? lengthLabel(monthsBetween(start, current ? today() : finish ?? start))
+    : null;
+  const thin = employer.projects.filter((project) => project.bullets.length === 0).length;
 
   return (
-    <>
-      <div className="md:grid md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-x-6">
-        <p className="eyebrow tnum mb-1 md:mb-0 md:pt-2 md:text-right">
-          {start ? whenLabel(start).replace(" ", " ") : "undated"}
-        </p>
+    <Disclosure
+      mark={thin > 0}
+      summary={employer.name}
+      aside={
+        <span className="hidden shrink-0 items-baseline gap-4 sm:flex">
+          <span className="text-xs text-soft">{employer.title}</span>
+          <Stamp>{spanLabel(start, finish, current)}</Stamp>
+          {length && <span className="text-xs text-soft">{length}</span>}
+        </span>
+      }
+    >
+      <div className="space-y-6">
+        <Sheet bands={[{
+          notes: [
+            { label: "Employer", value: edit({ name: "name", label: "employer", required: true,
+                                               className: "font-medium max-w-md" }) },
+            { label: "Your title", value: edit({ name: "title", label: "your title",
+                placeholder: "Your title there", className: "max-w-md" }) },
+            { label: "There", value: <Span table="employers" rowid={employer.rowid}
+                                           values={values} /> },
+            { label: "Still there", value: <span className="block max-w-32">
+                {edit({ name: "current", label: "still there",
+                        options: [["1", "still there"], ["0", "left"]], required: true })}
+              </span> },
+            { label: "What the company does", value: edit({ name: "context", kind: "area",
+                label: "what the company does",
+                placeholder: "What does this company do? One or two lines is plenty." }) },
+          ],
+        }]} />
 
-        <div className="spine relative pb-10 pl-5">
-          <span aria-hidden className={`absolute -left-[3.5px] top-2.5 size-[7px] rounded-full
-            ${current ? "bg-signal" : "bg-base-content"}`} />
-
-          <div className="flex flex-wrap items-baseline gap-x-3">
-            <Inline width="w-full max-w-md">
-              {edit({ name: "name", label: "employer", required: true,
-                      className: "font-display text-lg font-semibold tracking-tight" })}
-            </Inline>
+        <section>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
+            <h5 className="eyebrow">Projects</h5>
+            <p className="text-xs text-soft">
+              A project is one piece of work, with the bullets that describe it.
+            </p>
           </div>
-          <Inline width="w-full max-w-md">
-            {edit({ name: "title", label: "your title", placeholder: "Your title there",
-                    className: "text-sm" })}
-          </Inline>
-
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
-            <Dates table="employers" rowid={employer.rowid} values={held} />
-            <Inline width="w-28">
-              {edit({ name: "current", label: "still there",
-                      options: [["1", "still there"], ["0", "left"]], required: true,
-                      className: "text-xs" })}
-            </Inline>
-            {length && <span className="text-xs text-soft">{length}</span>}
-          </div>
-
-          <div className="mt-3 max-w-2xl">
-            {edit({ name: "context", kind: "area", label: "what the company does",
-                    placeholder: "What does this company do? One or two lines is plenty." })}
-          </div>
-
-          <div className="mt-6">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-              <h4 className="eyebrow">Projects</h4>
-              <p className="tnum text-xs text-soft">
-                {employer.projects.length} project{employer.projects.length === 1 ? "" : "s"}
-                {" · "}{bullets} bullet{bullets === 1 ? "" : "s"}
-              </p>
-            </div>
-
+          <Stack foot={<Adder table="projects" columns={COLUMNS.projects}
+                              seed={{ employer_id: String(employer.rowid) }} label="Add project" />}>
             {employer.projects.length === 0 && (
-              <p className="py-2 text-sm text-soft">
-                No projects here yet. A project is the unit a resume is built from — one piece of
-                work, with the bullets that describe it.
-              </p>
+              <p className="px-3 py-3 text-sm text-soft">No projects here yet.</p>
             )}
+            {employer.projects.map((project) => (
+              <ProjectPanel key={project.rowid} project={project} />
+            ))}
+          </Stack>
+        </section>
 
-            <div className="mt-1 border-t border-base-200">
-              {employer.projects.map((project) => (
-                <ProjectPanel key={project.rowid} project={project} />
-              ))}
-            </div>
-
-            <Adder table="projects" columns={COLUMNS.projects}
-                   seed={{ employer_id: String(employer.rowid) }} label="Add project" />
-          </div>
-
-          <div className="mt-6 flex items-center gap-2 text-xs text-soft">
-            <DeleteButton table="employers" rowid={employer.rowid} what={employer.name} />
-            Delete this employer, its projects and their bullets.
-          </div>
-        </div>
+        <Trash table="employers" rowid={employer.rowid} what={employer.name}
+               says="Delete this employer, its projects and their bullets." />
       </div>
-
-      {gap && (
-        <div className="md:grid md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-x-6">
-          <span />
-          <p className="spine-gap py-3 pl-5 text-xs text-soft">{gap} with no role recorded</p>
-        </div>
-      )}
-    </>
+    </Disclosure>
   );
 }
 
@@ -315,53 +240,62 @@ export default function CareerEditor({ employers, experience }: {
   const thin = employers.flatMap((employer) => employer.projects)
     .filter((project) => project.bullets.length === 0).length;
 
-  return (
-    <div>
-      <div className="mb-8 flex flex-wrap items-baseline gap-x-8 gap-y-2 border-b border-base-300
-        pb-5">
-        <p className="text-sm">
-          {experience.years === null ? (
+  const summary: Note[] = [
+    {
+      label: "Years of experience",
+      mark: experience.years === null,
+      value: experience.years === null
+        ? <span className="text-soft">
+            No dates on file yet, so a form asking for years of experience has nothing to answer
+            with.
+          </span>
+        : <>
+            <span className="tnum font-medium">{experience.years} years</span>
             <span className="text-soft">
-              No dates on file yet, so a form asking for years of experience has nothing to answer
-              with.
+              , {experience.relevant_years} of them relevant, counted from{" "}
+              {experience.clock_starts}. Correct a date below; there is no total to edit.
             </span>
-          ) : (
-            <>
-              <span className="tnum font-medium">{experience.years} years</span>
-              <span className="text-soft">
-                {" "}of experience, {experience.relevant_years} of them relevant, counted from{" "}
-                {experience.clock_starts}. Correct a date below; there is no total to edit.
-              </span>
-            </>
-          )}
-        </p>
-        <p className="tnum ml-auto text-xs text-soft">
-          {employers.length} employers · {projects} projects · {bullets} bullets
-          {thin > 0 && (
-            <span className="text-signal">
-              {" · "}{thin} project{thin === 1 ? "" : "s"} with no bullet
-            </span>
-          )}
-        </p>
-      </div>
+          </>,
+    },
+    {
+      label: "What a resume can draw on",
+      mark: thin > 0,
+      value: <span className="tnum">
+        {employers.length} employers · {projects} projects · {bullets} bullets
+        {thin > 0 && (
+          <span className="text-signal">
+            {" · "}{thin} project{thin === 1 ? "" : "s"} with no bullet
+          </span>
+        )}
+      </span>,
+    },
+  ];
 
-      {ordered.map((employer) => {
-        const start = opened(employer);
-        const covered = start ? covering(ordered, start) : null;
-        const idle = start && covered ? monthsBetween(covered, start) : 0;
-        return (
-          <EmployerBlock key={employer.rowid} employer={employer}
-                         gap={idle >= GAP_MONTHS ? lengthLabel(idle) : null} />
-        );
-      })}
+  return (
+    <div className="space-y-4">
+      <Sheet bands={[{ notes: summary }]} />
 
-      <div className="md:grid md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-x-6">
-        <span />
-        <div className="pl-5">
-          <Adder table="employers" columns={COLUMNS.employers} label="Add an employer"
-                 hint="Where you worked, what you were called, and when" />
-        </div>
-      </div>
+      <Stack foot={<Adder table="employers" columns={COLUMNS.employers} label="Add an employer"
+                          hint="Where you worked, what you were called, and when" />}>
+        {ordered.length === 0 && (
+          <p className="px-3 py-3 text-sm text-soft">No employers yet.</p>
+        )}
+        {ordered.map((employer) => {
+          const start = opened(employer);
+          const covered = start ? covering(ordered, start) : null;
+          const idle = start && covered ? monthsBetween(covered, start) : 0;
+          return (
+            <Fragment key={employer.rowid}>
+              <EmployerPanel employer={employer} />
+              {idle >= GAP_MONTHS && (
+                <p className="border-b border-base-200 px-3 py-2 text-xs text-soft last:border-0">
+                  {lengthLabel(idle)} with no role recorded
+                </p>
+              )}
+            </Fragment>
+          );
+        })}
+      </Stack>
     </div>
   );
 }

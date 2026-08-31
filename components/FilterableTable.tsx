@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { DataTable } from "./ui";
+import Ledger, { type LedgerColumn } from "./Ledger";
 
 export type Facet = { key: string; label: string; count: number; quiet?: boolean };
 export type FacetGroup = { name: string; legend?: string; facets: Facet[] };
 export type FilterRow = {
   key: string;
   href?: string;
+  mark?: boolean;
   facets: string[];
   haystack: string;
   cells: ReactNode[];
@@ -18,7 +19,7 @@ const PAGE = 15;
 export default function FilterableTable({
   head, rows, groups = [], placeholder, empty,
 }: {
-  head: { label: string; hideNarrow?: boolean; numeric?: boolean }[];
+  head: LedgerColumn[];
   rows: FilterRow[];
   groups?: FacetGroup[];
   placeholder: string;
@@ -82,8 +83,10 @@ export default function FilterableTable({
         ))}
       </div>
 
-      <DataTable head={head} rows={shown.slice(here * PAGE, here * PAGE + PAGE)}
-                 empty={narrowed ? "Nothing matches that. Clear the search and filters to see the rest." : empty} />
+      <Ledger head={head} rows={shown.slice(here * PAGE, here * PAGE + PAGE)}
+              empty={narrowed
+                ? "Nothing matches that. Clear the search and filters to see the rest."
+                : empty} />
 
       {pages > 1 && (
         <div className="flex items-center gap-4">

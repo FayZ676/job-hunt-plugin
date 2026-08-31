@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { ROOT } from "@/lib/root";
-import { Card, Prose, ScreenHead, Section } from "@/components/ui";
+import Ledger from "@/components/Ledger";
+import { Card, Prose, ScreenHead, Section, Sheet } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -76,31 +77,29 @@ export default function HelpPage() {
       </ScreenHead>
 
       <Section title="Commands">
-        <dl className="rounded-box border border-base-300 bg-base-100">
-          {manual.commands.map(({ call, does }) => (
-            <div key={call}
-                 className="grid gap-1 border-b border-base-300 p-3 last:border-0
-                   sm:grid-cols-[16rem_minmax(0,1fr)] sm:items-baseline sm:gap-4">
-              <dt className="font-mono text-sm">
+        <Sheet bands={[{
+          notes: manual.commands.map(({ call, does }) => ({
+            label: (
+              <span className="font-mono text-sm text-base-content">
                 <span className="text-soft">/job</span>
                 {call !== "(none)" && ` ${call}`}
-              </dt>
-              <dd className="text-sm">{does}</dd>
-            </div>
-          ))}
-        </dl>
+              </span>
+            ),
+            value: does,
+          })),
+        }]} />
       </Section>
 
       {manual.notes.length > 0 && (
         <Section title="Worth knowing">
-          <ul className="space-y-2">
-            {manual.notes.map((note) => (
-              <li key={note} className="flex gap-2.5 text-sm leading-relaxed">
-                <span aria-hidden className="mt-2 size-1 shrink-0 rounded-full bg-base-300" />
-                <span>{marked(note)}</span>
-              </li>
-            ))}
-          </ul>
+          <Ledger
+            headless
+            head={[{ label: "Note" }]}
+            rows={manual.notes.map((note) => ({
+              key: note,
+              cells: [<span key="n" className="leading-relaxed">{marked(note)}</span>],
+            }))}
+          />
         </Section>
       )}
     </>

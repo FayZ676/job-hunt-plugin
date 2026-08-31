@@ -1,5 +1,4 @@
 import FilterableTable from "@/components/FilterableTable";
-import Rail from "@/components/Rail";
 import { shortDate, shortPay, shortPlace } from "@/components/format";
 import { ORDER, rankOf, reading } from "@/components/status";
 import { Badge, Out, Score, ScreenHead, Stamp } from "@/components/ui";
@@ -34,17 +33,19 @@ export default function JobsPage() {
 
   return (
     <>
-      <ScreenHead kicker="Jobs" headline={headline(count("shortlisted"), count("staged"))}>
-        <Rail tallies={tallies} />
-      </ScreenHead>
+      <ScreenHead kicker="Jobs" headline={headline(count("shortlisted"), count("staged"))} />
       <FilterableTable
         placeholder="company, title or location"
         empty="Nothing scanned yet. Run the job routine and openings land here."
         head={[
-          { label: "Company" }, { label: "Title" }, { label: "Score", numeric: true },
-          { label: "Status" }, { label: "Location", hideNarrow: true },
-          { label: "Pay", hideNarrow: true, numeric: true },
-          { label: "Seen", hideNarrow: true }, { label: "Resume", hideNarrow: true },
+          { label: "Company", width: "16%" },
+          { label: "Title", width: "26%" },
+          { label: "Score", width: "6%", numeric: true },
+          { label: "Status", width: "12%" },
+          { label: "Location", width: "20%", hideNarrow: true },
+          { label: "Pay", width: "8%", hideNarrow: true, numeric: true },
+          { label: "Seen", width: "6%", hideNarrow: true },
+          { label: "Resume", width: "6%", hideNarrow: true },
         ]}
         groups={[{
           name: "status",
@@ -59,6 +60,7 @@ export default function JobsPage() {
         rows={rows.map((job) => ({
           key: job.key,
           href: `/jobs/${encodeURIComponent(job.key)}`,
+          mark: reading(job.status).stage === "waiting",
           facets: job.status ? [job.status] : [],
           haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
           cells: [

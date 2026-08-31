@@ -11,7 +11,7 @@ import { useVocabulary } from "./Vocabulary";
 type State = "" | "saving" | "saved" | "failed";
 
 const TONE: Record<State, string> = {
-  "": "", saving: "primary", saved: "success", failed: "error",
+  "": "", saving: "", saved: "success", failed: "error",
 };
 
 type Entry = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -26,13 +26,10 @@ export function Control({ column, value, onValue, onCommit, state = "", autoFocu
 }) {
   const vocabulary = useVocabulary();
   const options = column.options ?? (column.vocabulary && vocabulary[column.vocabulary]);
-  const look = options ? "select" : column.kind === "area" ? "textarea" : "input";
   const tone = TONE[state] || (column.blocking && !value ? "error" : "");
 
-  const dressed = column.quiet
-    ? `${options ? "select select-sm select-ghost w-full" : "quietbox"}
-       ${tone === "error" ? "quiet-missing" : ""} ${tone === "success" ? "quiet-saved" : ""}`
-    : `${look} ${look}-sm w-full ${tone ? `${look}-${tone}` : ""}`;
+  const dressed = `quietbox ${tone === "error" ? "quiet-missing" : ""}
+    ${tone === "success" ? "quiet-saved" : ""}`;
 
   const shared = {
     className: `${dressed} ${column.className ?? ""}`,

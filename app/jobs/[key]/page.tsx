@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Ledger from "@/components/Ledger";
 import {
-  Badge, Card, DataTable, DefList, Label, Out, PageHeader, Prose, Score, Section, Stamp,
+  Badge, Card, Out, Prose, Score, ScreenHead, Section, Sheet, Stamp,
 } from "@/components/ui";
 import { shortDate } from "@/components/format";
+import { reading } from "@/components/status";
 import { prospect } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -20,29 +22,34 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
 
   return (
     <>
-      <Link href="/jobs" className="link link-primary text-sm">← Jobs</Link>
-      <PageHeader
-        title={`${posting.company} — ${posting.title}`}
-        sub={
-          <span className="flex items-center gap-2">
-            <Score value={posting.score} /> ·
-            <Badge>{posting.status}</Badge> ·
-            <Stamp>{posting.key}</Stamp>
-          </span>
-        }
-      />
+      <Link href="/jobs"
+            className="text-sm text-soft underline decoration-base-300 underline-offset-2
+              transition-colors hover:text-base-content hover:decoration-current">
+        ← Jobs
+      </Link>
+      <ScreenHead kicker={posting.company} headline={posting.title}>
+        <p className="mt-2 flex items-center gap-3 text-sm">
+          <Score value={posting.score} />
+          <Badge>{posting.status}</Badge>
+          <Stamp>{posting.key}</Stamp>
+        </p>
+      </ScreenHead>
 
-      <Card className="mb-8">
-        <DefList pairs={[
-          ["Location", posting.location || (posting.remote ? "Remote" : "—")],
-          ["Compensation", posting.compensation || "—"],
-          ["Posted", shortDate(posting.posted_at)],
-          ["First seen", shortDate(posting.first_seen)],
-          ["Source", posting.source || "—"],
-          ["Posting", <Out key="u" href={posting.url}>open</Out>],
-          found.aliases.length > 0 && ["Also listed as", <Stamp key="x">{found.aliases.join(" · ")}</Stamp>],
-        ]} />
-      </Card>
+      <Section title="Opening">
+        <Sheet bands={[{
+          notes: [
+            { label: "Location", value: posting.location || (posting.remote ? "Remote" : "—") },
+            { label: "Compensation", value: posting.compensation || "—" },
+            { label: "Posted", value: shortDate(posting.posted_at) },
+            { label: "First seen", value: shortDate(posting.first_seen) },
+            { label: "Source", value: posting.source || "—" },
+            { label: "Posting", value: <Out href={posting.url}>open</Out> },
+            found.aliases.length > 0 && {
+              label: "Also listed as", value: <Stamp>{found.aliases.join(" · ")}</Stamp>,
+            },
+          ],
+        }]} />
+      </Section>
 
       {posting.reason && (
         <Section title="Why this score">
@@ -52,60 +59,59 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
 
       {staged && (
         <Section title="Staged application">
-          <Card className="mb-4">
-            <DefList pairs={[
-              ["Form status", <Badge key="s">{staged.status}</Badge>],
-              ["Apply URL", <Out key="u" href={staged.url}>open</Out>],
-              staged.blocked_on !== null &&
-                ["Blocked on", <span key="b" className="text-error">{staged.blocked_on}</span>],
-            ]} />
-          </Card>
+          <div className="space-y-4">
+            <Sheet bands={[{
+              notes: [
+                {
+                  label: "Form status",
+                  value: <Badge>{staged.status}</Badge>,
+                  mark: reading(staged.status).stage === "waiting",
+                },
+                { label: "Apply URL", value: <Out href={staged.url}>open</Out> },
+                staged.blocked_on !== null && {
+                  label: "Blocked on",
+                  value: <span className="text-error">{staged.blocked_on}</span>,
+                  mark: true,
+                },
+              ],
+            }]} />
 
-          {TIERS.map((tier) => {
-            const answers = found.fields.filter((field) => field.tier === tier);
-            if (!answers.length) return null;
-            return (
-              <div key={tier} className="mb-4">
-                <Label>{tier}</Label>
-                <Card className="space-y-2 !p-0">
-                  {answers.map((answer, index) => (
-                    <div key={index}
-                         className={`grid gap-1 border-b border-base-300 p-3 last:border-0
-                           sm:grid-cols-[14rem_minmax(0,1fr)] ${answer.flag ? "bg-error/10" : ""}`}>
-                      <div className="text-sm opacity-60">
-                        {answer.label}
-                        {answer.flag && <div className="text-xs text-error">{answer.flag}</div>}
-                      </div>
-                      <Prose>{answer.value}</Prose>
-                    </div>
-                  ))}
-                </Card>
+            <Sheet bands={TIERS.map((tier) => ({
+              label: tier,
+              notes: found.fields.filter((field) => field.tier === tier).map((answer) => ({
+                label: answer.label,
+                value: <Prose>{answer.value}</Prose>,
+                flag: answer.flag,
+                mark: Boolean(answer.flag),
+              })),
+            })).filter((band) => band.notes.length > 0)} />
+
+            {staged.screenshot && (
+              <div>
+                <h3 className="eyebrow mb-2">Filled form</h3>
+                <img src={asset("screenshot")} alt="the filled application form"
+                     className="w-full rounded-box border border-base-300 bg-white" />
               </div>
-            );
-          })}
-
-          {staged.screenshot && (
-            <>
-              <Label>Filled form</Label>
-              <img src={asset("screenshot")} alt="the filled application form"
-                   className="w-full rounded-box border border-base-300 bg-white" />
-            </>
-          )}
+            )}
+          </div>
         </Section>
       )}
 
       {posting.resume && (
-        <Section title="Resume" sub={<Stamp>{posting.resume}</Stamp>}>
+        <Section title="Resume" sub={posting.resume}>
           <iframe src={asset("resume")} title="resume"
                   className="h-[780px] w-full rounded-box border border-base-300 bg-white" />
         </Section>
       )}
 
       <Section title="History">
-        <DataTable
-          head={[{ label: "When" }, { label: "Status" }, { label: "Note" }]}
+        <Ledger
+          head={[{ label: "When", width: "22%" },
+                 { label: "Status", width: "22%" },
+                 { label: "Note" }]}
           rows={found.events.map((event, index) => ({
             key: String(index),
+            mark: reading(event.status).stage === "waiting",
             cells: [<Stamp key="w">{event.at}</Stamp>,
                     <Badge key="s">{event.status}</Badge>,
                     event.note],

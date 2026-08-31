@@ -26,8 +26,11 @@ export default function Toaster() {
 
   if (!note) return null;
   return (
-    <div className="toast toast-center toast-bottom z-50">
-      <div role="status" className={`alert ${note.bad ? "alert-error" : "alert-info"}`}>
+    <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+      <div role="status"
+           className={`rounded-box border px-3 py-2 text-sm shadow-sm ${note.bad
+             ? "border-error bg-error text-error-content"
+             : "border-base-content bg-base-content text-base-100"}`}>
         {note.message}
       </div>
     </div>

@@ -1,15 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { reading } from "./status";
-
-export const PageHeader = ({ title, sub, children }:
-  { title: string; sub?: ReactNode; children?: ReactNode }) => (
-  <header className="mb-6">
-    <h1 className="font-display text-xl font-semibold tracking-tight md:text-2xl">{title}</h1>
-    {sub && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-soft">{sub}</p>}
-    {children}
-  </header>
-);
 
 export const ScreenHead = ({ kicker, headline, children }:
   { kicker: string; headline: ReactNode; children?: ReactNode }) => (
@@ -26,10 +16,10 @@ export const Section = ({ title, sub, children, aside }:
   { title?: string; sub?: ReactNode; children: ReactNode; aside?: ReactNode }) => (
   <section className="mb-9">
     {(title || sub || aside) && (
-      <div className="mb-3 flex items-baseline justify-between gap-4">
-        <div>
-          {title && <h2 className="font-display text-base font-semibold tracking-tight">{title}</h2>}
-          {sub && <p className="mt-0.5 text-sm text-soft">{sub}</p>}
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div className="min-w-0">
+          {title && <h2 className="eyebrow">{title}</h2>}
+          {sub && <p className="mt-0.5 max-w-2xl text-xs text-soft">{sub}</p>}
         </div>
         {aside}
       </div>
@@ -44,12 +34,8 @@ export const Card = ({ children, className = "" }: { children: ReactNode; classN
   </div>
 );
 
-export const Label = ({ children }: { children: ReactNode }) => (
-  <h3 className="eyebrow mb-2">{children}</h3>
-);
-
 export const Empty = ({ children }: { children: ReactNode }) => (
-  <p className="py-6 text-sm text-soft">{children}</p>
+  <p className="px-3 py-3 text-sm text-soft">{children}</p>
 );
 
 export const Prose = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
@@ -58,11 +44,11 @@ export const Prose = ({ children, className = "" }: { children: ReactNode; class
   </div>
 );
 
-const STAGE_MARK: Record<string, string> = {
-  waiting: "bg-signal",
-  live: "bg-base-content",
-  closed: "bg-base-300",
-};
+export const Mark = ({ on }: { on?: boolean }) => (
+  <span aria-hidden
+        className={`inline-block size-1.5 shrink-0 rounded-full
+          ${on ? "bg-signal" : "bg-transparent"}`} />
+);
 
 const STAGE_TEXT: Record<string, string> = {
   waiting: "font-medium text-base-content",
@@ -73,12 +59,7 @@ const STAGE_TEXT: Record<string, string> = {
 export const Badge = ({ children }: { children: string | null | undefined }) => {
   if (!children) return null;
   const { label, stage } = reading(children);
-  return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${STAGE_TEXT[stage]}`}>
-      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${STAGE_MARK[stage]}`} />
-      {label}
-    </span>
-  );
+  return <span className={`whitespace-nowrap text-xs ${STAGE_TEXT[stage]}`}>{label}</span>;
 };
 
 export const Score = ({ value }: { value: number | null }) => (
@@ -103,54 +84,70 @@ export const Out = ({ href, children }: { href: string | null; children?: ReactN
     </a>
   ) : <span className="text-soft">—</span>;
 
-export const DataTable = ({ head, rows, empty = "Nothing here yet." }: {
-  head: { label: string; hideNarrow?: boolean; numeric?: boolean }[];
-  rows: { key: string; href?: string; cells: ReactNode[] }[];
-  empty?: string;
-}) => rows.length === 0 ? <Empty>{empty}</Empty> : (
-  <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100">
-    <table className="w-full text-sm">
-      <thead>
-        <tr className="border-b border-base-300">
-          {head.map((column) => (
-            <th key={column.label} scope="col"
-                className={`eyebrow whitespace-nowrap px-3 py-2.5 text-left font-medium
-                  ${column.hideNarrow ? "hidden md:table-cell" : ""}`}>
-              {column.label}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.key}
-              className="border-b border-base-300 transition-colors last:border-0 hover:bg-base-200">
-            {row.cells.map((cell, index) => (
-              <td key={head[index].label}
-                  className={`px-3 py-2.5 align-top
-                    ${head[index].numeric ? "tnum" : ""}
-                    ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}>
-                {index === 0 && row.href
-                  ? <Link href={row.href} className="block hover:underline">{cell}</Link>
-                  : cell}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+export type Note = { label: ReactNode; value: ReactNode; mark?: boolean; flag?: ReactNode };
+export type Band = { label?: string; note?: string; notes: (Note | false | null | undefined)[] };
+
+const kept = (notes: Band["notes"]) => notes.filter((note): note is Note => Boolean(note));
+
+const BandHead = ({ label, note }: { label: string; note?: string }) => (
+  <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-y border-base-200
+    bg-base-200 px-3 py-2 first:border-t-0">
+    <h3 className="eyebrow">{label}</h3>
+    {note && <p className="text-xs text-soft">{note}</p>}
   </div>
 );
 
-type Pair = [string, ReactNode];
-
-export const DefList = ({ pairs }: { pairs: (Pair | false | null | undefined)[] }) => (
-  <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[10rem_minmax(0,1fr)]">
-    {pairs.filter((pair): pair is Pair => Boolean(pair)).map(([label, node]) => (
-      <div key={label} className="contents">
-        <dt className="text-soft">{label}</dt>
-        <dd className="mb-2 min-w-0 break-words sm:mb-0">{node}</dd>
-      </div>
+export const Sheet = ({ bands, flush }: {
+  bands: (Band | false | null | undefined)[];
+  flush?: boolean;
+}) => (
+  <div className={flush
+    ? ""
+    : "overflow-hidden rounded-box border border-base-300 bg-base-100"}>
+    {bands.filter((band): band is Band => Boolean(band)).map((band, place) => (
+      <section key={band.label ?? place}>
+        {band.label && <BandHead label={band.label} note={band.note} />}
+        <dl className="divide-y divide-base-200">
+          {kept(band.notes).map((note, index) => (
+            <div key={index} className={`sheetrow px-3 py-2 ${note.flag ? "bg-error/10" : ""}`}>
+              <dt className="flex items-baseline gap-1.5 pt-1 text-sm text-soft">
+                <span className="self-center"><Mark on={note.mark} /></span>
+                <span className="min-w-0">
+                  {note.label}
+                  {note.flag && <span className="block text-xs text-error">{note.flag}</span>}
+                </span>
+              </dt>
+              <dd className="min-w-0 break-words pt-1 text-sm">{note.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     ))}
-  </dl>
+  </div>
+);
+
+export const Stack = ({ children, foot }: { children: ReactNode; foot?: ReactNode }) => (
+  <div className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+    {children}
+    {foot && <div className="border-t border-base-300">{foot}</div>}
+  </div>
+);
+
+export const Disclosure = ({ summary, aside, mark, children, className = "" }: {
+  summary: ReactNode;
+  aside?: ReactNode;
+  mark?: boolean;
+  children: ReactNode;
+  className?: string;
+}) => (
+  <details className={`border-b border-base-200 last:border-0 ${className}`}>
+    <summary className="flex cursor-pointer list-none items-baseline gap-2 px-3 py-2.5
+      transition-colors hover:bg-base-200 [&::-webkit-details-marker]:hidden">
+      <span className="self-center"><Mark on={mark} /></span>
+      <span aria-hidden className="twist shrink-0 text-soft">›</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{summary}</span>
+      {aside}
+    </summary>
+    <div className="px-3 pb-7 pt-3 sm:pl-[calc(0.75rem+1.5rem)]">{children}</div>
+  </details>
 );

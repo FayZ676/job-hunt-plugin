@@ -12,7 +12,6 @@ export type Column = {
   blocking?: boolean;
   width?: string;
   placeholder?: string;
-  quiet?: boolean;
   className?: string;
   rows?: number;
 };
@@ -28,24 +27,23 @@ export const LINK = { type: "url", pattern: "https?://.+\\..+", placeholder: "ht
 
 export const COLUMNS = {
   education: [
-    { name: "degree", required: true, width: "minmax(0,1.2fr)" },
-    { name: "institution", width: "minmax(0,1.2fr)" },
-    { name: "finished", label: "year", ...WHEN, width: "minmax(0,0.6fr)" },
+    { name: "degree", required: true, width: "40%" },
+    { name: "institution", width: "40%" },
+    { name: "finished", label: "year", ...WHEN, width: "20%" },
   ],
   employers: [
-    { name: "name", label: "employer", required: true, width: "minmax(0,1.4fr)" },
-    { name: "title", label: "your title", width: "minmax(0,1.4fr)" },
-    { name: "start", ...WHEN, width: "minmax(0,0.7fr)" },
-    { name: "finish", ...WHEN, width: "minmax(0,0.7fr)" },
-    { name: "current", label: "still there",
-      options: YES_NO, required: true, width: "minmax(0,0.7fr)" },
+    { name: "name", label: "employer", required: true },
+    { name: "title", label: "your title" },
+    { name: "start", ...WHEN },
+    { name: "finish", ...WHEN },
+    { name: "current", label: "still there", options: YES_NO, required: true },
   ],
   employerContext: [{ name: "context", label: "what the company does", kind: "area" }],
   projects: [
-    { name: "name", label: "project", required: true, width: "minmax(0,1.6fr)" },
-    { name: "status", vocabulary: "status", width: "minmax(0,0.9fr)" },
-    { name: "start", ...WHEN, width: "minmax(0,0.7fr)" },
-    { name: "finish", ...WHEN, width: "minmax(0,0.7fr)" },
+    { name: "name", label: "project", required: true },
+    { name: "status", vocabulary: "status" },
+    { name: "start", ...WHEN },
+    { name: "finish", ...WHEN },
   ],
   projectDetail: [
     { name: "summary", kind: "area", label: "what it was" },
@@ -53,12 +51,12 @@ export const COLUMNS = {
     { name: "notes", kind: "area" },
   ],
   bullets: [
-    { name: "text", label: "bullet", kind: "area", required: true, width: "minmax(0,1fr)" },
-    { name: "seq", label: "order", type: "number", min: 0, step: 1, width: "minmax(0,0.4fr)" },
+    { name: "text", label: "bullet", kind: "area", required: true },
+    { name: "seq", label: "order", type: "number", min: 0, step: 1 },
   ],
   metrics: [{ name: "metric", kind: "area", required: true }],
   links: [
-    { name: "label", required: true, width: "minmax(0,0.8fr)" },
-    { name: "url", ...LINK, required: true, width: "minmax(0,2fr)" },
+    { name: "label", required: true, width: "30%" },
+    { name: "url", ...LINK, required: true, width: "70%" },
   ],
 } satisfies Record<string, Column[]>;

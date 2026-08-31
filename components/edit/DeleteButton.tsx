@@ -13,7 +13,8 @@ export default function DeleteButton({ table, rowid, what = "this" }:
       type="button"
       aria-label={`delete ${what}`}
       title={`delete ${what}`}
-      className="btn btn-sm btn-square btn-ghost hover:btn-error"
+      className="rounded-field px-1.5 leading-none text-soft transition-colors
+        hover:bg-base-200 hover:text-error"
       onClick={async () => {
         if (!confirm(`Delete ${what}? It is gone from your profile for good.`)) return;
         const result = await answered(remove(table, rowid));
