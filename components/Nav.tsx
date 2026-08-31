@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CircleHelp, SlidersHorizontal, User, type LucideIcon } from "lucide-react";
+import { Briefcase, CircleHelp, User, type LucideIcon } from "lucide-react";
 import Glyph from "./Glyph";
 import Mark from "./Mark";
 
@@ -11,7 +11,6 @@ type Item = { href: string; label: string; icon: LucideIcon };
 const WORK: Item[] = [
   { href: "/profile", label: "Profile", icon: User },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
-  { href: "/criteria", label: "Search Criteria", icon: SlidersHorizontal },
 ];
 
 const ASIDE: Item[] = [{ href: "/help", label: "Help", icon: CircleHelp }];
