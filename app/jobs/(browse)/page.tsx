@@ -19,7 +19,7 @@ export default function JobsPage() {
   return (
     <FilterableTable
       placeholder="company, title or location"
-      empty="Nothing scanned yet. Run the job routine and openings land here."
+      empty="Nothing scanned yet."
       head={[
         { label: "Company", width: "16%" },
         { label: "Title", width: "26%" },

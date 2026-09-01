@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 type Panel = {
-  title?: string; tab: string; sub?: string; covers?: string[]; icon: LucideIcon;
+  tab: string; covers?: string[]; icon: LucideIcon;
   body: () => ReactNode;
 };
 
@@ -30,25 +30,19 @@ export const PANELS: Record<string, Panel> = {
 
   career: {
     tab: "Work history",
-    sub: "Employers, the projects inside them, and the bullets a resume is built from. Every"
-      + " application the app writes is assembled out of this page.",
     covers: ["career", "experience"],
     icon: BriefcaseBusiness,
     body: () => <CareerEditor employers={career()} experience={experience()} />,
   },
   education: {
     tab: "Education",
-    sub: "Degrees, and the years forms ask you to confirm.",
     icon: GraduationCap,
     body: () => records("education", COLUMNS.education, education() as Record_[],
                         "this degree", "Add a degree"),
   },
 
   instructions: {
-    title: "Instructions for the search",
     tab: "Instructions",
-    sub: "Everything above says who you are. This says what to do with it, and every search and"
-      + " every score reads it.",
     icon: NotebookPen,
     body: () => <Instructions />,
   },

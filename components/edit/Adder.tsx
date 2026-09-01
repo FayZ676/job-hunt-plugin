@@ -8,12 +8,11 @@ import { answered } from "./answered";
 import { Control } from "./Field";
 import { title, type Column } from "./columns";
 
-export default function Adder({ table, columns, seed = {}, label, hint }: {
+export default function Adder({ table, columns, seed = {}, label }: {
   table: string;
   columns: Column[];
   seed?: Record<string, string>;
   label: string;
-  hint?: string;
 }) {
   const blank = Object.fromEntries(columns.map((column) => [column.name, ""]));
   const [draft, setDraft] = useState<Record<string, string>>(blank);
@@ -55,8 +54,6 @@ export default function Adder({ table, columns, seed = {}, label, hint }: {
         add();
       }}
     >
-      {hint && <p className="eyebrow">{hint}</p>}
-
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
         {columns.map((column, index) => (
           <label key={column.name} className="min-w-40 flex-1">

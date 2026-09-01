@@ -78,17 +78,12 @@ function ProjectPanel({ project }: { project: Project }) {
               </span> },
             { label: "Ran", value: <Span table="projects" rowid={project.rowid} values={values} /> },
             { label: "What it was", value: edit({ name: "summary", kind: "area",
-                label: "what it was", placeholder: "One sentence on what this project was." }) },
+                label: "what it was" }) },
           ],
         }]} />
 
         <section>
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
-            <h5 className="eyebrow">Bullets</h5>
-            <p className="text-xs text-soft">
-              A tailored resume draws on these sentences and no others.
-            </p>
-          </div>
+          <h5 className="eyebrow mb-2">Bullets</h5>
           <RecordList
             table="project_bullets"
             columns={[COLUMNS.bullets[0]]}
@@ -96,16 +91,13 @@ function ProjectPanel({ project }: { project: Project }) {
             seed={seed}
             what="this bullet"
             addLabel="Add bullet"
-            empty="Nothing here yet. Until this project has a bullet, no resume can use it."
+            empty="No bullets yet."
             ordered
           />
         </section>
 
         <section>
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
-            <h5 className="eyebrow">Technologies</h5>
-            <p className="text-xs text-soft">What a job description is matched against.</p>
-          </div>
+          <h5 className="eyebrow mb-2">Technologies</h5>
           <Chips table="project_technologies" column="technology" rows={project.technologies}
                  seed={seed} placeholder="add one, then enter" />
         </section>
@@ -114,7 +106,7 @@ function ProjectPanel({ project }: { project: Project }) {
           <h5 className="eyebrow mb-2">Metrics</h5>
           <RecordList table="project_metrics" columns={COLUMNS.metrics} rows={project.metrics}
                       seed={seed} what="this metric" addLabel="Add metric"
-                      empty="Numbers you can stand behind land hardest on a resume." />
+                      empty="No metrics yet." />
         </section>
 
         <section>
@@ -127,10 +119,9 @@ function ProjectPanel({ project }: { project: Project }) {
           <h5 className="eyebrow mb-2">Notes to yourself</h5>
           <Sheet bands={[{
             notes: [
-              { label: "Shared with", value: edit({ name: "shared_with", label: "shared with",
-                  placeholder: "Who else worked on it" }) },
-              { label: "Notes", value: edit({ name: "notes", kind: "area",
-                  placeholder: "Anything worth remembering when this comes up in an interview" }) },
+              { label: "Shared with", value: edit({ name: "shared_with",
+                  label: "shared with" }) },
+              { label: "Notes", value: edit({ name: "notes", kind: "area" }) },
             ],
           }]} />
         </section>
@@ -171,7 +162,7 @@ function EmployerPanel({ employer }: { employer: Employer }) {
             { label: "Employer", value: edit({ name: "name", label: "employer", required: true,
                                                className: "font-medium max-w-md" }) },
             { label: "Your title", value: edit({ name: "title", label: "your title",
-                placeholder: "Your title there", className: "max-w-md" }) },
+                className: "max-w-md" }) },
             { label: "There", value: <Span table="employers" rowid={employer.rowid}
                                            values={values} /> },
             { label: "Still there", value: <span className="block max-w-32">
@@ -179,18 +170,12 @@ function EmployerPanel({ employer }: { employer: Employer }) {
                         options: [["1", "still there"], ["0", "left"]], required: true })}
               </span> },
             { label: "What the company does", value: edit({ name: "context", kind: "area",
-                label: "what the company does",
-                placeholder: "What does this company do? One or two lines is plenty." }) },
+                label: "what the company does" }) },
           ],
         }]} />
 
         <section>
-          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
-            <h5 className="eyebrow">Projects</h5>
-            <p className="text-xs text-soft">
-              A project is one piece of work, with the bullets that describe it.
-            </p>
-          </div>
+          <h5 className="eyebrow mb-2">Projects</h5>
           <Stack foot={<Adder table="projects" columns={COLUMNS.projects}
                               seed={{ employer_id: String(employer.rowid) }} label="Add project" />}>
             {employer.projects.length === 0 && (
@@ -245,17 +230,13 @@ export default function CareerEditor({ employers, experience }: {
       label: "Years of experience",
       mark: experience.years === null,
       value: experience.years === null
-        ? <span className="text-soft">
-            No dates on file yet, so a form asking for years of experience has nothing to answer
-            with.
-          </span>
-        : <>
-            <span className="tnum font-medium">{experience.years} years</span>
+        ? <span className="text-soft">—</span>
+        : <span className="tnum">
+            <span className="font-medium">{experience.years} years</span>
             <span className="text-soft">
-              , {experience.relevant_years} of them relevant, counted from{" "}
-              {experience.clock_starts}. Correct a date below; there is no total to edit.
+              {" · "}{experience.relevant_years} relevant · since {experience.clock_starts}
             </span>
-          </>,
+          </span>,
     },
     {
       label: "What a resume can draw on",
@@ -275,8 +256,8 @@ export default function CareerEditor({ employers, experience }: {
     <div className="space-y-4">
       <Sheet readout bands={[{ notes: summary }]} />
 
-      <Stack foot={<Adder table="employers" columns={COLUMNS.employers} label="Add an employer"
-                          hint="Where you worked, what you were called, and when" />}>
+      <Stack foot={<Adder table="employers" columns={COLUMNS.employers}
+                          label="Add an employer" />}>
         {ordered.length === 0 && (
           <Empty>No employers yet.</Empty>
         )}

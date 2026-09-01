@@ -47,7 +47,7 @@ export const COLUMNS = {
   ],
   projectDetail: [
     { name: "summary", kind: "area", label: "what it was" },
-    { name: "shared_with", label: "shared with", placeholder: "one other engineer" },
+    { name: "shared_with", label: "shared with" },
     { name: "notes", kind: "area" },
   ],
   bullets: [

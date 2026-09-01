@@ -14,7 +14,7 @@ const GROUPS: () => Group[] = () => [
     label: "How to reach you",
     fields: [
       { name: "full_name" },
-      { name: "preferred_name", placeholder: "What you go by, if it differs" },
+      { name: "preferred_name" },
       { name: "last_name" },
       { name: "email", ...EMAIL },
       { name: "phone", type: "tel", pattern: "[^A-Za-z]{7,}", placeholder: "555-555-0100" },
@@ -26,7 +26,6 @@ const GROUPS: () => Group[] = () => [
   },
   {
     label: "Work authorization",
-    note: "Asked on nearly every form.",
     fields: [
       { name: "authorized_in_country_of_residence", options: YES_NO },
       { name: "legal_right_to_work_without_sponsorship", options: YES_NO },
@@ -42,8 +41,7 @@ const GROUPS: () => Group[] = () => [
       choice("employment_type"),
       choice("remote_preference"),
       { name: "willing_to_relocate", options: YES_NO },
-      { name: "compensation_floor", type: "number", min: 0, step: 1,
-        placeholder: "The lowest number you would sign" },
+      { name: "compensation_floor", type: "number", min: 0, step: 1, placeholder: "120000" },
       { name: "compensation_currency", pattern: "[A-Z]{3}", placeholder: "USD" },
     ],
   },
@@ -80,12 +78,7 @@ export function Identity() {
         <Sheet bands={asked.map(band)} />
 
         <Stack>
-          <Disclosure
-            summary="Demographics"
-            aside={<span className="hidden text-xs text-soft @2xl:block">
-              Optional on most forms.
-            </span>}
-          >
+          <Disclosure summary="Demographics">
             <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
           </Disclosure>
         </Stack>
@@ -99,10 +92,8 @@ export function Identity() {
 const INSTRUCTIONS: Column = {
   name: "text", kind: "area",
   className: "pane-max",
-  placeholder: "The work to go looking for, in the words a job board would use for it, "
-    + "strongest first — then what makes an opening worth applying to, what puts you off, and "
-    + "what makes it a no outright, including the seniority you are after and the years a posting "
-    + "may ask for. Written the way you would brief someone reading the JD on your behalf.",
+  placeholder: "Titles to look for, strongest first. Then the seniority you want, what makes an "
+    + "opening worth applying to, and what rules one out.",
 };
 
 export function Instructions() {

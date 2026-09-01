@@ -7,7 +7,6 @@ import { Card, Prose, ScreenHead, Section, Sheet } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 type Manual = {
-  lead: string;
   commands: { call: string; does: string }[];
   notes: string[];
 };
@@ -17,9 +16,6 @@ const NOTE = /^ {2}(\S.*)$/;
 
 function parse(text: string): Manual {
   const lines = text.split("\n");
-  const said = lines.slice(0, lines.findIndex((line) => line.trim() === ""))
-    .join(" ").replace(/^job — /, "").replace(/\s+/g, " ").trim();
-  const lead = said.charAt(0).toUpperCase() + said.slice(1);
 
   const commands: Manual["commands"] = [];
   const notes: string[] = [];
@@ -41,7 +37,7 @@ function parse(text: string): Manual {
     }
   }
 
-  return { lead, commands, notes };
+  return { commands, notes };
 }
 
 const TICKS = /`([^`]+)`/g;
@@ -69,11 +65,7 @@ export default function HelpPage() {
 
   return (
     <div className="max-w-4xl">
-      <ScreenHead headline={manual.lead}>
-        <p className="mt-3 text-sm text-soft">
-          Every command is typed into Claude Code, not a shell.
-        </p>
-      </ScreenHead>
+      <ScreenHead headline="Job commands" />
 
       <Section title="Commands">
         <Sheet readout bands={[{
