@@ -1,14 +1,11 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 
-import { SUBMITTED, open } from "../lib/core/db.ts";
+import { SUBMITTED, absolute, open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
 import { fail, guard } from "./kit.ts";
-
-const absolute = (held: string) => path.resolve(held.replace(/^~(?=$|\/)/, os.homedir()));
 
 const companions = (pdf: string) => {
   const stem = pdf.slice(0, pdf.length - path.extname(pdf).length);

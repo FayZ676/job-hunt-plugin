@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { CAREER, one } from "@/lib/core/db";
+import { CAREER, absolute, one } from "@/lib/core/db";
 
 const FROM = { resume: "postings", screenshot: "staged" } as const;
 
@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
     `SELECT ${kind} AS p FROM ${table} WHERE key=?`, [decodeURIComponent(key.join("/"))]);
   if (!found?.p) return new Response("no such file", { status: 404 });
 
-  const resolved = fs.realpathSync(found.p.replace(/^~(?=$|\/)/, process.env.HOME ?? "~"));
+  const resolved = fs.realpathSync(absolute(found.p));
   if (!resolved.startsWith(fs.realpathSync(CAREER) + path.sep) || !fs.statSync(resolved).isFile())
     return new Response("no such file", { status: 404 });
 

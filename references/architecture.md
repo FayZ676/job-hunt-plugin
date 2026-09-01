@@ -17,13 +17,13 @@ TypeScript directly, so there is nothing to build.
 **One module per phase, under `cli/`.** Each runs on its own, so any step can be redone without the
 ones before it.
 
-| Phase | Module | Subcommands |
-| ----- | ------ | ----------- |
-| 1 — Search | `cli/search.ts` | (default) `rule` `dispositions` |
-| 2 — Score | `cli/score.ts` | `triage` `instructions` `show` `set` `pending` |
-| 3 — Resume | `cli/resume.ts` | `spec` `build` |
-| 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
-| 5 — Review and submit | `cli/submit.ts` | `review` `record` `rejected` |
+| Phase                 | Module          | Subcommands                                    |
+| --------------------- | --------------- | ---------------------------------------------- |
+| 1 — Search            | `cli/search.ts` | (default) `rule` `dispositions`                |
+| 2 — Score             | `cli/score.ts`  | `triage` `instructions` `show` `set` `pending` |
+| 3 — Resume            | `cli/resume.ts` | `spec` `build`                                 |
+| 4 — Stage             | `cli/stage.ts`  | `add` `show` `list` `drop`                     |
+| 5 — Review and submit | `cli/submit.ts` | `review` `record` `rejected`                   |
 
 **One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
 the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`, `posting.ts`,
@@ -37,3 +37,16 @@ that defines both.
 renders through `lib/web/queries.ts`, and a server action in `lib/web/actions.ts` writes the one
 column it was given. Everything under `components/edit/` writes and everything beside it only
 displays, so what can reach the database is the part of the tree you can point at.
+
+## Changing the schema
+
+**Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
+exists, so editing `sql/*.sql` leaves every database that has already been opened exactly as it was,
+and `align` then refuses to open it. Changing a column is one change in three places: the DDL,
+`TABLES` in `lib/core/schema.ts`, and an `ALTER TABLE` against the live database. That last one goes
+through `sqlite3 "$(job-paths db)"`, never `job-q` — either half of the edit puts the database out of
+agreement with the other, and `job-q` refuses to open it until both are done.
+
+Dropping a column or a table drops what it holds, and no later run can bring it back. **Save the rows
+first, and tell the user what you saved and where** — the judgment about whether they are worth
+keeping is theirs, not yours.

@@ -5,9 +5,7 @@ import { Command } from "commander";
 import { open } from "../lib/core/db.ts";
 import { DEFAULTS, DISPOSITIONS, type Found, replay, rule, search } from "../lib/search.ts";
 import * as sources from "../lib/core/sources.ts";
-import { fail, guard } from "./kit.ts";
-
-const collect = (value: string, held: string[]) => [...held, value];
+import { collect, fail, guard } from "./kit.ts";
 
 const dropped = (counts: Record<string, number>) =>
   Object.entries(counts).filter(([, n]) => n).map(([name, n]) => `${name} ${n}`).join(" | ");

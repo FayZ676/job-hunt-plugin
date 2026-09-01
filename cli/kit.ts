@@ -1,5 +1,7 @@
 import { open } from "../lib/core/db.ts";
 
+export const collect = (value: string, held: string[]) => [...held, value];
+
 export function fail(message: string): never {
   console.error(message);
   process.exit(1);
