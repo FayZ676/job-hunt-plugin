@@ -1,6 +1,3 @@
-import { Briefcase, NotebookPen } from "lucide-react";
-import Glyph from "@/components/Glyph";
-import Tabs from "@/components/Tabs";
 import { ScreenHead } from "@/components/ui";
 import { stats } from "@/lib/web/queries";
 
@@ -28,11 +25,6 @@ export default function JobsLayout({ children }: LayoutProps<"/jobs">) {
   return (
     <>
       <ScreenHead headline={headline(counts["shortlisted"] ?? 0, counts["staged"] ?? 0)} />
-      <Tabs items={[
-        { href: "/jobs", label: "Openings", icon: <Glyph icon={Briefcase} /> },
-        { href: "/jobs/instructions", label: "Instructions",
-          icon: <Glyph icon={NotebookPen} /> },
-      ]} />
       {children}
     </>
   );

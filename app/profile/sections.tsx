@@ -1,7 +1,7 @@
 import Field from "@/components/edit/Field";
 import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
-import { Disclosure, Sheet, Split, Stack, type Band, type Note } from "@/components/ui";
-import { identity, options } from "@/lib/web/queries";
+import { Card, Disclosure, Sheet, Split, Stack, type Band, type Note } from "@/components/ui";
+import { identity, instructions, options } from "@/lib/web/queries";
 
 type Group = { label?: string; note?: string; fields: Column[] };
 
@@ -93,5 +93,22 @@ export function Identity() {
     }>
       <Sheet label="10rem" bands={[band(reach)]} />
     </Split>
+  );
+}
+
+const INSTRUCTIONS: Column = {
+  name: "text", kind: "area",
+  className: "pane-max",
+  placeholder: "The work to go looking for, in the words a job board would use for it, "
+    + "strongest first — then what makes an opening worth applying to, what puts you off, and "
+    + "what makes it a no outright, including the seniority you are after and the years a posting "
+    + "may ask for. Written the way you would brief someone reading the JD on your behalf.",
+};
+
+export function Instructions() {
+  return (
+    <Card>
+      <Field table="instructions" rowid={1} column={INSTRUCTIONS} value={instructions().text} />
+    </Card>
   );
 }
