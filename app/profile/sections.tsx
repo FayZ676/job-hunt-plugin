@@ -90,7 +90,7 @@ export function Identity() {
 }
 
 const INSTRUCTIONS: Column = {
-  name: "text", kind: "area",
+  name: "text", kind: "area", preview: true,
   className: "pane-max",
   placeholder: "Titles to look for, strongest first. Then the seniority you want, what makes an "
     + "opening worth applying to, and what rules one out.",

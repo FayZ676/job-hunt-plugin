@@ -14,6 +14,7 @@ export type Column = {
   placeholder?: string;
   className?: string;
   rows?: number;
+  preview?: boolean;
 };
 
 export const title = (column: Column) =>

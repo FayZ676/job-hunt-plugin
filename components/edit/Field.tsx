@@ -6,6 +6,7 @@ import { save } from "@/lib/web/actions";
 import { answered } from "./answered";
 import { title, type Column } from "./columns";
 import { say } from "@/components/Toaster";
+import Markdown from "@/components/Markdown";
 import { useVocabulary } from "./Vocabulary";
 
 type State = "" | "saving" | "saved" | "failed";
@@ -66,6 +67,7 @@ export default function Field({ table, rowid, column, value }: {
   const was = value === null || value === undefined ? "" : String(value);
   const [held, setHeld] = useState(was);
   const [state, setState] = useState<State>("");
+  const [editing, setEditing] = useState(false);
   const router = useRouter();
 
   const commit = async (next: string, entry: Entry) => {
@@ -86,5 +88,26 @@ export default function Field({ table, rowid, column, value }: {
     setTimeout(() => setState(""), 1400);
   };
 
-  return <Control column={column} value={held} onValue={setHeld} onCommit={commit} state={state} />;
+  if (column.preview && !editing)
+    return (
+      <div role="button" tabIndex={0} aria-label={title(column)}
+           className={`quietbox cursor-text text-left ${column.className ?? ""}`}
+           onClick={() => setEditing(true)}
+           onFocus={() => setEditing(true)}
+           onKeyDown={(event) => {
+             if (event.key === "Enter" || event.key === " ") {
+               event.preventDefault();
+               setEditing(true);
+             }
+           }}>
+        {held
+          ? <Markdown>{held}</Markdown>
+          : <span className="text-soft">{column.placeholder ?? title(column)}</span>}
+      </div>
+    );
+
+  return (
+    <Control column={column} value={held} onValue={setHeld} state={state} autoFocus={editing}
+             onCommit={(next, entry) => { setEditing(false); return commit(next, entry); }} />
+  );
 }
