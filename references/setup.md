@@ -83,8 +83,8 @@ command -v pdftoppm || echo "brew install poppler"
 `.env.local` in the skill directory, which is git-ignored and read by both the commands and the
 dashboard.
 
-**5. Do a dry run.** `job-scan search --max 25`, then query `triage`. Keep the first run small: it
-is billed per job returned, and the point is to see whether the filters aim straight, not to fill
-the database. Sensible companies means they are tuned; nothing, or all noise, means another pass —
-the drop counts say which rule, and `job-scan ingest --redo` re-rules the same postings after each
-adjustment **without spending again**.
+**5. Do a dry run.** `job-scan search "<a role they named>" --max 25`, then query `triage`. Keep the
+first run small: it is billed per job returned, and the point is to see whether the filters aim
+straight, not to fill the database. Sensible companies means they are tuned; nothing, or all noise,
+means another pass — the drop counts say which rule, and `job-scan ingest --redo` re-rules the same
+postings after each adjustment **without spending again**.
