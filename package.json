@@ -12,7 +12,7 @@
     "job-paths": "cli/paths.ts",
     "job-q": "cli/q.ts",
     "job-profile": "cli/profile.ts",
-    "job-scan": "cli/scan.ts",
+    "job-search": "cli/search.ts",
     "job-score": "cli/score.ts",
     "job-resume": "cli/resume.ts",
     "job-stage": "cli/stage.ts",

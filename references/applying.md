@@ -5,13 +5,29 @@ submits.
 
 ## Contents
 
+- Who answers a field — the three tiers, and what a judgment question may assume
 - Reaching the form — apply URLs per ATS, and waiting for it to render
 - Filling — field types, Yes/No shapes, typeaheads, stale refs, resume upload
 - Before you stop — the required-field re-check and the screenshot
 - Lever specifics — hCaptcha, the hidden resume input, the EEO reveal
 - Workday specifics — the per-employer account, the five-step flow, mid-flow required fields
-- Submitting — Phase 5 only, and what counts as a confirmation
+- Submitting — Phase 5 only, what counts as a confirmation, and recording a rejection
 - Traps — published bands, application limits, cover letters, login walls
+
+## Who answers a field
+
+Every field is one of three tiers, and the tier decides who answers it:
+
+| Tier | What it is | Source | Auto-filled |
+| ---- | ---------- | ------ | ----------- |
+| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` | Yes |
+| **Policy** | Work authorization, sponsorship, EEO, start date, compensation | `identity` | Yes |
+| **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
+
+A judgment question gets the answer the profile supports. Where nothing supports one, flag it for the
+user, **except** when a row in `projects` plainly answers it — then answer, cite that project, and
+flag `evidence-backed` so the review can check the reasoning. A question needing a project that is
+not in `projects` is a flag, not an inference.
 
 ## Reaching the form
 
@@ -117,6 +133,11 @@ job-stage add <key> \
 `job-profile answers` and `job-profile missing` are where the identity and policy answers come from,
 and which of them are still `NULL`.
 
+`ready` means every field is filled; `blocked` means a `NULL` in the profile or a question nothing
+answers. **You do not assert which** — a field staged with no value derives `blocked` and names
+itself in `blocked_on`; `--blocked-on` covers a block no empty field shows. Keep the browser tab
+open; the staged rows survive a lost session and refilling from them is cheap.
+
 **A start date is computed, not stored.** No employer is `current` and they can start at once;
 otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier
 application — the answer moves with the day the form is asked.
@@ -164,7 +185,10 @@ page was complete. **Work Experience, Education and Skills are optional** when a
 
 ## Submitting
 
-Phase 5 only, and only for applications the user named.
+Phase 5 only, and only for applications the user named. Present every staged application in one table
+— company, title, score, status, and whatever is named in `blocked_on` (`job-submit review`). Keep it
+to that table; the user reads the applications themselves in the dashboard. Then ask which to submit,
+accepting "all", a subset, or none.
 
 ```
 browser_click    → the submit button
@@ -183,6 +207,19 @@ job-submit record <key> \
 ```
 
 That is the one step that sets `applied`; it moves the resume into `submitted/` with it.
+
+## Recording a rejection
+
+Only a reported rejection. Do nothing for a role that is merely quiet.
+
+```bash
+job-submit rejected <key> --note "3 days, no interview — resume screen"
+```
+
+That records the rejection and **deletes that resume's `.pdf` and `.json` from
+`$CAREER/resumes/submitted/`** — the record still says an application went out, and the dead document
+is gone. Note the shape in `--note` — days from submission, and whether any interview stage
+happened.
 
 ## Traps
 

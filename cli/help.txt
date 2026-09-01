@@ -4,9 +4,10 @@ job — search every company career site, score the openings, tailor a resume,
 usage: /job [command] [argument]
 
 commands:
-  (none)                      run all five phases: scan, score, resume, stage, submit
+  (none)                      run all five phases: search, score, resume, stage, submit
   setup                       first-run setup: create $CAREER, build the profile, set the filters
-  scan                        scan and score only
+  search                      search and rule only
+  score                       score the prospects already found
   resume <JD, URL, or key>    build one tailored resume as a PDF
   apply <key or URL>          build and stage one application, stopping before submit
   submit                      review what is staged and submit only what you name
@@ -18,5 +19,5 @@ notes:
   nothing is submitted without your approval, named by you, in that run
   a field your profile does not answer is left empty and reported, never guessed
   everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)
-  searching costs Apify credit, billed per job returned — scoring and ingest are free
+  searching costs Apify credit, billed per job returned — ruling again is free
   ask about your search in plain English — it is answered with a query

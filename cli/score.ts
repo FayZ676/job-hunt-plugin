@@ -3,7 +3,8 @@ import { Command } from "commander";
 
 import { open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
-import { fail, guard } from "./kit.ts";
+import { instructions, prospect, record, triage, unscored } from "../lib/score.ts";
+import { guard } from "./kit.ts";
 
 const program = new Command("job-score").description(
   `Phase 2 — score every prospect against the search profile.
@@ -17,32 +18,6 @@ const program = new Command("job-score").description(
 
 A score sets the status by the threshold in settings, so the two cannot disagree.`);
 
-type Standing = {
-  location: string | null;
-  remote_preference: string | null;
-  willing_to_relocate: number | null;
-  employment_type: string | null;
-  compensation_floor: number | null;
-  compensation_currency: string | null;
-  requires_sponsorship_now_or_future: number | null;
-  legal_right_to_work_without_sponsorship: number | null;
-};
-
-const said = (value: string) => value.replace(/_/g, " ");
-
-const standing = (row: Standing | undefined) => [
-  row?.location && `Based in ${row.location}.`,
-  row?.remote_preference && `Wants ${said(row.remote_preference)} work.`,
-  row?.willing_to_relocate === 0 && "Will not relocate for a role.",
-  row?.willing_to_relocate === 1 && "Open to relocating.",
-  row?.employment_type && `Wants ${said(row.employment_type)} roles.`,
-  row?.compensation_floor
-    && `Will not go below ${row.compensation_floor} ${row.compensation_currency ?? ""}.`.trim(),
-  row?.requires_sponsorship_now_or_future === 0
-    && row?.legal_right_to_work_without_sponsorship === 1
-    && "Needs no visa sponsorship, now or later.",
-].filter((line): line is string => Boolean(line));
-
 program
   .command("triage")
   .description("the triage view: no descriptions, on purpose")
@@ -51,12 +26,7 @@ program
   .option("--json")
   .option("--db <path>")
   .action(guard((options) => {
-    let sql = "SELECT * FROM triage" + (options.status ? " WHERE status=?" : "");
-    if (options.limit) sql += ` LIMIT ${Number(options.limit)}`;
-    const rows = open(options.db)
-      .prepare(sql)
-      .all(...(options.status ? [options.status] : [])) as Record<string, unknown>[];
-    printRows(rows, options.json);
+    printRows(triage(open(options.db), options), options.json);
   }));
 
 program
@@ -64,19 +34,13 @@ program
   .description("everything scoring reads: standing profile facts, then the instructions")
   .option("--db <path>")
   .action(guard((options) => {
-    const database = open(options.db);
-    const held = standing(database
-      .prepare("SELECT * FROM identity WHERE id=1")
-      .get() as Standing | undefined);
-    if (held.length) {
+    const { standing, text } = instructions(open(options.db));
+    if (standing.length) {
       console.log("From the profile, and not up for debate:");
-      for (const line of held) console.log(`- ${line}`);
+      for (const line of standing) console.log(`- ${line}`);
       console.log("");
     }
-    const written = database
-      .prepare("SELECT text FROM instructions WHERE id=1")
-      .get() as { text: string | null };
-    console.log(written.text ?? "(nothing written down)");
+    console.log(text ?? "(nothing written down)");
   }));
 
 program
@@ -87,9 +51,7 @@ program
   .action(guard((keys: string[], options) => {
     const database = open(options.db);
     for (const key of keys) {
-      const row = database.prepare(
-        "SELECT key, company, title, location, remote, compensation, posted_at, url, " +
-        "score, status, description FROM prospects WHERE key=?").get(key) as any;
+      const row = prospect(database, key);
       if (!row) {
         console.error(`no prospect '${key}'`);
         continue;
@@ -114,24 +76,7 @@ program
   .requiredOption("--reason <text>")
   .option("--db <path>")
   .action(guard((key: string, options) => {
-    const database = open(options.db);
-    const row = database
-      .prepare("SELECT key, description, status FROM prospects WHERE key=?")
-      .get(key) as { description: string | null } | undefined;
-    if (!row) fail(`no prospect '${key}'`);
-    const score = Number(options.score);
-    if (!(score >= 0 && score <= 10)) fail(`score must be 0-10, got ${options.score}`);
-    if (!options.reason.trim())
-      fail("--reason cannot be empty: name the JD language that drove the score");
-    if (!(row.description ?? "").trim())
-      fail(`${key} has no description — scoring off a title is what this phase exists to ` +
-        "prevent. Re-fetch the source: every source now carries its description");
-
-    database.prepare("UPDATE postings SET score=?, reason=? WHERE key=?")
-      .run(score, options.reason.trim(), key);
-    const after = database
-      .prepare("SELECT score, status FROM prospects WHERE key=?")
-      .get(key) as { score: number; status: string };
+    const after = record(open(options.db), key, Number(options.score), options.reason);
     console.log(`${key}  ${after.score}  ${after.status}`);
   }));
 
@@ -141,9 +86,7 @@ program
   .option("--json")
   .option("--db <path>")
   .action(guard((options) => {
-    const rows = open(options.db).prepare(
-      "SELECT key, company, title, location, first_seen FROM prospects " +
-      "WHERE score IS NULL ORDER BY first_seen DESC").all() as Record<string, unknown>[];
+    const rows = unscored(open(options.db));
     printRows(rows, options.json);
     if (rows.length && !options.json)
       console.log(`\n${rows.length} unscored — each one stays \`new\` and comes back tomorrow`);

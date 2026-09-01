@@ -1,9 +1,12 @@
 import type { Database } from "better-sqlite3";
 
-import { ddl } from "../core/db.ts";
-import { POSTING_COLUMNS, Posting } from "../core/posting.ts";
-import { vocabulary } from "../core/schema.ts";
-import { ageDays, compilePatterns, matchesAny, norm, normCompany } from "../core/text.ts";
+import { ddl } from "./core/db.ts";
+import { POSTING_COLUMNS, Posting } from "./core/posting.ts";
+import { vocabulary } from "./core/schema.ts";
+import * as sources from "./core/sources.ts";
+import {
+  ageDays, compilePatterns, literals, matchesAny, norm, normCompany,
+} from "./core/text.ts";
 
 export const DISPOSITIONS: Record<string, string> = {
   expired: "a listing whose `date_valid_through` has passed",
@@ -35,7 +38,7 @@ export type Options = {
   comp_floor?: number | null;
 };
 
-export type Ingested = {
+export type Ruled = {
   kept: number;
   examined: number;
   counts: Record<string, number>;
@@ -136,7 +139,7 @@ const pendingCount = (database: Database) =>
   (database.prepare("SELECT COUNT(*) n FROM postings WHERE disposition IS NULL")
     .get() as { n: number }).n;
 
-export function ingest(database: Database, options: Options = {}): Ingested {
+export function rule(database: Database, options: Options = {}): Ruled {
   const declared = [...vocabulary(ddl(), "postings", "disposition")].sort();
   const mine = [...Object.keys(DISPOSITIONS), "kept"].sort();
   if (mine.join(",") !== declared.join(","))
@@ -201,4 +204,82 @@ export function ingest(database: Database, options: Options = {}): Ingested {
     counts,
     pending: pendingCount(database),
   };
+}
+
+export const DEFAULTS = {
+  locations: ["United States"],
+  remote: false,
+  since: "7d" as sources.Since,
+  max: 200,
+};
+
+export type Aim = {
+  terms: string[];
+  locations?: string[];
+  remote?: boolean;
+  since?: sources.Since;
+  max?: number;
+};
+
+export type Found = Ruled & { fetched: number; fresh: number; unkeepable: string[] };
+
+export function store(database: Database, postings: Posting[]) {
+  const known = new Set((database.prepare("SELECT key FROM postings").all() as { key: string }[])
+    .map((row) => row.key));
+  const insert = database.prepare(
+    `INSERT INTO postings(${POSTING_COLUMNS.join(",")},first_fetched,last_fetched) ` +
+    `VALUES(${POSTING_COLUMNS.map(() => "?").join(",")},date('now'),date('now')) ` +
+    "ON CONFLICT(key) DO UPDATE SET " +
+    "  last_fetched=date('now')," +
+    "  title=excluded.title, location=excluded.location, remote=excluded.remote," +
+    "  expired=excluded.expired," +
+    "  compensation=COALESCE(excluded.compensation, postings.compensation)," +
+    "  description=COALESCE(excluded.description, postings.description)," +
+    "  raw=COALESCE(excluded.raw, postings.raw)");
+
+  let fresh = 0;
+  database.transaction(() => {
+    for (const posting of postings) {
+      if (!known.has(posting.key)) fresh += 1;
+      insert.run(POSTING_COLUMNS.map((column) => posting[column]));
+    }
+  })();
+  return fresh;
+}
+
+export function unkeepable(database: Database, terms: string[]) {
+  const include = compilePatterns(patterns(database, "title_include"));
+  if (!include.length) return [];
+  return terms.filter((term) => !matchesAny(include, term));
+}
+
+const unwanted = (database: Database) => ({
+  notTitles: [...new Set(["title_exclude", "title_noise"]
+    .flatMap((kind) => patterns(database, kind).flatMap(literals)))],
+  notOrganizations: patterns(database, "agency_blocklist"),
+});
+
+export async function search(database: Database, aim: Aim): Promise<Found> {
+  if (!aim.terms.length) throw new Error("name what to search for, short and literal");
+  const held = await sources.search({
+    terms: aim.terms,
+    locations: aim.locations?.length ? aim.locations : DEFAULTS.locations,
+    remote: aim.remote ?? DEFAULTS.remote,
+    since: aim.since ?? DEFAULTS.since,
+    max: aim.max ?? DEFAULTS.max,
+    ...unwanted(database),
+  });
+  return found(database, held, unkeepable(database, aim.terms));
+}
+
+export function replay(database: Database, payload: unknown): Found {
+  const items = Array.isArray(payload)
+    ? payload
+    : (payload as { items?: unknown[] })?.items ?? [];
+  return found(database, sources.fromApify(items), []);
+}
+
+function found(database: Database, held: Posting[], unkeepable: string[]): Found {
+  const fresh = store(database, held);
+  return { fetched: held.length, fresh, unkeepable, ...rule(database) };
 }

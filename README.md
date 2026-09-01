@@ -17,7 +17,7 @@ Five phases, in order.
 
 | Phase | What happens |
 |---|---|
-| **Scan** | One search across 175,000 company career sites on 54 ATSes — Greenhouse and Lever, but also Workday, iCIMS and SuccessFactors, where most large employers actually post. Every result is the employer's own posting, description attached; no aggregator, no gig spam. Because it bills per job returned, your title and agency filters are pushed into the request, so most of what you'd reject is never bought. Fetching and filtering stay separate steps: what came back lands in `postings` untouched, and one pass rules on each row; the ones it keeps are the prospects. |
+| **Search** | One search across 175,000 company career sites on 54 ATSes — Greenhouse and Lever, but also Workday, iCIMS and SuccessFactors, where most large employers actually post. Every result is the employer's own posting, description attached; no aggregator, no gig spam. Because it bills per job returned, your title and agency filters are pushed into the request, so most of what you'd reject is never bought. What came back lands in `postings` untouched, and the same run rules on each row; the ones it keeps are the prospects. |
 | **Score** | Triages on a cheap list with no descriptions, pulls full text only for the plausible ones, then scores 0–10 against your profile — citing the JD language that drove it. Everything is recorded, shortlisted or not, so nothing is reviewed twice. |
 | **Resume** | Builds a role-specific resume straight to PDF, selecting the bullets in your profile that match this posting. It never invents a number your profile doesn't have. |
 | **Stage** | Opens the application form and fills every field your profile answers. An unanswered field is a hard stop, not a guess. Screening questions and essays get drafted and flagged, never auto-accepted. Stops with a finger over the submit button. |
@@ -26,7 +26,7 @@ Five phases, in order.
 **The submit click is never unattended.** Everything before it is.
 
 It is one TypeScript app with two faces and one database under them. `cli/` stands between the jobs
-and the database: one module per phase — `scan.ts`, `score.ts`, `resume.ts`, `stage.ts`,
+and the database: one module per phase — `search.ts`, `score.ts`, `resume.ts`, `stage.ts`,
 `submit.ts` — so any step can be run or redone on its own, plus `q.ts` for SQL. `app/` is the
 Next.js dashboard that stands between you and the database, and is the only thing that writes your
 profile. `lib/` is what both use, including the one description of the schema, and `sql/` belongs to
@@ -45,7 +45,7 @@ npm link --prefix ~/.claude/skills/job
 ```
 
 The install brings in the dependencies and serves `/job ui`; the link puts the phases on your `PATH`
-as `job-scan`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`, `job-profile` and
+as `job-search`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`, `job-profile` and
 `job-paths`. Node runs the TypeScript directly, so there is nothing to build.
 
 Then, from anywhere:
@@ -58,7 +58,7 @@ Setup interviews you — identity, work authorization, compensation floor, what 
 you'll work, and your experience — and writes it into your profile. If you have a resume or LinkedIn
 export, hand it over and it drafts the whole thing for you to correct.
 
-That's the whole install. `/job scan` works as soon as setup finishes.
+That's the whole install. `/job search` works as soon as setup finishes.
 
 Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`lib/sources.ts`) —
 a function that returns `Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
@@ -74,7 +74,7 @@ It holds your profile — identity, the answers application forms ask for, your 
 projects, and what you're looking for — alongside every posting ever fetched, every prospect derived
 from one, your filters, staged applications, and the history of each role. You never edit it by hand: tell
 Claude about a job you had, paste a resume, upload a CV, and it writes the rows. You talk; the data
-stays consistent. There are no per-day scan files — a scan updates the database, and a question
+stays consistent. There are no per-day run files — a search updates the database, and a question
 about your search is a query. Because the raw layer is kept, "what did that filter cost me?" is also
 a query, and a filter you change re-runs over this morning's fetch without touching the network.
 
@@ -110,7 +110,8 @@ You can start with just Node and add the rest before your first resume.
 |---|---|
 | `/job setup` | First-run setup |
 | `/job` | All five phases |
-| `/job scan` | Scan and score |
+| `/job search` | Find the openings and rule on them |
+| `/job score` | Score the prospects already found |
 | `/job resume <JD, URL, or key>` | Build one resume |
 | `/job apply <key or URL>` | Build and stage one application, stopping before submit |
 | `/job submit` | Review and submit whatever is staged |
@@ -168,7 +169,7 @@ the first run. If they drift, say so — they are database rows, and Claude edit
 filters are also what keeps the search cheap: the titles you exclude are excluded before you are
 billed for them.
 
-The highest-leverage thing you can do is correct the profile when a scan surfaces something you'd
+The highest-leverage thing you can do is correct the profile when a search surfaces something you'd
 never apply to, or misses something you would. Its search profile is what every scoring
 pass reads.
 

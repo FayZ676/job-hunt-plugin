@@ -54,7 +54,7 @@ every table. Cover:
 
 A `NULL` is not a failure — it is a hard stop later. Tell them which ones will block an application.
 
-**3. Write the filters.** `filters` is what `ingest` rules on, and `title_exclude`, `title_noise` and
+**3. Write the filters.** `filters` is what the search rules on, and `title_exclude`, `title_noise` and
 `agency_blocklist` are also pushed into the paid search, so a filter written here is credit not
 spent. Derive them from what they just told you — the field they work in, the titles they refuse,
 the countries they cannot work in:
@@ -73,7 +73,7 @@ cannot, and quietly falls back to being paid for.
 and scoring run on; Typst and Poppler are only for the resume build.
 
 ```bash
-command -v job-scan || echo 'npm install --prefix "$HOME/.claude/skills/job" && npm link --prefix "$HOME/.claude/skills/job"'
+command -v job-search || echo 'npm install --prefix "$HOME/.claude/skills/job" && npm link --prefix "$HOME/.claude/skills/job"'
 command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 [ -s "$HOME/.claude/skills/job/.env.local" ] || echo "APIFY_TOKEN=… needed in the skill's .env.local"
@@ -83,8 +83,8 @@ command -v pdftoppm || echo "brew install poppler"
 `.env.local` in the skill directory, which is git-ignored and read by both the commands and the
 dashboard.
 
-**5. Do a dry run.** `job-scan search "<a role they named>" --max 25`, then query `triage`. Keep the
+**5. Do a dry run.** `job-search "<a role they named>" --max 25`, then query `triage`. Keep the
 first run small: it is billed per job returned, and the point is to see whether the filters aim
 straight, not to fill the database. Sensible companies means they are tuned; nothing, or all noise,
-means another pass — the drop counts say which rule, and `job-scan ingest --redo` re-rules the same
+means another pass — the drop counts say which rule, and `job-search rule --redo` re-rules the same
 postings after each adjustment **without spending again**.

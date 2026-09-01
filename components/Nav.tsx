@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CircleHelp, User, type LucideIcon } from "lucide-react";
+import { Briefcase, CircleHelp, Play, User, type LucideIcon } from "lucide-react";
 import Glyph from "./Glyph";
 import Mark from "./Mark";
 
 type Item = { href: string; label: string; icon: LucideIcon };
 
 const SECTIONS: Item[] = [
+  { href: "/run", label: "Run", icon: Play },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/help", label: "Help", icon: CircleHelp },
