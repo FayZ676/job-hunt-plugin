@@ -1,13 +1,10 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { spawnSync } from "node:child_process";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { Command } from "commander";
 
 import { open } from "../lib/core/db.ts";
-import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES, build, type Density } from "../lib/core/typst.ts";
-import { fail, guard } from "./kit.ts";
+import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES } from "../lib/core/typst.ts";
+import { build } from "../lib/resume.ts";
+import { guard } from "./kit.ts";
 
 const SPEC_HELP = (types: string) =>
   `A resume spec is content only -- job-resume owns every formatting decision.
@@ -64,40 +61,15 @@ program
   .option("--keep-typ", "write the .typ alongside the PDF")
   .option("--db <path>")
   .action(guard((specPath: string, outPath: string | undefined, options) => {
-    if (spawnSync("which", ["typst"], { stdio: "ignore" }).status !== 0)
-      fail("typst not found: brew install typst");
-    const density = options.density as Density;
-    if (!(density in DENSITY))
-      fail(`--density must be one of ${Object.keys(DENSITY).join(", ")}, got '${density}'`);
-
-    const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
-    const out = path.resolve(
-      outPath || `${specPath.slice(0, specPath.length - path.extname(specPath).length)}.pdf`);
-    const markup = build(spec, density);
-
-    const stem = out.slice(0, out.length - path.extname(out).length);
-    const source = options.keepTyp
-      ? `${stem}.typ`
-      : path.join(fs.mkdtempSync(path.join(os.tmpdir(), "job-resume-")), "resume.typ");
-    fs.writeFileSync(source, markup, "utf8");
-
-    try {
-      const ran = spawnSync("typst", ["compile", source, out], { encoding: "utf8" });
-      if (ran.status) fail(`typst failed:\n${ran.stderr}`);
-    } finally {
-      if (!options.keepTyp) fs.rmSync(path.dirname(source), { recursive: true, force: true });
-    }
-    if (!fs.existsSync(out)) fail(`typst reported success but ${out} is not there`);
-    console.log(`wrote ${out} (density: ${density})`);
-
-    if (options.key) {
-      const database = open(options.db);
-      const row = database.prepare("SELECT key, status FROM prospects WHERE key=?")
-        .get(options.key) as { status: string } | undefined;
-      if (!row) fail(`no prospect '${options.key}' — the PDF is at ${out}, unrecorded`);
-      database.prepare("UPDATE postings SET resume=? WHERE key=?").run(out, options.key);
-      console.log(`recorded on ${options.key} (${row.status})`);
-    }
+    const built = build(specPath, outPath, {
+      density: options.density,
+      keepTyp: options.keepTyp,
+      key: options.key,
+      database: options.key ? open(options.db) : undefined,
+    });
+    console.log(`wrote ${built.out} (density: ${built.density})`);
+    if (built.recorded !== null)
+      console.log(`recorded on ${options.key} (${built.recorded})`);
   }));
 
 program.parseAsync();
