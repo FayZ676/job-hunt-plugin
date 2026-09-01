@@ -35,18 +35,19 @@ every table. Cover:
   the EEO questions forms ask last, and the compensation floor. The
   EEO answers are optional, and `decline_to_say` is a complete answer — offer it rather than
   pressing.
-- **What they're looking for.** Titles are `search_titles`, strongest first — that list is the
-  paid search's query, so keep the rows short and literal. Everything else is one piece of prose
-  in `search_scope.worth_applying_to`, written in their words. Nothing forces a question here, so
-  **ask all of it**: seniority, the years a posting may ask for before it stops fitting, what
-  makes an opening better, what puts them off, and what makes them skip it outright — and **how
-  those relate**, which is the judgement a list cannot hold. Keep the slopes they describe: "7+
-  years only when the rest is a bullseye" is the answer, not a number. **Name the hard stops as
-  hard stops** in the prose, or they read as a strong dislike. **A rule a pattern could decide is
-  a `filters` row** — a country, a title they never take, an agency name. **A fact `identity`
-  already holds is not rubric material** — where they live, remote preference, relocation,
-  employment type, the floor. `job-score rubric` prints those above the prose, so restating them
-  only gives the two a chance to disagree.
+- **What to do with all that.** One piece of prose in `instructions.text`, written in their words
+  and read over the profile rather than repeating it. Nothing forces a question here, so **ask all
+  of it**: the work they want, strongest first, in the words a job board would use for it — the
+  paid search is typed off this prose, so it has to name the roles plainly enough to search on —
+  seniority, the years a posting may ask for before it stops fitting, what makes an opening better,
+  what puts them off, and what makes them skip it outright — and **how those relate**, which is the
+  judgement a list cannot hold. Keep the slopes they describe: "7+ years only when the rest is a
+  bullseye" is the answer, not a number. **Name the hard stops as hard stops** in the prose, or they
+  read as a strong dislike. **A rule a pattern could decide is a `filters` row** — a country, a
+  title they never take, an agency name. **A fact `identity` already holds does not belong here** —
+  where they live, remote preference, relocation, employment type, the floor.
+  `job-score instructions` prints those above the prose, so restating them only gives the two a
+  chance to disagree.
 - **Their experience.** The longest part and the one that matters most: `employers` → `projects` is
   **the only source a resume may draw from**, so a thin profile produces thin resumes. Offer to read
   a resume, CV, or LinkedIn export and draft it for them to correct.

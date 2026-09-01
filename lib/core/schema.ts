@@ -79,8 +79,7 @@ export const TABLES = {
   project_technologies: z.object({ project_id: int, technology: text }),
   project_metrics: z.object({ project_id: int, metric: text }),
   project_links: z.object({ project_id: int, label: text, url: text }),
-  search_scope: z.object({ id: int, worth_applying_to: maybeText }),
-  search_titles: z.object({ value: text, seq: maybeInt }),
+  instructions: z.object({ id: int, text: maybeText }),
   events: z.object({ id: int, key: text, at: text, status: maybeText, note: maybeText }),
   staged: z.object({
     key: text, url: maybeText, screenshot: maybeText,
@@ -126,6 +125,14 @@ const enumerated = (shape: z.ZodType): string[] | null => {
 };
 
 export function prune(database: Database, ddl: string) {
+  const written = new Set(
+    [...ddl.matchAll(/CREATE (?:TABLE|VIEW)(?: IF NOT EXISTS)? (\w+)/g)].map((found) => found[1]));
+  const held = database.prepare(
+    "SELECT name, type FROM sqlite_master WHERE type IN ('table','view') " +
+    "AND name NOT LIKE 'sqlite_%'").all() as { name: string; type: string }[];
+  for (const { name, type } of held)
+    if (!written.has(name)) database.exec(`DROP ${type.toUpperCase()} IF EXISTS ${name}`);
+
   for (const [name, shape] of Object.entries(TABLES)) {
     const declared = Object.keys(shape.shape);
     const written = columns(ddl, name);

@@ -4,7 +4,7 @@ Getting postings into `postings`, the raw layer. **Fetching judges nothing**: no
 scoring, no prospect. Everything the search returned is stored as it arrived, normalized into shared
 columns, and `job-scan ingest` rules on it afterwards.
 
-One command, `job-scan search`: who is hiring for the work, anywhere. It calls one paid Apify
+One command, `job-scan search`: who is hiring for the work you name, anywhere. It calls one paid Apify
 actor, `fantastic-jobs/career-site-job-listing-api`, which indexes 175k company career sites across 54 ATSes — Greenhouse, Lever and Ashby, and also Workday, iCIMS,
 SuccessFactors, Oracle Cloud, BambooHR, Rippling, SmartRecruiters, Eightfold. There is no ATS left
 to check by hand, and no aggregator in the path: every row's `url` is the employer's own posting,
@@ -17,7 +17,7 @@ applies is money already spent.** Every filter that can be pushed into the reque
 
 | Local filter | Rides along as | Note |
 | ------------ | -------------- | ---- |
-| `title` criteria | `titleSearch` | |
+| what you searched for | `titleSearch` | |
 | `title_exclude`, `title_noise` | `titleExclusionSearch` | the regex alternations are flattened into literal terms; a pattern with no closing `\b` becomes a `:*` prefix match |
 | `agency_blocklist` | `organizationExclusionSearch` | alongside the API's own `removeAgency` |
 | `max_age_days` | `--since` | |
@@ -35,14 +35,14 @@ not survive it**: those jobs are bought and then dropped. Fix the disagreement i
 the other; do not pay for it twice a week.
 
 ```bash
-job-scan search                                  # the title criteria, US, last 7 days
-job-scan search --remote --since 24h --max 100   # a daily pass
-job-scan search --title "AI Engineer" --location "Oregon, United States"
+job-scan search "AI Engineer"                    # US, last 7 days
+job-scan search "AI Engineer" --remote --since 24h --max 100
+job-scan search "AI Engineer" --location "Oregon, United States"
 ```
 
-With no `--title`, the titles are the `title` criteria rows — the same vocabulary the scorer uses,
-so discovery and scoring cannot drift apart. A parenthetical is stripped and anything over five
-words is dropped, because those rows are written for the scorer to read, not for a search box.
+**What you search for comes off `job-score instructions`** — the same words the scorer reads, so
+discovery and scoring cannot drift apart. Say them the way a search box wants them, short and
+literal; the prose around them is for the scorer, not for the API.
 
 `--since` is `1h`, `24h`, `7d` or `6m`; `6m` is the backfill worth running once, on the first scan,
 and rarely again.

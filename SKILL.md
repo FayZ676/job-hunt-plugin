@@ -52,7 +52,7 @@ without the ones before it, and `--help` on any of them lists its subcommands.
 | Phase | Module | Subcommands |
 | ----- | ------ | ----------- |
 | 1 — Fetch, then ingest | `cli/scan.ts` | `search` `ingest` `dispositions` |
-| 2 — Score | `cli/score.ts` | `triage` `rubric` `show` `set` `pending` |
+| 2 — Score | `cli/score.ts` | `triage` `instructions` `show` `set` `pending` |
 | 3 — Resume | `cli/resume.ts` | `spec` `build` |
 | 4 — Stage | `cli/stage.ts` | `add` `show` `list` `drop` |
 | 5 — Review and submit | `cli/submit.ts` | `review` `record` `rejected` |
@@ -183,7 +183,7 @@ Two steps, and they stay separate. Fetching judges nothing; ingest fetches nothi
 to re-run; **fetching is not.**
 
 ```bash
-job-scan search                               # preferred titles across every career site
+job-scan search "AI Engineer"                 # across every career site
 job-scan ingest                               # postings -> prospects
 job-scan ingest --redo --no-location-filter   # re-rule stored rows, no network
 ```
@@ -198,20 +198,20 @@ One paid Apify actor covers 175k career sites across 54 ATSes, **billed per job 
 
 ```bash
 job-score triage --status new   # no descriptions, on purpose
-job-score rubric                # what scoring reads
+job-score instructions          # what scoring reads: profile facts, then the prose
 job-score show <key> <key>      # only what survives triage
 job-score set <key> --score 9 --reason "the JD language that drove it, quoted"
 job-score pending               # what is still unscored
 ```
 
-Triage against the rubric, pull descriptions for the plausible ones, then score, citing the JD
-language that drove it. **The rubric carries no numbers**: `worth_applying_to` is prose and says in
-its own words what counts for how much and what is a hard stop, and `search_titles` runs strongest
-first. Nothing is added up — the score is a judgement the rubric informs.
+Triage against the instructions, pull descriptions for the plausible ones, then score, citing the JD
+language that drove it. **The instructions carry no numbers**: `instructions.text` is prose laid
+over the profile, and says in its own words what counts for how much, what is a hard stop, and what
+the search should ask for. Nothing is added up — the score is a judgement they inform.
 
 **Anything you score must have had its description read** — scoring off a title is the failure this
 phase exists to prevent; a "Software Engineer" JD that is 80% LLM work beats a "Senior AI Engineer"
-req that is really data plumbing. **Apply the rubric's hard stops first**, a zero regardless of how
+req that is really data plumbing. **Apply their hard stops first**, a zero regardless of how
 well the rest reads. **Score every prospect, including the ones you skip** — `job-score pending` is what is left, and
 an unscored row stays `new` and comes back tomorrow. Where a score turns on something still `NULL`, score on a stated assumption and
 say so in `reason`.

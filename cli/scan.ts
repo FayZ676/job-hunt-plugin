@@ -47,9 +47,9 @@ function nextStep(database: Database) {
 const program = new Command("job-scan").description(
   `Phase 1 — fetch postings, then rule on them. Two steps, and they stay separate.
 
-  job-scan search                           your preferred titles across every career site
-  job-scan search --title "AI Engineer" --location "Oregon, United States"
-  job-scan search --remote --since 24h      only what a remote worker can hold
+  job-scan search "AI Engineer"             across every career site
+  job-scan search "AI Engineer" --location "Oregon, United States"
+  job-scan search "AI Engineer" --remote --since 24h
   job-scan ingest                           postings into prospects, no network
   job-scan ingest --redo --no-location-filter
   job-scan dispositions                     every verdict, in the order ruled`);
@@ -75,22 +75,20 @@ const since = (held: string) => {
   return held as sources.Since;
 };
 
-const searchable = (value: string) => value.replace(/\([^)]*\)/g, "").trim();
-
 const unwanted = (database: Database) => ({
   notTitles: [...new Set(["title_exclude", "title_noise"]
     .flatMap((kind) => patterns(database, kind).flatMap(literals)))],
   notOrganizations: patterns(database, "agency_blocklist"),
 });
 
-function warnUnkeepable(database: Database, titles: string[]) {
+function warnUnkeepable(database: Database, terms: string[]) {
   const include = compilePatterns(patterns(database, "title_include"));
   if (!include.length) return;
-  const doomed = titles.filter((title) => !matchesAny(include, title));
+  const doomed = terms.filter((term) => !matchesAny(include, term));
   if (!doomed.length) return;
-  console.log("these titles cannot survive title_include, so every job they return is " +
+  console.log("these cannot survive title_include, so every job they return is " +
     `paid for and then dropped: ${doomed.join(", ")}`);
-  console.log("  drop them from the title criteria, or widen title_include\n");
+  console.log("  drop them, or widen title_include\n");
 }
 
 async function fetched(database: Database, aim: sources.Search, what: string) {
@@ -102,29 +100,21 @@ async function fetched(database: Database, aim: sources.Search, what: string) {
 
 spend(program
   .command("search")
-  .description("search every career site by title, descriptions included")
-  .option("--title <text>", "repeatable; defaults to your preferred titles", collect, []))
-  .action(guard(async (options) => {
+  .description("search every career site for the roles you name, descriptions included")
+  .argument("[role...]", "what to search for, short and literal"))
+  .action(guard(async (terms: string[], options) => {
     const database = open(options.db);
     if (options.file) return replay(database, options.file);
-
-    let titles: string[] = options.title;
-    if (!titles.length)
-      titles = (database.prepare(
-        "SELECT value FROM search_titles ORDER BY seq IS NULL, seq, value")
-        .all() as { value: string }[])
-        .map((row) => searchable(row.value))
-        .filter((value) => value && value.split(/\s+/).length <= 5);
-    if (!titles.length)
-      fail("no titles: pass --title, or add rows to search_titles");
+    if (!terms.length)
+      fail("name what to search for, short and literal; `job-score instructions` says what");
 
     const locations = options.location.length ? options.location : ["United States"];
-    warnUnkeepable(database, titles);
+    warnUnkeepable(database, terms);
     const spared = unwanted(database);
     await fetched(database, {
-      titles, locations, ...spared, remote: Boolean(options.remote),
+      terms, locations, ...spared, remote: Boolean(options.remote),
       since: since(options.since), max: options.max,
-    }, `for ${titles.length} titles`);
+    }, `for ${terms.length} searches`);
   }));
 
 program

@@ -13,7 +13,7 @@ export const SINCE = ["1h", "24h", "7d", "6m"] as const;
 export type Since = (typeof SINCE)[number];
 
 export type Search = {
-  titles: string[]; notTitles: string[]; notOrganizations: string[];
+  terms: string[]; notTitles: string[]; notOrganizations: string[];
   locations: string[]; remote: boolean; since: Since; max: number;
 };
 
@@ -100,7 +100,7 @@ export async function search(aim: Search): Promise<Posting[]> {
       populateAiRemoteLocation: true,
       populateAiRemoteLocationDerived: true,
       ...(aim.remote ? { aiWorkArrangementFilter: [...REMOTE] } : {}),
-      ...some("titleSearch", aim.titles),
+      ...some("titleSearch", aim.terms),
       ...some("titleExclusionSearch", aim.notTitles),
       ...some("organizationExclusionSearch", aim.notOrganizations),
       ...some("locationSearch", aim.locations),

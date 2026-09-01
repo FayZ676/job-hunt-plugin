@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 ) STRICT;
 
-DROP TABLE IF EXISTS companies;
-
 CREATE TABLE IF NOT EXISTS filters (
   kind    TEXT NOT NULL CHECK (kind IN (
             'title_include','title_exclude','location_include','location_exclude',
@@ -92,8 +90,6 @@ CREATE INDEX IF NOT EXISTS idx_events_key ON events(key);
 
 -- ---------------------------------------------------------------------------
 -- ---------------------------------------------------------------------------
-
-DROP TRIGGER IF EXISTS on_prospect_new;
 
 CREATE TRIGGER IF NOT EXISTS on_kept AFTER UPDATE OF disposition ON postings
 WHEN new.disposition = 'kept' AND old.disposition IS NOT 'kept'

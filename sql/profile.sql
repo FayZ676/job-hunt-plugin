@@ -111,22 +111,14 @@ CREATE TABLE IF NOT EXISTS project_links (
   url        TEXT NOT NULL CHECK (url LIKE 'http%://%.%')
 ) STRICT;
 
--- The rubric, as prose, because one reader reads it and typed columns only
+-- What to do with everything above: the prose the search is typed from and
+-- every score is judged against. One reader reads it, and typed columns only
 -- flatten the slopes it describes into walls.
-CREATE TABLE IF NOT EXISTS search_scope (
-  id                 INTEGER PRIMARY KEY CHECK (id = 1),
-  worth_applying_to  TEXT    CHECK (trim(worth_applying_to) <> '')
+CREATE TABLE IF NOT EXISTS instructions (
+  id   INTEGER PRIMARY KEY CHECK (id = 1),
+  text TEXT    CHECK (trim(text) <> '')
 ) STRICT;
-INSERT OR IGNORE INTO search_scope(id) VALUES (1);
-
--- The one thing that is genuinely a list, because it is a search query before it
--- is a preference: the titles the paid search asks for, strongest first.
-CREATE TABLE IF NOT EXISTS search_titles (
-  value TEXT PRIMARY KEY CHECK (trim(value) <> ''),
-  seq   INTEGER CHECK (seq >= 0)
-) STRICT;
-
-DROP TABLE IF EXISTS accounts;
+INSERT OR IGNORE INTO instructions(id) VALUES (1);
 
 -- The totals a form asks for as a number rather than a story, counted off
 -- `employers` rather than stored: a written-down total is wrong by one every
