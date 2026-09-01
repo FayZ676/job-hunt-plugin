@@ -60,16 +60,16 @@ export default function HelpPage() {
 
   if (manual.commands.length === 0) {
     return (
-      <>
-        <ScreenHead kicker="Help" headline="Job commands" />
+      <div className="max-w-4xl">
+        <ScreenHead headline="Job commands" />
         <Card readout><Prose className="font-mono text-xs">{raw}</Prose></Card>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <ScreenHead kicker="Help" headline={manual.lead}>
+    <div className="max-w-4xl">
+      <ScreenHead headline={manual.lead}>
         <p className="mt-3 text-sm text-soft">
           Every command is typed into Claude Code, not a shell.
         </p>
@@ -98,6 +98,6 @@ export default function HelpPage() {
           </Card>
         </Section>
       )}
-    </>
+    </div>
   );
 }

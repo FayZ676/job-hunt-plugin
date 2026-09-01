@@ -33,15 +33,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en"
           className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}
             h-full antialiased`}>
-      <body className="min-h-full bg-base-200 text-base-content md:flex">
+      <body className="min-h-full bg-base-200 text-base-content">
         <a href="#content"
            className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50
              focus:rounded-box focus:bg-base-100 focus:px-3 focus:py-2 focus:text-sm">
           Skip to content
         </a>
         <Nav db={DB} />
-        <main id="content" className="min-w-0 flex-1 px-5 py-7 pb-24 md:px-9 md:py-9">
-          <div className="mx-auto max-w-6xl">{children}</div>
+        <main id="content" className="mx-auto min-w-0 max-w-[104rem] px-4 py-7 pb-24 md:px-6">
+          {children}
         </main>
         <Toaster />
       </body>

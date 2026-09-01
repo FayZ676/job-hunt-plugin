@@ -3,10 +3,11 @@ import Glyph from "./Glyph";
 import { reading } from "./status";
 
 export const ScreenHead = ({ kicker, headline, children }:
-  { kicker: ReactNode; headline: ReactNode; children?: ReactNode }) => (
+  { kicker?: ReactNode; headline: ReactNode; children?: ReactNode }) => (
   <header className="mb-6">
-    <p className="eyebrow">{kicker}</p>
-    <p className="mt-2 max-w-3xl font-display text-xl font-medium leading-snug md:text-2xl">
+    {kicker && <p className="eyebrow">{kicker}</p>}
+    <p className="max-w-3xl font-display text-xl font-medium leading-snug not-first:mt-2
+      md:text-2xl">
       {headline}
     </p>
     {children}

@@ -27,10 +27,7 @@ export default function JobsLayout({ children }: LayoutProps<"/jobs">) {
 
   return (
     <>
-      <ScreenHead
-        kicker="Jobs"
-        headline={headline(counts["shortlisted"] ?? 0, counts["staged"] ?? 0)}
-      />
+      <ScreenHead headline={headline(counts["shortlisted"] ?? 0, counts["staged"] ?? 0)} />
       <Tabs items={[
         { href: "/jobs", label: "Openings", icon: <Glyph icon={Briefcase} /> },
         { href: "/jobs/criteria", label: "Search Criteria",

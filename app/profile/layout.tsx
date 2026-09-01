@@ -13,7 +13,7 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
 
   return (
     <VocabularyProvider value={vocabularies()}>
-      <ScreenHead kicker="Profile" headline="Everything an application draws on.">
+      <ScreenHead headline="Everything an application draws on.">
         <p className="mt-3 max-w-2xl text-sm text-soft">
           The better this page is, the better the work the app finds. An answer saves the moment
           you leave it; clearing one takes it back.
