@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import { ddl } from "./db.ts";
-import { TABLES, vocabulary } from "./schema.ts";
+import { vocabulary } from "./ddl.ts";
+import { TABLES } from "./schema.ts";
 
 export const POSTING_COLUMNS = [
   "key", "source", "company", "title", "url", "location", "remote",

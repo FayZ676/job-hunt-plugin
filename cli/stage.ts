@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { Command } from "commander";
 
 import { absolute, ddl, open } from "../lib/core/db.ts";
-import { vocabulary } from "../lib/core/schema.ts";
+import { vocabulary } from "../lib/core/ddl.ts";
 import { printRows } from "../lib/core/table.ts";
 import { collect, fail, guard } from "./kit.ts";
 

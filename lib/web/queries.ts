@@ -1,8 +1,13 @@
 import { z } from "zod";
 
 import { ddl, one, rows } from "../core/db.ts";
+import { choices } from "../core/ddl.ts";
 import {
-  choices, TABLES, VIEWS, withRowid, type Rowed, type Table,
+  TABLES,
+  VIEWS,
+  withRowid,
+  type Rowed,
+  type Table,
 } from "../core/schema.ts";
 
 const listing = <T extends Table>(table: T, order = "") =>

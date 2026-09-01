@@ -2,7 +2,7 @@ import type { Database } from "better-sqlite3";
 
 import { ddl } from "./core/db.ts";
 import { POSTING_COLUMNS, Posting } from "./core/posting.ts";
-import { vocabulary } from "./core/schema.ts";
+import { vocabulary } from "./core/ddl.ts";
 import * as sources from "./core/sources.ts";
 import {
   ageDays, compilePatterns, literals, matchesAny, norm, normCompany,

@@ -2,7 +2,7 @@
 import { Command } from "commander";
 
 import { ddl, open } from "../lib/core/db.ts";
-import { columns, sections, takes } from "../lib/core/schema.ts";
+import { columns, sections, takes } from "../lib/core/ddl.ts";
 import { printRows } from "../lib/core/table.ts";
 import { fail, guard } from "./kit.ts";
 

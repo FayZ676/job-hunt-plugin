@@ -29,8 +29,9 @@ It is one TypeScript app with two faces and one database under them. `cli/` stan
 and the database: one module per phase — `search.ts`, `score.ts`, `resume.ts`, `stage.ts`,
 `submit.ts` — so any step can be run or redone on its own, plus `q.ts` for SQL. `app/` is the
 Next.js dashboard that stands between you and the database, and is the only thing that writes your
-profile. `lib/` is what both use, including the one description of the schema, and `sql/` belongs to
-neither: every connect applies it, from a page or a phase. The rules above are enforced in those modules, not just described: the
+profile. `lib/` is what both use, and `sql/` belongs to neither: it is the one place the schema is
+described, applied on every connect from a page or a phase, and the typed mirror in `lib/` is
+generated from it. The rules above are enforced in those modules, not just described: the
 scorer refuses a posting whose description was never read, staging refuses an application with no
 built resume, and nothing is marked applied without the confirmation text you saw.
 

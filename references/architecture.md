@@ -40,12 +40,16 @@ displays, so what can reach the database is the part of the tree you can point a
 
 ## Changing the schema
 
+**`sql/*.sql` is the only place a column is declared.** `lib/core/tables.generated.ts` is written
+by `npm run schema`, which reads the DDL — every column, its nullability, and any `CHECK (x IN (…))`
+as a real enum. Never edit it by hand; the next regenerate discards the edit.
+
 **Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
 exists, so editing `sql/*.sql` leaves every database that has already been opened exactly as it was,
-and `align` then refuses to open it. Changing a column is one change in three places: the DDL,
-`TABLES` in `lib/core/schema.ts`, and an `ALTER TABLE` against the live database. That last one goes
-through `sqlite3 "$(job-paths db)"`, never `job-q` — either half of the edit puts the database out of
-agreement with the other, and `job-q` refuses to open it until both are done.
+and `align` then refuses to open it. So a column change is: edit the DDL, `npm run schema`, and
+`ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(job-paths db)"`,
+never `job-q` — the check runs before the SQL does, so `job-q` refuses to open the database that
+needs fixing.
 
 Dropping a column or a table drops what it holds, and no later run can bring it back. **Save the rows
 first, and tell the user what you saved and where** — the judgment about whether they are worth
