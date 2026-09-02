@@ -11,10 +11,14 @@ export default function JobsPage() {
   const tallies = stats().map((group) => ({ status: group.status ?? "", n: group.n }));
   const counts = Object.fromEntries(tallies.map((tally) => [tally.status, tally.n]));
   const count = (status: string) => counts[status] ?? 0;
-  const rows = jobs().slice().sort((left, right) =>
-    rankOf(left.status) - rankOf(right.status) ||
-    (right.score ?? -1) - (left.score ?? -1) ||
-    (right.first_seen ?? "").localeCompare(left.first_seen ?? ""));
+  const rows = jobs()
+    .slice()
+    .sort(
+      (left, right) =>
+        rankOf(left.status) - rankOf(right.status) ||
+        (right.score ?? -1) - (left.score ?? -1) ||
+        (right.first_seen ?? "").localeCompare(left.first_seen ?? ""),
+    );
 
   return (
     <FilterableTable
@@ -30,17 +34,19 @@ export default function JobsPage() {
         { label: "Seen", width: "6%", hideNarrow: true },
         { label: "Resume", width: "6%", hideNarrow: true },
       ]}
-      groups={[{
-        name: "status",
-        legend: "Filter openings by status",
-        facets: ORDER.filter((status) => counts[status]).map((status) => ({
-          key: status,
-          label: reading(status).label,
-          count: counts[status],
-          quiet: reading(status).stage === "closed",
-          icon: <Glyph icon={reading(status).icon} />,
-        })),
-      }]}
+      groups={[
+        {
+          name: "status",
+          legend: "Filter openings by status",
+          facets: ORDER.filter((status) => counts[status]).map((status) => ({
+            key: status,
+            label: reading(status).label,
+            count: counts[status],
+            quiet: reading(status).stage === "closed",
+            icon: <Glyph icon={reading(status).icon} />,
+          })),
+        },
+      ]}
       rows={rows.map((job) => ({
         key: job.key,
         href: `/jobs/${encodeURIComponent(job.key)}`,
@@ -48,18 +54,32 @@ export default function JobsPage() {
         facets: job.status ? [job.status] : [],
         haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
         cells: [
-          <span key="c" className="font-medium">{job.company}</span>,
+          <span key="c" className="font-medium">
+            {job.company}
+          </span>,
           job.title,
           <Score key="s" value={job.score} />,
           <Badge key="b">{job.status}</Badge>,
           shortPlace(job.location) || (job.remote ? "Remote" : "—"),
-          shortPay(job.compensation)
-            ? <span key="p" className="whitespace-nowrap">{shortPay(job.compensation)}</span>
-            : <span key="p" className="text-soft">—</span>,
+          shortPay(job.compensation) ? (
+            <span key="p" className="whitespace-nowrap">
+              {shortPay(job.compensation)}
+            </span>
+          ) : (
+            <span key="p" className="text-soft">
+              —
+            </span>
+          ),
           <Stamp key="t">{shortDate(job.first_seen)}</Stamp>,
-          job.resume
-            ? <Out key="r" href={`/asset/resume/${encodeURIComponent(job.key)}`}>Résumé</Out>
-            : <span key="r" className="text-soft">—</span>,
+          job.resume ? (
+            <Out key="r" href={`/asset/resume/${encodeURIComponent(job.key)}`}>
+              Résumé
+            </Out>
+          ) : (
+            <span key="r" className="text-soft">
+              —
+            </span>
+          ),
         ],
       }))}
     />

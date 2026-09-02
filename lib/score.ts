@@ -41,8 +41,7 @@ const Written = TABLES.instructions;
 
 export type Prospect = z.infer<typeof Prospect>;
 
-const listed = <T extends z.ZodObject>(shape: T) =>
-  Object.keys(shape.shape).join(", ");
+const listed = <T extends z.ZodObject>(shape: T) => Object.keys(shape.shape).join(", ");
 
 const said = (value: string) => value.replace(/_/g, " ");
 
@@ -53,17 +52,14 @@ const facts = (row: z.infer<typeof Standing> | null) =>
     row?.willing_to_relocate === 0 && "Will not relocate for a role.",
     row?.willing_to_relocate === 1 && "Open to relocating.",
     row?.employment_type && `Wants ${said(row.employment_type)} roles.`,
-    row?.compensation_floor &&
-      `Will not go below ${row.compensation_floor} ${row.compensation_currency ?? ""}.`.trim(),
+    row?.compensation_floor && `Will not go below ${row.compensation_floor} ${row.compensation_currency ?? ""}.`.trim(),
     row?.requires_sponsorship_now_or_future === 0 &&
       row?.legal_right_to_work_without_sponsorship === 1 &&
       "Needs no visa sponsorship, now or later.",
   ].filter((line): line is string => Boolean(line));
 
 export const instructions = () => ({
-  standing: facts(
-    one(Standing, `SELECT ${listed(Standing)} FROM identity WHERE id=1`),
-  ),
+  standing: facts(one(Standing, `SELECT ${listed(Standing)} FROM identity WHERE id=1`)),
   text: one(Written, "SELECT text FROM instructions WHERE id=1")?.text ?? null,
 });
 
@@ -76,34 +72,22 @@ export const triage = (filter: { status?: string; limit?: number } = {}) =>
     filter.status ? [filter.status] : [],
   );
 
-export const prospect = (key: string) =>
-  one(Prospect, `SELECT ${listed(Prospect)} FROM prospects WHERE key=?`, [key]);
+export const prospect = (key: string) => one(Prospect, `SELECT ${listed(Prospect)} FROM prospects WHERE key=?`, [key]);
 
 export const unscored = () =>
-  rows(
-    Pending,
-    `SELECT ${listed(Pending)} FROM prospects WHERE score IS NULL ORDER BY first_seen DESC`,
-  );
+  rows(Pending, `SELECT ${listed(Pending)} FROM prospects WHERE score IS NULL ORDER BY first_seen DESC`);
 
 export function record(key: string, score: number, reason: string) {
   const row = prospect(key);
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (!(score >= 0 && score <= 10))
-    throw new Error(`score must be 0-10, got ${score}`);
-  if (!reason.trim())
-    throw new Error(
-      "a reason cannot be empty: name the JD language that drove the score",
-    );
+  if (!(score >= 0 && score <= 10)) throw new Error(`score must be 0-10, got ${score}`);
+  if (!reason.trim()) throw new Error("a reason cannot be empty: name the JD language that drove the score");
   if (!(row.description ?? "").trim())
     throw new Error(
       `${key} has no description — scoring off a title is what this phase exists ` +
         "to prevent. Search again: every source now carries its description",
     );
 
-  db()
-    .prepare("UPDATE postings SET score=?, reason=? WHERE key=?")
-    .run(score, reason.trim(), key);
-  return one(Scored, `SELECT ${listed(Scored)} FROM prospects WHERE key=?`, [
-    key,
-  ])!;
+  db().prepare("UPDATE postings SET score=?, reason=? WHERE key=?").run(score, reason.trim(), key);
+  return one(Scored, `SELECT ${listed(Scored)} FROM prospects WHERE key=?`, [key])!;
 }

@@ -17,10 +17,12 @@ export type Column = {
   preview?: boolean;
 };
 
-export const title = (column: Column) =>
-  column.label ?? column.name.replace(/_/g, " ");
+export const title = (column: Column) => column.label ?? column.name.replace(/_/g, " ");
 
-export const YES_NO: [string, string][] = [["1", "yes"], ["0", "no"]];
+export const YES_NO: [string, string][] = [
+  ["1", "yes"],
+  ["0", "no"],
+];
 
 export const WHEN = { pattern: "\\d{4}(-\\d{2}){0,2}", placeholder: "2024, 2024-06 or 2024-06-01" };
 export const EMAIL = { type: "email", pattern: ".+@.+\\..+" } as const;

@@ -20,26 +20,13 @@ export const POSTING_COLUMNS = [
   "raw",
 ] as const;
 
-const undeclared = POSTING_COLUMNS.filter(
-  (name) => !(name in TABLES.postings.shape),
-);
-if (undeclared.length)
-  throw new Error(
-    `postings has no column ${undeclared.join(", ")} — lib/schema.ts is the list`,
-  );
+const undeclared = POSTING_COLUMNS.filter((name) => !(name in TABLES.postings.shape));
+if (undeclared.length) throw new Error(`postings has no column ${undeclared.join(", ")} — lib/schema.ts is the list`);
 
-const text = z.preprocess(
-  (held) => (typeof held === "string" ? held.trim() : held),
-  z.string(),
-);
+const text = z.preprocess((held) => (typeof held === "string" ? held.trim() : held), z.string());
 
 const maybeText = z.preprocess(
-  (held) =>
-    held === undefined || held === ""
-      ? null
-      : typeof held === "string"
-        ? held.trim()
-        : held,
+  (held) => (held === undefined || held === "" ? null : typeof held === "string" ? held.trim() : held),
   z.string().nullable(),
 );
 
@@ -49,10 +36,7 @@ const flag = z.preprocess(
 );
 
 const pay = z.preprocess(
-  (held) =>
-    held === undefined || held === "" || held === null || Number(held) < 0
-      ? null
-      : Number(held),
+  (held) => (held === undefined || held === "" || held === null || Number(held) < 0 ? null : Number(held)),
   z.number().nullable(),
 );
 
@@ -68,12 +52,7 @@ export const Posting = z.object({
     message: "title cannot be blank",
   }),
   url: maybeText.default(null),
-  location: z
-    .preprocess(
-      (held) => (held === null || held === undefined ? "" : held),
-      text,
-    )
-    .default(""),
+  location: z.preprocess((held) => (held === null || held === undefined ? "" : held), text).default(""),
   remote: flag.default(0),
   compensation: maybeText.default(null),
   posted_at: maybeText.default(null),

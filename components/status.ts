@@ -1,6 +1,17 @@
 import {
-  Check, Circle, CircleAlert, CircleDashed, CircleDot, Gauge, Lock, MessagesSquare, Minus, Send,
-  SkipForward, X, type LucideIcon,
+  Check,
+  Circle,
+  CircleAlert,
+  CircleDashed,
+  CircleDot,
+  Gauge,
+  Lock,
+  MessagesSquare,
+  Minus,
+  Send,
+  SkipForward,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 
 export type Stage = "waiting" | "live" | "closed";

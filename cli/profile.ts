@@ -6,9 +6,7 @@ import { printRows } from "../lib/core/table.ts";
 import { answers, clear, missing, set } from "../lib/profile.ts";
 import { guard } from "./kit.ts";
 
-const program = new Command("job-profile")
-  .description("Read and answer the search profile.")
-  .option("--db <path>");
+const program = new Command("job-profile").description("Read and answer the search profile.").option("--db <path>");
 
 program
   .command("set")
@@ -56,9 +54,7 @@ program
       const rows = missing();
       printRows(rows, options.json);
       if (rows.length && !options.json)
-        console.log(
-          `\n${rows.length} unanswered — a form asking for one of these blocks, never guesses`,
-        );
+        console.log(`\n${rows.length} unanswered — a form asking for one of these blocks, never guesses`);
     }),
   );
 

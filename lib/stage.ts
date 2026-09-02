@@ -31,15 +31,11 @@ const Application = TABLES.staged
     blocked_on: true,
     screenshot: true,
   })
-  .extend(
-    VIEWS.prospects.pick({ company: true, title: true, resume: true }).shape,
-  );
+  .extend(VIEWS.prospects.pick({ company: true, title: true, resume: true }).shape);
 
 const Waiting = TABLES.staged
   .pick({ key: true, status: true, blocked_on: true })
-  .extend(
-    VIEWS.prospects.pick({ company: true, title: true, score: true }).shape,
-  )
+  .extend(VIEWS.prospects.pick({ company: true, title: true, score: true }).shape)
   .extend({ prospect: VIEWS.prospects.shape.status });
 
 export type Field = {
@@ -65,49 +61,29 @@ export type Staged = {
 };
 
 export function add(key: string, filling: Filling): Staged {
-  const row = one(
-    Ready,
-    "SELECT key, company, title, status, resume FROM prospects WHERE key=?",
-    [key],
-  );
+  const row = one(Ready, "SELECT key, company, title, status, resume FROM prospects WHERE key=?", [key]);
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (row.status && CLOSED.includes(row.status))
-    throw new Error(`${key} is already ${row.status} — nothing to stage`);
-  if (!row.resume)
-    throw new Error(
-      `${key} has no resume — build it first: job-resume build <spec> --key ${key}`,
-    );
+  if (row.status && CLOSED.includes(row.status)) throw new Error(`${key} is already ${row.status} — nothing to stage`);
+  if (!row.resume) throw new Error(`${key} has no resume — build it first: job-resume build <spec> --key ${key}`);
   if (!fs.existsSync(absolute(row.resume)))
-    throw new Error(
-      `the resume recorded for ${key} is not on disk: ${row.resume}`,
-    );
+    throw new Error(`the resume recorded for ${key} is not on disk: ${row.resume}`);
 
   const screenshot = absolute(filling.screenshot);
   if (!fs.existsSync(screenshot))
-    throw new Error(
-      `no screenshot at ${screenshot} — Phase 4 ends with the filled form captured`,
-    );
+    throw new Error(`no screenshot at ${screenshot} — Phase 4 ends with the filled form captured`);
 
   if (!filling.fields.length)
-    throw new Error(
-      "stage at least one --field: an application with no recorded answers is not staged",
-    );
+    throw new Error("stage at least one --field: an application with no recorded answers is not staged");
 
   const tiers = TIERS();
   for (const field of filling.fields) {
     if (!field.label) throw new Error("a field needs a label");
     if (!tiers.includes(field.tier))
-      throw new Error(
-        `tier must be one of ${tiers.join(", ")}, got '${field.tier}' on '${field.label}'`,
-      );
+      throw new Error(`tier must be one of ${tiers.join(", ")}, got '${field.tier}' on '${field.label}'`);
   }
 
-  const empty = filling.fields
-    .filter((field) => !field.value)
-    .map((field) => field.label);
-  const blockedOn =
-    filling.blockedOn ||
-    (empty.length ? `no answer for: ${empty.join("; ")}` : null);
+  const empty = filling.fields.filter((field) => !field.value).map((field) => field.label);
+  const blockedOn = filling.blockedOn || (empty.length ? `no answer for: ${empty.join("; ")}` : null);
   const status = blockedOn ? "blocked" : "ready";
 
   db().transaction(() => {
@@ -119,11 +95,8 @@ export function add(key: string, filling: Filling): Staged {
       )
       .run(key, filling.url, screenshot, status, blockedOn);
     db().prepare("DELETE FROM staged_fields WHERE key=?").run(key);
-    const insert = db().prepare(
-      "INSERT INTO staged_fields(key,label,value,tier,flag) VALUES(?,?,?,?,?)",
-    );
-    for (const field of filling.fields)
-      insert.run(key, field.label, field.value || null, field.tier, field.flag);
+    const insert = db().prepare("INSERT INTO staged_fields(key,label,value,tier,flag) VALUES(?,?,?,?,?)");
+    for (const field of filling.fields) insert.run(key, field.label, field.value || null, field.tier, field.flag);
     db().prepare("UPDATE postings SET status='staged' WHERE key=?").run(key);
   })();
 
@@ -131,9 +104,7 @@ export function add(key: string, filling: Filling): Staged {
     status,
     blockedOn,
     fields: filling.fields.length,
-    flagged: filling.fields
-      .filter((field) => field.flag)
-      .map((field) => field.label),
+    flagged: filling.fields.filter((field) => field.flag).map((field) => field.label),
   };
 }
 
@@ -147,11 +118,7 @@ export function show(key: string) {
   if (!application) throw new Error(`nothing staged for '${key}'`);
   return {
     application,
-    fields: rows(
-      Answer,
-      "SELECT tier, label, value, flag FROM staged_fields WHERE key=? ORDER BY rowid",
-      [key],
-    ),
+    fields: rows(Answer, "SELECT tier, label, value, flag FROM staged_fields WHERE key=? ORDER BY rowid", [key]),
   };
 }
 
@@ -164,21 +131,11 @@ export const list = () =>
   );
 
 export function drop(key: string) {
-  if (
-    !one(
-      TABLES.staged.pick({ key: true }),
-      "SELECT key FROM staged WHERE key=?",
-      [key],
-    )
-  )
+  if (!one(TABLES.staged.pick({ key: true }), "SELECT key FROM staged WHERE key=?", [key]))
     throw new Error(`nothing staged for '${key}'`);
   db().transaction(() => {
     db().prepare("DELETE FROM staged_fields WHERE key=?").run(key);
     db().prepare("DELETE FROM staged WHERE key=?").run(key);
-    db()
-      .prepare(
-        "UPDATE postings SET status='shortlisted' WHERE key=? AND status='staged'",
-      )
-      .run(key);
+    db().prepare("UPDATE postings SET status='shortlisted' WHERE key=? AND status='staged'").run(key);
   })();
 }

@@ -24,7 +24,10 @@ export function useReorder(table: string, rows: { rowid: number; seq?: unknown }
     for (const [place, row] of order.entries()) {
       if (row.seq === place) continue;
       const done = await answered(save(table, row.rowid, { seq: String(place) }));
-      if ("error" in done) { say(done.error, true); break; }
+      if ("error" in done) {
+        say(done.error, true);
+        break;
+      }
     }
     setBusy(false);
     router.refresh();
@@ -32,7 +35,10 @@ export function useReorder(table: string, rows: { rowid: number; seq?: unknown }
 
   const dropzone = (place: number) => ({
     "data-over": over === place && held.current !== place ? "" : undefined,
-    onDragOver: (event: React.DragEvent) => { event.preventDefault(); setOver(place); },
+    onDragOver: (event: React.DragEvent) => {
+      event.preventDefault();
+      setOver(place);
+    },
     onDrop: (event: React.DragEvent) => {
       event.preventDefault();
       if (held.current !== null) move(held.current, place);
@@ -48,8 +54,14 @@ export function useReorder(table: string, rows: { rowid: number; seq?: unknown }
       role="button"
       aria-label={`reorder ${what} — drag, or press the arrow keys`}
       title="Drag to reorder"
-      onDragStart={(event) => { held.current = place; event.dataTransfer.effectAllowed = "move"; }}
-      onDragEnd={() => { held.current = null; setOver(null); }}
+      onDragStart={(event) => {
+        held.current = place;
+        event.dataTransfer.effectAllowed = "move";
+      }}
+      onDragEnd={() => {
+        held.current = null;
+        setOver(null);
+      }}
       onKeyDown={(event) => {
         const step = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
         if (!step) return;

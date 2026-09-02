@@ -8,6 +8,6 @@ const Vocabulary = createContext<Vocabularies>({ status: [] });
 
 export const useVocabulary = () => useContext(Vocabulary);
 
-export const VocabularyProvider = ({ value, children }:
-  { value: Vocabularies; children: ReactNode }) =>
-  <Vocabulary value={value}>{children}</Vocabulary>;
+export const VocabularyProvider = ({ value, children }: { value: Vocabularies; children: ReactNode }) => (
+  <Vocabulary value={value}>{children}</Vocabulary>
+);

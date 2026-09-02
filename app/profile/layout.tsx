@@ -12,12 +12,14 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
 
   return (
     <VocabularyProvider value={vocabularies()}>
-      <Tabs items={Object.entries(PANELS).map(([slug, panel]) => ({
-        href: `/profile/${slug}`,
-        label: panel.tab,
-        icon: <Glyph icon={panel.icon} />,
-        missing: blocking.filter((answer) => slugFor(answer.section) === slug).length,
-      }))} />
+      <Tabs
+        items={Object.entries(PANELS).map(([slug, panel]) => ({
+          href: `/profile/${slug}`,
+          label: panel.tab,
+          icon: <Glyph icon={panel.icon} />,
+          missing: blocking.filter((answer) => slugFor(answer.section) === slug).length,
+        }))}
+      />
       {children}
     </VocabularyProvider>
   );

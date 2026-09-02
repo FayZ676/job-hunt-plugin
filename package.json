@@ -23,7 +23,9 @@
     "build": "next build",
     "start": "next start -p 8765",
     "typecheck": "tsc --noEmit",
-    "schema": "node --disable-warning=ExperimentalWarning scripts/schema.ts"
+    "schema": "node --disable-warning=ExperimentalWarning scripts/schema.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
@@ -45,6 +47,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "daisyui": "^5.7.22",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

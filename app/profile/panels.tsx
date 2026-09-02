@@ -6,12 +6,12 @@ import { COLUMNS, type Column } from "@/components/edit/columns";
 import { career, education, experience } from "@/lib/web/queries";
 import type { Table } from "@/lib/core/schema";
 import type { ReactNode } from "react";
-import {
-  BriefcaseBusiness, GraduationCap, IdCard, NotebookPen, type LucideIcon,
-} from "lucide-react";
+import { BriefcaseBusiness, GraduationCap, IdCard, NotebookPen, type LucideIcon } from "lucide-react";
 
 type Panel = {
-  tab: string; covers?: string[]; icon: LucideIcon;
+  tab: string;
+  covers?: string[];
+  icon: LucideIcon;
   body: () => ReactNode;
 };
 
@@ -37,8 +37,7 @@ export const PANELS: Record<string, Panel> = {
   education: {
     tab: "Education",
     icon: GraduationCap,
-    body: () => records("education", COLUMNS.education, education() as Record_[],
-                        "this degree", "Add a degree"),
+    body: () => records("education", COLUMNS.education, education() as Record_[], "this degree", "Add a degree"),
   },
 
   instructions: {
@@ -49,5 +48,4 @@ export const PANELS: Record<string, Panel> = {
 };
 
 export const slugFor = (section: string) =>
-  Object.entries(PANELS).find(([slug, panel]) => (panel.covers ?? [slug]).includes(section))?.[0]
-  ?? section;
+  Object.entries(PANELS).find(([slug, panel]) => (panel.covers ?? [slug]).includes(section))?.[0] ?? section;

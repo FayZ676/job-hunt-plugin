@@ -17,16 +17,15 @@ export function* dump(database: Database) {
 
   for (const held of objects.filter((one) => one.type === "table")) {
     if (held.sql) yield `${held.sql};`;
-    const columns = (database.pragma(`table_info("${held.name}")`) as { name: string }[])
-      .map((column) => `"${column.name}"`);
+    const columns = (database.pragma(`table_info("${held.name}")`) as { name: string }[]).map(
+      (column) => `"${column.name}"`,
+    );
     if (!columns.length) continue;
     for (const row of database.prepare(`SELECT * FROM "${held.name}"`).all() as Record<string, unknown>[])
-      yield `INSERT INTO "${held.name}"(${columns.join(",")}) VALUES(${
-        Object.values(row).map(quoted).join(",")});`;
+      yield `INSERT INTO "${held.name}"(${columns.join(",")}) VALUES(${Object.values(row).map(quoted).join(",")});`;
   }
 
-  for (const held of objects.filter((one) => one.type !== "table"))
-    if (held.sql) yield `${held.sql};`;
+  for (const held of objects.filter((one) => one.type !== "table")) if (held.sql) yield `${held.sql};`;
 
   yield "COMMIT;";
 }

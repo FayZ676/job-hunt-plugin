@@ -30,13 +30,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en"
-          className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}
-            h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}
+            h-full antialiased`}
+    >
       <body className="min-h-full bg-base-200 text-base-content">
-        <a href="#content"
-           className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50
-             focus:rounded-box focus:bg-base-100 focus:px-3 focus:py-2 focus:text-sm">
+        <a
+          href="#content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50
+             focus:rounded-box focus:bg-base-100 focus:px-3 focus:py-2 focus:text-sm"
+        >
           Skip to content
         </a>
         <Nav db={DB} />

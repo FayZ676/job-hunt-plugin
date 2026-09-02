@@ -6,8 +6,10 @@ import { CAREER, absolute, one } from "@/lib/core/db";
 const FROM = { resume: "postings", screenshot: "staged" } as const;
 
 const TYPES: Record<string, string> = {
-  ".pdf": "application/pdf", ".png": "image/png",
-  ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
 };
 
 export async function GET(_request: Request, { params }: { params: Promise<{ kind: string; key: string[] }> }) {
@@ -15,8 +17,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
   const table = FROM[kind as keyof typeof FROM];
   if (!table) return new Response("no such kind", { status: 404 });
 
-  const found = one(z.object({ p: z.string().nullable() }),
-    `SELECT ${kind} AS p FROM ${table} WHERE key=?`, [decodeURIComponent(key.join("/"))]);
+  const found = one(z.object({ p: z.string().nullable() }), `SELECT ${kind} AS p FROM ${table} WHERE key=?`, [
+    decodeURIComponent(key.join("/")),
+  ]);
   if (!found?.p) return new Response("no such file", { status: 404 });
 
   const resolved = fs.realpathSync(absolute(found.p));

@@ -5,8 +5,7 @@ import { remove } from "@/lib/web/actions";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 
-export default function DeleteButton({ table, rowid, what = "this" }:
-  { table: string; rowid: number; what?: string }) {
+export default function DeleteButton({ table, rowid, what = "this" }: { table: string; rowid: number; what?: string }) {
   const router = useRouter();
   return (
     <button

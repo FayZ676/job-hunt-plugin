@@ -7,20 +7,31 @@ export const MARK_PATHS = [
 
 export const MARK_BLIP = { cx: 12, cy: 18, r: 1.5 };
 
-export default function Mark({ size = 18, strokeWidth = 1.5, className = "" }:
-  { size?: number; strokeWidth?: number; className?: string }) {
+export default function Mark({
+  size = 18,
+  strokeWidth = 1.5,
+  className = "",
+}: {
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+}) {
   return (
-    <svg aria-hidden
-         viewBox="0 0 24 24"
-         width={size}
-         height={size}
-         fill="none"
-         stroke="currentColor"
-         strokeWidth={strokeWidth * 24 / size}
-         strokeLinecap="round"
-         strokeLinejoin="round"
-         className={`shrink-0 ${className}`}>
-      {MARK_PATHS.map((d) => <path key={d} d={d} />)}
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={(strokeWidth * 24) / size}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`shrink-0 ${className}`}
+    >
+      {MARK_PATHS.map((d) => (
+        <path key={d} d={d} />
+      ))}
       <circle {...MARK_BLIP} className="fill-blip" stroke="none" />
     </svg>
   );

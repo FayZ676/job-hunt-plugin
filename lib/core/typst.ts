@@ -1,13 +1,40 @@
 export const DENSITY = {
-  tight: { body: 9.5, name: 17.0, section: 10.5, leading: 0.58,
-           para_gap: 4.0, sec_above: 7.0, sec_below: 3.0,
-           rule_gap: 1.5, role_gap: 4.0, bullet_gap: 0.30 },
-  normal: { body: 10.0, name: 18.0, section: 11.0, leading: 0.65,
-            para_gap: 5.5, sec_above: 9.5, sec_below: 4.0,
-            rule_gap: 2.0, role_gap: 5.5, bullet_gap: 0.40 },
-  roomy: { body: 10.5, name: 19.0, section: 11.5, leading: 0.72,
-           para_gap: 7.0, sec_above: 12.0, sec_below: 5.0,
-           rule_gap: 2.5, role_gap: 7.0, bullet_gap: 0.50 },
+  tight: {
+    body: 9.5,
+    name: 17.0,
+    section: 10.5,
+    leading: 0.58,
+    para_gap: 4.0,
+    sec_above: 7.0,
+    sec_below: 3.0,
+    rule_gap: 1.5,
+    role_gap: 4.0,
+    bullet_gap: 0.3,
+  },
+  normal: {
+    body: 10.0,
+    name: 18.0,
+    section: 11.0,
+    leading: 0.65,
+    para_gap: 5.5,
+    sec_above: 9.5,
+    sec_below: 4.0,
+    rule_gap: 2.0,
+    role_gap: 5.5,
+    bullet_gap: 0.4,
+  },
+  roomy: {
+    body: 10.5,
+    name: 19.0,
+    section: 11.5,
+    leading: 0.72,
+    para_gap: 7.0,
+    sec_above: 12.0,
+    sec_below: 5.0,
+    rule_gap: 2.5,
+    role_gap: 7.0,
+    bullet_gap: 0.5,
+  },
 };
 
 export type Density = keyof typeof DENSITY;
@@ -19,14 +46,18 @@ export const SECTION_TYPES: Record<string, [string, string]> = {
   bullets: ['"items": ["…", "…"]', "a bare bulleted list, no sub-heading"],
   labeled: ['"items": [{"label": "…", "text": "…"}]', "**Label:** text, one per line"],
   entries: ['"items": [{"primary": "…", "secondary": "…"}]', "**Primary** — Secondary, one per line"],
-  experience: ['"roles": [{"title", "company", "dates", "bullets": ["…"]}]',
-               "**Title, Company** — Dates, then a bulleted list"],
+  experience: [
+    '"roles": [{"title", "company", "dates", "bullets": ["…"]}]',
+    "**Title, Company** — Dates, then a bulleted list",
+  ],
 };
 
 const INLINE = /\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/\S+)/g;
 
 export const s = (text: unknown) =>
-  `"${String(text ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  `"${String(text ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')}"`;
 
 export function inline(text: string | null | undefined) {
   const held = text ?? "";
@@ -68,8 +99,7 @@ export function build(spec: Record<string, any>, density: Density) {
     `#set par(leading: ${d.leading}em, spacing: ${d.para_gap}pt, justify: false)`,
     "#set smartquote(enabled: false)",
     '#show link: set text(fill: rgb("#0563c1"))',
-    `#set list(indent: 1.1em, body-indent: 0.45em, spacing: ${d.bullet_gap}em, ` +
-      "marker: text(0.95em)[•])",
+    `#set list(indent: 1.1em, body-indent: 0.45em, spacing: ${d.bullet_gap}em, ` + "marker: text(0.95em)[•])",
     "",
     `#let sec(title) = block(above: ${d.sec_above}pt, below: ${d.sec_below}pt, width: 100%)[`,
     `  #text(size: ${d.section}pt, weight: "bold")[#title]`,
@@ -82,8 +112,7 @@ export function build(spec: Record<string, any>, density: Density) {
   ];
 
   const contact: unknown[] = spec.contact ?? [];
-  if (contact.length)
-    L.push(`#align(center)[${contact.map(rich).join('#text("  |  ")')}]`);
+  if (contact.length) L.push(`#align(center)[${contact.map(rich).join('#text("  |  ")')}]`);
 
   for (const section of spec.sections ?? []) {
     L.push("");
@@ -96,14 +125,18 @@ export function build(spec: Record<string, any>, density: Density) {
         for (const item of section.items ?? []) L.push(`- ${inline(item)}`);
         break;
       case "labeled":
-        L.push((section.items ?? []).map((item: any) =>
-          `#strong(text(${s(item.label ?? "")}))#text(": ")${inline(item.text ?? "")}`)
-          .join(" \\\n"));
+        L.push(
+          (section.items ?? [])
+            .map((item: any) => `#strong(text(${s(item.label ?? "")}))#text(": ")${inline(item.text ?? "")}`)
+            .join(" \\\n"),
+        );
         break;
       case "entries":
-        L.push((section.items ?? []).map((item: any) =>
-          `#strong(text(${s(item.primary ?? "")}))#text(" — ")${inline(item.secondary ?? "")}`)
-          .join(" \\\n"));
+        L.push(
+          (section.items ?? [])
+            .map((item: any) => `#strong(text(${s(item.primary ?? "")}))#text(" — ")${inline(item.secondary ?? "")}`)
+            .join(" \\\n"),
+        );
         break;
       case "experience":
         (section.roles ?? []).forEach((role: any, at: number) => {
@@ -116,7 +149,8 @@ export function build(spec: Record<string, any>, density: Density) {
       default:
         throw new Error(
           `unknown section type "${section.type}" in '${section.heading}'; ` +
-          `valid: ${Object.keys(SECTION_TYPES).join(", ")}`);
+            `valid: ${Object.keys(SECTION_TYPES).join(", ")}`,
+        );
     }
   }
   return `${L.join("\n")}\n`;

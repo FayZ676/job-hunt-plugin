@@ -26,7 +26,14 @@ const HEAD = "eyebrow whitespace-nowrap px-3 py-2 text-left font-medium";
 const SLIM = "eyebrow whitespace-nowrap py-2 text-left font-medium";
 
 export default function Ledger({
-  head, rows, empty = "Nothing here yet.", foot, grip, action, dense, headless,
+  head,
+  rows,
+  empty = "Nothing here yet.",
+  foot,
+  grip,
+  action,
+  dense,
+  headless,
 }: {
   head: LedgerColumn[];
   rows: LedgerRow[];
@@ -54,7 +61,9 @@ export default function Ledger({
         <colgroup>
           <col className="w-5" />
           {grip && <col className="w-6" />}
-          {head.map((column) => <col key={column.label} style={{ width: column.width }} />)}
+          {head.map((column) => (
+            <col key={column.label} style={{ width: column.width }} />
+          ))}
           {action && <col className="w-9" />}
         </colgroup>
 
@@ -64,16 +73,25 @@ export default function Ledger({
               <th scope="col" className={`${SLIM} pl-3`}>
                 <span className="sr-only">Waiting on you</span>
               </th>
-              {grip && <th scope="col" className={`${SLIM} px-1`}>
-                <span className="sr-only">Order</span>
-              </th>}
+              {grip && (
+                <th scope="col" className={`${SLIM} px-1`}>
+                  <span className="sr-only">Order</span>
+                </th>
+              )}
               {head.map((column) => (
-                <th key={column.label} scope="col"
-                    className={`${HEAD} ${column.hideNarrow ? "hidden md:table-cell" : ""}`}>
+                <th
+                  key={column.label}
+                  scope="col"
+                  className={`${HEAD} ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
+                >
                   {column.label}
                 </th>
               ))}
-              {action && <th scope="col" className={HEAD}><span className="sr-only">Remove</span></th>}
+              {action && (
+                <th scope="col" className={HEAD}>
+                  <span className="sr-only">Remove</span>
+                </th>
+              )}
             </tr>
           </thead>
         )}
@@ -81,17 +99,24 @@ export default function Ledger({
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={span}><Empty>{empty}</Empty></td>
+              <td colSpan={span}>
+                <Empty>{empty}</Empty>
+              </td>
             </tr>
           )}
 
           {rows.map((row) => (
-            <tr key={row.key} {...row.zone}
-                onClick={row.href ? follow(row.href) : undefined}
-                className={`ledgerrow group/row border-b border-base-200 last:border-0
-                  ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}>
+            <tr
+              key={row.key}
+              {...row.zone}
+              onClick={row.href ? follow(row.href) : undefined}
+              className={`ledgerrow group/row border-b border-base-200 last:border-0
+                  ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}
+            >
               <td className={`${pad} pl-3 pr-0 align-top`}>
-                <span className="flex h-5 items-center"><Mark on={row.mark} /></span>
+                <span className="flex h-5 items-center">
+                  <Mark on={row.mark} />
+                </span>
               </td>
 
               {grip && (
@@ -101,20 +126,28 @@ export default function Ledger({
               )}
 
               {row.cells.map((cell, index) => (
-                <td key={head[index].label}
-                    className={`${pad} px-3 align-top
+                <td
+                  key={head[index].label}
+                  className={`${pad} px-3 align-top
                       ${head[index].numeric ? "tnum" : ""}
-                      ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}>
-                  {index === 0 && row.href
-                    ? <Link href={row.href} className="block hover:underline">{cell}</Link>
-                    : cell}
+                      ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}
+                >
+                  {index === 0 && row.href ? (
+                    <Link href={row.href} className="block hover:underline">
+                      {cell}
+                    </Link>
+                  ) : (
+                    cell
+                  )}
                 </td>
               ))}
 
               {action && (
                 <td className={`${pad} px-3 align-top`}>
-                  <span className="flex h-5 items-center justify-end opacity-0 transition-opacity
-                    group-hover/row:opacity-100 group-focus-within/row:opacity-100">
+                  <span
+                    className="flex h-5 items-center justify-end opacity-0 transition-opacity
+                    group-hover/row:opacity-100 group-focus-within/row:opacity-100"
+                  >
                     {row.action}
                   </span>
                 </td>
@@ -130,7 +163,6 @@ export default function Ledger({
             </tr>
           </tfoot>
         )}
-
       </table>
     </div>
   );

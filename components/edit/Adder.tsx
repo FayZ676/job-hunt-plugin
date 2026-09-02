@@ -8,7 +8,12 @@ import { answered } from "./answered";
 import { Control } from "./Field";
 import { title, type Column } from "./columns";
 
-export default function Adder({ table, columns, seed = {}, label }: {
+export default function Adder({
+  table,
+  columns,
+  seed = {},
+  label,
+}: {
   table: string;
   columns: Column[];
   seed?: Record<string, string>;
@@ -36,10 +41,16 @@ export default function Adder({ table, columns, seed = {}, label }: {
 
   if (!open)
     return (
-      <button type="button" onClick={() => setOpen(true)}
-              className="flex w-full items-center gap-1.5 px-3 py-2.5 text-left text-sm text-soft
-                transition-colors hover:bg-base-200 hover:text-base-content">
-        <span aria-hidden className="font-mono">+</span>{label}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center gap-1.5 px-3 py-2.5 text-left text-sm text-soft
+                transition-colors hover:bg-base-200 hover:text-base-content"
+      >
+        <span aria-hidden className="font-mono">
+          +
+        </span>
+        {label}
       </button>
     );
 
@@ -58,22 +69,32 @@ export default function Adder({ table, columns, seed = {}, label }: {
         {columns.map((column, index) => (
           <label key={column.name} className="min-w-40 flex-1">
             <span className="eyebrow mb-0.5 block">{title(column)}</span>
-            <Control column={column} autoFocus={index === 0}
-                     value={draft[column.name]}
-                     onValue={(value) => setDraft({ ...draft, [column.name]: value })} />
+            <Control
+              column={column}
+              autoFocus={index === 0}
+              value={draft[column.name]}
+              onValue={(value) => setDraft({ ...draft, [column.name]: value })}
+            />
           </label>
         ))}
       </div>
 
       <div className="flex items-center gap-3 text-sm">
-        <button type="button" disabled={busy} onClick={add}
-                className="rounded-field border border-base-content bg-base-content px-2.5 py-1
-                  text-xs text-base-100 transition-opacity disabled:opacity-40">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={add}
+          className="rounded-field border border-base-content bg-base-content px-2.5 py-1
+                  text-xs text-base-100 transition-opacity disabled:opacity-40"
+        >
           {label}
         </button>
-        <button type="button" onClick={() => setOpen(false)}
-                className="text-xs text-soft underline decoration-base-300 underline-offset-2
-                  hover:decoration-current">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-xs text-soft underline decoration-base-300 underline-offset-2
+                  hover:decoration-current"
+        >
           Done
         </button>
       </div>

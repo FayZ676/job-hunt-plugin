@@ -6,7 +6,13 @@ import { remove, save } from "@/lib/web/actions";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 
-export default function Chips({ table, column, rows, seed = {}, placeholder }: {
+export default function Chips({
+  table,
+  column,
+  rows,
+  seed = {},
+  placeholder,
+}: {
   table: string;
   column: string;
   rows: ({ rowid: number } & Record<string, unknown>)[];
@@ -24,9 +30,11 @@ export default function Chips({ table, column, rows, seed = {}, placeholder }: {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {rows.map((row) => (
-        <span key={row.rowid}
-              className="inline-flex items-center gap-1 rounded-selector border border-base-300
-                py-0.5 pl-2 pr-1 text-xs">
+        <span
+          key={row.rowid}
+          className="inline-flex items-center gap-1 rounded-selector border border-base-300
+                py-0.5 pl-2 pr-1 text-xs"
+        >
           {String(row[column])}
           <button
             type="button"

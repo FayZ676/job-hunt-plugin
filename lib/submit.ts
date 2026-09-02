@@ -7,9 +7,7 @@ import { TABLES, VIEWS } from "./core/schema.ts";
 
 const companions = (pdf: string) => {
   const stem = pdf.slice(0, pdf.length - path.extname(pdf).length);
-  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) =>
-    fs.existsSync(held),
-  );
+  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) => fs.existsSync(held));
 };
 
 const move = (from: string, to: string) => {
@@ -23,16 +21,12 @@ const move = (from: string, to: string) => {
 
 const Waiting = VIEWS.prospects
   .pick({ company: true, title: true, score: true })
-  .extend(
-    TABLES.staged.pick({ status: true, blocked_on: true, key: true }).shape,
-  );
+  .extend(TABLES.staged.pick({ status: true, blocked_on: true, key: true }).shape);
 
-const Recordable = VIEWS.prospects
-  .pick({ key: true, company: true, title: true, resume: true, status: true })
-  .extend({
-    staged_status: TABLES.staged.shape.status,
-    blocked_on: TABLES.staged.shape.blocked_on,
-  });
+const Recordable = VIEWS.prospects.pick({ key: true, company: true, title: true, resume: true, status: true }).extend({
+  staged_status: TABLES.staged.shape.status,
+  blocked_on: TABLES.staged.shape.blocked_on,
+});
 
 export type Waiting = z.infer<typeof Waiting>;
 
@@ -46,10 +40,7 @@ export const review = () =>
 
 export function record(key: string, confirmation: string) {
   const said = confirmation.trim();
-  if (!said)
-    throw new Error(
-      "--confirmation cannot be empty: `applied` requires a confirmation page you saw",
-    );
+  if (!said) throw new Error("--confirmation cannot be empty: `applied` requires a confirmation page you saw");
 
   const row = one(
     Recordable,
@@ -62,14 +53,11 @@ export function record(key: string, confirmation: string) {
   if (row.staged_status === null || row.staged_status === undefined)
     throw new Error(`${key} was never staged — run job-stage add first`);
   if (row.staged_status !== "ready")
-    throw new Error(
-      `${key} is ${row.staged_status}: ${row.blocked_on || "no reason recorded"}`,
-    );
+    throw new Error(`${key} is ${row.staged_status}: ${row.blocked_on || "no reason recorded"}`);
   if (!row.resume) throw new Error(`${key} has no resume recorded`);
 
   const source = absolute(row.resume);
-  if (!fs.existsSync(source))
-    throw new Error(`the resume recorded for ${key} is not on disk: ${source}`);
+  if (!fs.existsSync(source)) throw new Error(`the resume recorded for ${key} is not on disk: ${source}`);
 
   fs.mkdirSync(SUBMITTED, { recursive: true });
   const moved: [string, string][] = [];
@@ -81,16 +69,11 @@ export function record(key: string, confirmation: string) {
       moved.push([held, target]);
     }
     db().transaction(() => {
-      db()
-        .prepare("UPDATE postings SET status='applied', resume=? WHERE key=?")
-        .run(resume, key);
-      db()
-        .prepare("INSERT INTO events(key,status,note) VALUES(?,'applied',?)")
-        .run(key, said);
+      db().prepare("UPDATE postings SET status='applied', resume=? WHERE key=?").run(resume, key);
+      db().prepare("INSERT INTO events(key,status,note) VALUES(?,'applied',?)").run(key, said);
     })();
   } catch (error) {
-    for (const [original, target] of [...moved].reverse())
-      if (fs.existsSync(target)) move(target, original);
+    for (const [original, target] of [...moved].reverse()) if (fs.existsSync(target)) move(target, original);
     throw error;
   }
 
@@ -105,18 +88,11 @@ export function rejected(key: string, note: string) {
     [key],
   );
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (!said)
-    throw new Error(
-      "--note cannot be empty: record the shape — days elapsed, and any interview stage",
-    );
+  if (!said) throw new Error("--note cannot be empty: record the shape — days elapsed, and any interview stage");
 
   db().transaction(() => {
-    db()
-      .prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?")
-      .run(key);
-    db()
-      .prepare("INSERT INTO events(key,status,note) VALUES(?,'rejected',?)")
-      .run(key, said);
+    db().prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?").run(key);
+    db().prepare("INSERT INTO events(key,status,note) VALUES(?,'rejected',?)").run(key, said);
   })();
 
   const deleted: string[] = [];

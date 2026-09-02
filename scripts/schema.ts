@@ -18,8 +18,7 @@ const OUT = path.join(ROOT, "sql", "tables.sql");
 const bare = (shape: z.ZodType): z.ZodType =>
   shape instanceof z.ZodNullable ? bare(shape.unwrap() as z.ZodType) : shape;
 
-const kindOf = (shape: z.ZodType, said?: string) =>
-  said ?? (bare(shape) instanceof z.ZodNumber ? "INTEGER" : "TEXT");
+const kindOf = (shape: z.ZodType, said?: string) => said ?? (bare(shape) instanceof z.ZodNumber ? "INTEGER" : "TEXT");
 
 const enumCheck = (name: string, shape: z.ZodType) => {
   const inner = bare(shape);
@@ -44,27 +43,22 @@ const enumCheck = (name: string, shape: z.ZodType) => {
 function declare(table: string, shape: z.ZodObject) {
   const meta = (shape.meta() ?? {}) as Shape;
   const fields = Object.entries(shape.shape) as [string, z.ZodType][];
-  const width = Math.max(
-    ...fields.map(([name]) => name.length),
-    meta.singleRow ? 2 : 0,
-  );
+  const width = Math.max(...fields.map(([name]) => name.length), meta.singleRow ? 2 : 0);
 
-  const lines: { body: string; note?: string }[] = fields.map(
-    ([name, held]) => {
-      const column = (held.meta() ?? {}) as Column;
-      const nullable = held.safeParse(null).success;
-      const parts = [
-        kindOf(held, column.kind),
-        !nullable && !column.sql?.includes("PRIMARY KEY") ? "NOT NULL" : "",
-        column.sql ?? "",
-        enumCheck(name, held),
-      ].filter(Boolean);
-      return {
-        body: `  ${name.padEnd(width)} ${parts.join(" ")}`,
-        note: column.note,
-      };
-    },
-  );
+  const lines: { body: string; note?: string }[] = fields.map(([name, held]) => {
+    const column = (held.meta() ?? {}) as Column;
+    const nullable = held.safeParse(null).success;
+    const parts = [
+      kindOf(held, column.kind),
+      !nullable && !column.sql?.includes("PRIMARY KEY") ? "NOT NULL" : "",
+      column.sql ?? "",
+      enumCheck(name, held),
+    ].filter(Boolean);
+    return {
+      body: `  ${name.padEnd(width)} ${parts.join(" ")}`,
+      note: column.note,
+    };
+  });
 
   if (meta.singleRow)
     lines.unshift({
@@ -74,12 +68,7 @@ function declare(table: string, shape: z.ZodObject) {
   for (const held of meta.constraints ?? []) lines.push({ body: `  ${held}` });
 
   const rendered = lines
-    .map(
-      (held, n) =>
-        held.body +
-        (n < lines.length - 1 ? "," : "") +
-        (held.note ? `             -- ${held.note}` : ""),
-    )
+    .map((held, n) => held.body + (n < lines.length - 1 ? "," : "") + (held.note ? `             -- ${held.note}` : ""))
     .join("\n");
 
   const note = meta.note
@@ -88,12 +77,8 @@ function declare(table: string, shape: z.ZodObject) {
         .map((l) => `-- ${l}`)
         .join("\n") + "\n"
     : "";
-  const seed = meta.singleRow
-    ? `\nINSERT OR IGNORE INTO ${table}(id) VALUES (1);`
-    : "";
-  const indexes = (meta.indexes ?? [])
-    .map((held) => `\nCREATE INDEX IF NOT EXISTS ${held};`)
-    .join("");
+  const seed = meta.singleRow ? `\nINSERT OR IGNORE INTO ${table}(id) VALUES (1);` : "";
+  const indexes = (meta.indexes ?? []).map((held) => `\nCREATE INDEX IF NOT EXISTS ${held};`).join("");
 
   return `${note}CREATE TABLE IF NOT EXISTS ${table} (\n${rendered}\n) STRICT;${seed}${indexes}`;
 }
@@ -169,6 +154,4 @@ const body = [
 
 fs.writeFileSync(OUT, body, "utf8");
 
-console.log(
-  `wrote ${path.relative(ROOT, OUT)} — ${ORDER.length} tables, ${SECTIONS.length} sections`,
-);
+console.log(`wrote ${path.relative(ROOT, OUT)} — ${ORDER.length} tables, ${SECTIONS.length} sections`);

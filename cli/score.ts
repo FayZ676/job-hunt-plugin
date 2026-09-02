@@ -3,13 +3,7 @@ import { Command } from "commander";
 
 import { open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
-import {
-  instructions,
-  prospect,
-  record,
-  triage,
-  unscored,
-} from "../lib/score.ts";
+import { instructions, prospect, record, triage, unscored } from "../lib/score.ts";
 import { guard } from "./kit.ts";
 
 const program = new Command("job-score")
@@ -42,9 +36,7 @@ program
 
 program
   .command("instructions")
-  .description(
-    "everything scoring reads: standing profile facts, then the instructions",
-  )
+  .description("everything scoring reads: standing profile facts, then the instructions")
   .action(
     guard((options) => {
       open(program.opts().db);
@@ -82,10 +74,7 @@ program
             `${row.score !== null ? "  score " + row.score : ""}`,
         );
         console.log(`  ${row.url || ""}\n`);
-        console.log(
-          row.description ||
-            "(no description — job-score set will refuse this one)",
-        );
+        console.log(row.description || "(no description — job-score set will refuse this one)");
         console.log("\n" + "-".repeat(78) + "\n");
       }
     }),
@@ -115,9 +104,7 @@ program
       const rows = unscored();
       printRows(rows, options.json);
       if (rows.length && !options.json)
-        console.log(
-          `\n${rows.length} unscored — each one stays \`new\` and comes back tomorrow`,
-        );
+        console.log(`\n${rows.length} unscored — each one stays \`new\` and comes back tomorrow`);
     }),
   );
 

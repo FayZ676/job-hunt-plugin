@@ -13,8 +13,7 @@ export function compile(pattern: string) {
   return new RegExp(source, flags);
 }
 
-export const compilePatterns = (patterns: string[] | null | undefined) =>
-  (patterns ?? []).map(compile);
+export const compilePatterns = (patterns: string[] | null | undefined) => (patterns ?? []).map(compile);
 
 const SAYABLE = /^[a-z0-9][a-z0-9 .&'/-]*$/i;
 
@@ -45,13 +44,15 @@ export const matchesAny = (patterns: RegExp[], text: string | null | undefined) 
   patterns.some((pattern) => pattern.test(text ?? ""));
 
 export const norm = (text: string | null | undefined) =>
-  (text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  (text ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
 const COMPANY_SUFFIXES =
   /[,.]?\s*\b(inc|llc|ltd|corp|corporation|co|company|technologies|technology|labs|holdings|group|usa)\b\.?/gi;
 
-export const normCompany = (name: string | null | undefined) =>
-  norm((name ?? "").replace(COMPANY_SUFFIXES, ""));
+export const normCompany = (name: string | null | undefined) => norm((name ?? "").replace(COMPANY_SUFFIXES, ""));
 
 export function htmlToText(raw: string | null | undefined) {
   if (!raw) return "";
@@ -62,12 +63,14 @@ export function htmlToText(raw: string | null | undefined) {
   text = text.replace(/<[^>]+>/g, "");
   text = decodeHTML(text);
   text = text.replace(/ /g, " ").replace(/[ \t\r\f\v]+/g, " ");
-  text = text.split("\n").map((line) => line.trim()).join("\n");
+  text = text
+    .split("\n")
+    .map((line) => line.trim())
+    .join("\n");
   return text.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-const ISO =
-  /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?))?\s*(Z|[+-]\d{2}:?\d{2})?$/;
+const ISO = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?))?\s*(Z|[+-]\d{2}:?\d{2})?$/;
 
 const offset = (held: string | undefined) => {
   if (!held) return "";
@@ -90,7 +93,8 @@ export function toIso(value: unknown): string | null {
     let time = held[2] ?? "00:00:00";
     if (time.length === 5) time += ":00";
     time = time.replace(/\.(\d+)$/, (whole, digits: string) =>
-      /^0+$/.test(digits) ? "" : `.${digits.padEnd(6, "0").slice(0, 6)}`);
+      /^0+$/.test(digits) ? "" : `.${digits.padEnd(6, "0").slice(0, 6)}`,
+    );
     return `${held[1]}T${time}${offset(held[3])}`;
   }
   const moment = new Date(text);

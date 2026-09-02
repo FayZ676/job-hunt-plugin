@@ -30,9 +30,7 @@ program
       printRows(waiting as unknown as Record<string, unknown>[], options.json);
       if (waiting.length && !options.json) {
         const ready = waiting.filter((row) => row.status === "ready").length;
-        console.log(
-          `\n${ready} ready. Nothing goes out until the user names it, in this run.`,
-        );
+        console.log(`\n${ready} ready. Nothing goes out until the user names it, in this run.`);
       }
     }),
   );
@@ -41,10 +39,7 @@ program
   .command("record")
   .description("mark applied and move the resume into submitted/")
   .argument("<key>")
-  .requiredOption(
-    "--confirmation <text>",
-    "what the confirmation page said — clicking the button is not evidence",
-  )
+  .requiredOption("--confirmation <text>", "what the confirmation page said — clicking the button is not evidence")
   .action(
     guard((key: string, options) => {
       open(program.opts().db);
@@ -67,9 +62,7 @@ program
       console.log(`${key}  rejected`);
       for (const held of gone.deleted) console.log(`  deleted ${held}`);
       if (gone.stubborn.length) {
-        console.log(
-          "\na synced folder keeps re-materializing these — delete them by hand:",
-        );
+        console.log("\na synced folder keeps re-materializing these — delete them by hand:");
         for (const held of gone.stubborn) console.log(`  ${held}`);
         process.exit(1);
       }

@@ -7,8 +7,7 @@ import path from "node:path";
 import { ROOT } from "./root.ts";
 import { align } from "./schema.ts";
 
-export const absolute = (held: string) =>
-  path.resolve(held.replace(/^~(?=$|\/)/, os.homedir()));
+export const absolute = (held: string) => path.resolve(held.replace(/^~(?=$|\/)/, os.homedir()));
 
 export const CAREER = absolute(process.env.JOB_CAREER_DIR || "~/data/job");
 export const DB = path.join(CAREER, "job.db");
@@ -27,9 +26,7 @@ const SQL = path.join(ROOT, "sql");
 const held = globalThis as { db?: Database.Database; ddl?: string };
 
 export const ddl = () =>
-  (held.ddl ??= ["tables", "logic"]
-    .map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8"))
-    .join("\n"));
+  (held.ddl ??= ["tables", "logic"].map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8")).join("\n"));
 
 export function connect(at: string = DB) {
   fs.mkdirSync(path.dirname(at) || ".", { recursive: true });
@@ -49,41 +46,25 @@ export function open(at?: string | null) {
   return (held.db = connect(absolute(at)));
 }
 
-const parsed = <T extends z.ZodType>(
-  shape: T,
-  sql: string,
-  row: unknown,
-): z.infer<T> => {
+const parsed = <T extends z.ZodType>(shape: T, sql: string, row: unknown): z.infer<T> => {
   const read = shape.safeParse(row);
   if (read.success) return read.data;
   throw new Error(
     `${sql}\nreturned a row its shape does not describe:\n` +
-      read.error.issues
-        .map((issue) => `  ${issue.path.join(".")}: ${issue.message}`)
-        .join("\n"),
+      read.error.issues.map((issue) => `  ${issue.path.join(".")}: ${issue.message}`).join("\n"),
   );
 };
 
-export const rows = <T extends z.ZodType>(
-  shape: T,
-  sql: string,
-  args: unknown[] = [],
-): z.infer<T>[] =>
+export const rows = <T extends z.ZodType>(shape: T, sql: string, args: unknown[] = []): z.infer<T>[] =>
   (
     db()
       .prepare(sql)
       .all(...args) as unknown[]
   ).map((row) => parsed(shape, sql, row));
 
-export const one = <T extends z.ZodType>(
-  shape: T,
-  sql: string,
-  args: unknown[] = [],
-): z.infer<T> | null => {
+export const one = <T extends z.ZodType>(shape: T, sql: string, args: unknown[] = []): z.infer<T> | null => {
   const found = db()
     .prepare(sql)
     .get(...args);
-  return found === undefined || found === null
-    ? null
-    : parsed(shape, sql, found);
+  return found === undefined || found === null ? null : parsed(shape, sql, found);
 };

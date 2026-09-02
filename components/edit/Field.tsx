@@ -12,12 +12,22 @@ import { useVocabulary } from "./Vocabulary";
 type State = "" | "saving" | "saved" | "failed";
 
 const TONE: Record<State, string> = {
-  "": "", saving: "", saved: "success", failed: "error",
+  "": "",
+  saving: "",
+  saved: "success",
+  failed: "error",
 };
 
 type Entry = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
-export function Control({ column, value, onValue, onCommit, state = "", autoFocus }: {
+export function Control({
+  column,
+  value,
+  onValue,
+  onCommit,
+  state = "",
+  autoFocus,
+}: {
   column: Column;
   value: string;
   onValue: (value: string) => void;
@@ -44,25 +54,47 @@ export function Control({ column, value, onValue, onCommit, state = "", autoFocu
 
   if (options)
     return (
-      <select {...shared}
-              onChange={(event) => { onValue(event.target.value); onCommit?.(event.target.value, event.currentTarget); }}>
+      <select
+        {...shared}
+        onChange={(event) => {
+          onValue(event.target.value);
+          onCommit?.(event.target.value, event.currentTarget);
+        }}
+      >
         {!column.required && <option value="">—</option>}
         {options.map((option) => {
           const [held, shown] = Array.isArray(option) ? option : [option, option.replace(/_/g, " ")];
-          return <option key={held} value={held}>{shown}</option>;
+          return (
+            <option key={held} value={held}>
+              {shown}
+            </option>
+          );
         })}
       </select>
     );
-  if (column.kind === "area")
-    return <textarea {...shared} rows={column.rows ?? 2} required={column.required} />;
+  if (column.kind === "area") return <textarea {...shared} rows={column.rows ?? 2} required={column.required} />;
   return (
-    <input {...shared} type={column.type ?? "text"} pattern={column.pattern}
-           min={column.min} step={column.step} required={column.required} />
+    <input
+      {...shared}
+      type={column.type ?? "text"}
+      pattern={column.pattern}
+      min={column.min}
+      step={column.step}
+      required={column.required}
+    />
   );
 }
 
-export default function Field({ table, rowid, column, value }: {
-  table: string; rowid: number; column: Column; value: string | number | null;
+export default function Field({
+  table,
+  rowid,
+  column,
+  value,
+}: {
+  table: string;
+  rowid: number;
+  column: Column;
+  value: string | number | null;
 }) {
   const was = value === null || value === undefined ? "" : String(value);
   const [held, setHeld] = useState(was);
@@ -90,24 +122,35 @@ export default function Field({ table, rowid, column, value }: {
 
   if (column.preview && !editing)
     return (
-      <div role="button" tabIndex={0} aria-label={title(column)}
-           className={`quietbox cursor-text text-left ${column.className ?? ""}`}
-           onClick={() => setEditing(true)}
-           onFocus={() => setEditing(true)}
-           onKeyDown={(event) => {
-             if (event.key === "Enter" || event.key === " ") {
-               event.preventDefault();
-               setEditing(true);
-             }
-           }}>
-        {held
-          ? <Markdown>{held}</Markdown>
-          : <span className="text-soft">{column.placeholder ?? title(column)}</span>}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={title(column)}
+        className={`quietbox cursor-text text-left ${column.className ?? ""}`}
+        onClick={() => setEditing(true)}
+        onFocus={() => setEditing(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setEditing(true);
+          }
+        }}
+      >
+        {held ? <Markdown>{held}</Markdown> : <span className="text-soft">{column.placeholder ?? title(column)}</span>}
       </div>
     );
 
   return (
-    <Control column={column} value={held} onValue={setHeld} state={state} autoFocus={editing}
-             onCommit={(next, entry) => { setEditing(false); return commit(next, entry); }} />
+    <Control
+      column={column}
+      value={held}
+      onValue={setHeld}
+      state={state}
+      autoFocus={editing}
+      onCommit={(next, entry) => {
+        setEditing(false);
+        return commit(next, entry);
+      }}
+    />
   );
 }

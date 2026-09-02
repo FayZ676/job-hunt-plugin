@@ -13,8 +13,13 @@ export const SINCE = ["1h", "24h", "7d", "6m"] as const;
 export type Since = (typeof SINCE)[number];
 
 export type Search = {
-  terms: string[]; notTitles: string[]; notOrganizations: string[];
-  locations: string[]; remote: boolean; since: Since; max: number;
+  terms: string[];
+  notTitles: string[];
+  notOrganizations: string[];
+  locations: string[];
+  remote: boolean;
+  since: Since;
+  max: number;
 };
 
 function token(): string {
@@ -22,12 +27,17 @@ function token(): string {
   if (!held)
     throw new Error(
       "APIFY_TOKEN is not set. Get a token from apify.com/settings/integrations and put " +
-      `APIFY_TOKEN=… in ${path.join(ROOT, ".env.local")}`);
+        `APIFY_TOKEN=… in ${path.join(ROOT, ".env.local")}`,
+    );
   return held;
 }
 
 const PERIOD: Record<string, string> = {
-  HOUR: "HOURLY", DAY: "DAILY", WEEK: "WEEKLY", MONTH: "MONTHLY", YEAR: "YEARLY",
+  HOUR: "HOURLY",
+  DAY: "DAILY",
+  WEEK: "WEEKLY",
+  MONTH: "MONTHLY",
+  YEAR: "YEARLY",
 };
 
 const REMOTE = new Set(["Remote OK", "Remote Solely"]);
@@ -63,8 +73,7 @@ export function fromApify(items: Json[]): Posting[] {
       const money = pay(item);
       const location = where(item);
       const valid = toIso(item.date_valid_through);
-      const written = String(item.description_text ?? "").trim()
-        || htmlToText(String(item.description_html ?? ""));
+      const written = String(item.description_text ?? "").trim() || htmlToText(String(item.description_html ?? ""));
       return posting({
         key: `${source}:${item.id}`,
         source,
@@ -108,8 +117,7 @@ export async function search(aim: Search): Promise<Posting[]> {
     signal: AbortSignal.timeout(600000),
   });
   if (!answered.ok)
-    throw new Error(
-      `HTTP ${answered.status} ${answered.statusText}: ${(await answered.text()).slice(0, 200)}`);
+    throw new Error(`HTTP ${answered.status} ${answered.statusText}: ${(await answered.text()).slice(0, 200)}`);
   const items = await answered.json();
   return fromApify(Array.isArray(items) ? items : []);
 }

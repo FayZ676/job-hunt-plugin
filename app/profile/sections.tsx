@@ -47,53 +47,65 @@ const GROUPS: () => Group[] = () => [
   },
 ];
 
-const OPTIONAL = [
-  "gender", "race_ethnicity", "hispanic_or_latino", "veteran_status", "disability_status",
-];
+const OPTIONAL = ["gender", "race_ethnicity", "hispanic_or_latino", "veteran_status", "disability_status"];
 
-const noted = (row: Record<string, unknown>) => (column: Column): Note => {
-  const answer = (row[column.name] ?? null) as string | number | null;
-  return {
-    label: title(column),
-    mark: answer === null,
-    value: (
-      <Field table="identity" rowid={1} value={answer}
-             column={{ ...column, blocking: true, label: title(column),
-                       className: column.options ? "max-w-64" : "max-w-xl",
-                       placeholder: column.placeholder ?? "—" }} />
-    ),
+const noted =
+  (row: Record<string, unknown>) =>
+  (column: Column): Note => {
+    const answer = (row[column.name] ?? null) as string | number | null;
+    return {
+      label: title(column),
+      mark: answer === null,
+      value: (
+        <Field
+          table="identity"
+          rowid={1}
+          value={answer}
+          column={{
+            ...column,
+            blocking: true,
+            label: title(column),
+            className: column.options ? "max-w-64" : "max-w-xl",
+            placeholder: column.placeholder ?? "—",
+          }}
+        />
+      ),
+    };
   };
-};
 
 export function Identity() {
   const row = held();
   const note = noted(row);
-  const band = (group: Group): Band =>
-    ({ label: group.label, note: group.note, notes: group.fields.map(note) });
+  const band = (group: Group): Band => ({ label: group.label, note: group.note, notes: group.fields.map(note) });
   const [reach, ...asked] = GROUPS();
 
   return (
-    <Split rail={
-      <>
-        <Sheet bands={asked.map(band)} />
+    <Split
+      rail={
+        <>
+          <Sheet bands={asked.map(band)} />
 
-        <Stack>
-          <Disclosure summary="Demographics">
-            <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
-          </Disclosure>
-        </Stack>
-      </>
-    }>
+          <Stack>
+            <Disclosure summary="Demographics">
+              <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
+            </Disclosure>
+          </Stack>
+        </>
+      }
+    >
       <Sheet label="10rem" bands={[band(reach)]} />
     </Split>
   );
 }
 
 const INSTRUCTIONS: Column = {
-  name: "text", kind: "area", preview: true,
+  name: "text",
+  kind: "area",
+  preview: true,
   className: "pane-max",
-  placeholder: "Titles to look for, strongest first. Then the seniority you want, what makes an "
-    + "opening worth applying to, and what rules one out.",
+  placeholder:
+    "Titles to look for, strongest first. Then the seniority you want, what makes an " +
+    "opening worth applying to, and what rules one out.",
 };
 
 export function Instructions() {

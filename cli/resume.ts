@@ -46,13 +46,10 @@ program
   .command("spec")
   .description("print the spec contract and every section type")
   .action(() => {
-    const width = Math.max(
-      ...Object.keys(SECTION_TYPES).map((held) => held.length),
-    );
+    const width = Math.max(...Object.keys(SECTION_TYPES).map((held) => held.length));
     const types = Object.entries(SECTION_TYPES)
       .map(
-        ([name, [payload, shape]]) =>
-          `  ${name.padEnd(width)}  ${payload}\n  ${"".padEnd(width)}  renders as ${shape}`,
+        ([name, [payload, shape]]) => `  ${name.padEnd(width)}  ${payload}\n  ${"".padEnd(width)}  renders as ${shape}`,
       )
       .join("\n");
     console.log(SPEC_HELP(types));
@@ -64,11 +61,7 @@ program
   .argument("<spec>")
   .argument("[out]", "default: <spec>.pdf")
   .option("--key <key>", "record the PDF on this prospect")
-  .option(
-    "--density <density>",
-    `one of ${Object.keys(DENSITY).join(", ")}`,
-    "normal",
-  )
+  .option("--density <density>", `one of ${Object.keys(DENSITY).join(", ")}`, "normal")
   .option("--keep-typ", "write the .typ alongside the PDF")
   .action(
     guard((specPath: string, outPath: string | undefined, options) => {
@@ -79,8 +72,7 @@ program
         key: options.key,
       });
       console.log(`wrote ${built.out} (density: ${built.density})`);
-      if (built.recorded !== null)
-        console.log(`recorded on ${options.key} (${built.recorded})`);
+      if (built.recorded !== null) console.log(`recorded on ${options.key} (${built.recorded})`);
     }),
   );
 

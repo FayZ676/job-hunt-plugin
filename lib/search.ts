@@ -4,31 +4,19 @@ import { db, one, rows as query } from "./core/db.ts";
 import { POSTING_COLUMNS, Posting } from "./core/posting.ts";
 import { TABLES, options as allowed } from "./core/schema.ts";
 import * as sources from "./core/sources.ts";
-import {
-  ageDays,
-  compilePatterns,
-  literals,
-  matchesAny,
-  norm,
-  normCompany,
-} from "./core/text.ts";
+import { ageDays, compilePatterns, literals, matchesAny, norm, normCompany } from "./core/text.ts";
 
 export const DISPOSITIONS: Record<string, string> = {
   expired: "a listing whose `date_valid_through` has passed",
-  agency:
-    "reposters and body shops, by `agency_blocklist` name or `agency_name_patterns`",
-  noise:
-    "`title_noise` -- AI Trainer, annotation, tutoring, freelance-gig phrasing",
-  lowball:
-    "a STATED YEARLY band topping out below `comp_floor`; per-hour or unstated is not judged",
+  agency: "reposters and body shops, by `agency_blocklist` name or `agency_name_patterns`",
+  noise: "`title_noise` -- AI Trainer, annotation, tutoring, freelance-gig phrasing",
+  lowball: "a STATED YEARLY band topping out below `comp_floor`; per-hour or unstated is not judged",
   title: "fails `title_include`, or matches `title_exclude`",
   location:
-    "fails `location_include`, or matches `location_exclude` with no US anchor; " +
-    "remote skips the include test",
+    "fails `location_include`, or matches `location_exclude` with no US anchor; " + "remote skips the include test",
   stale: "older than `max_age_days`",
   seen: "already kept, or already collapsed into a kept row, by key or company + title",
-  duplicate:
-    "one role listed in several places, collapsed into the row that was kept",
+  duplicate: "one role listed in several places, collapsed into the row that was kept",
 };
 
 const PATTERN_KINDS = [
@@ -42,11 +30,9 @@ const PATTERN_KINDS = [
 ] as const;
 
 export const patterns = (kind: string) =>
-  query(
-    TABLES.filters.pick({ pattern: true }),
-    "SELECT pattern FROM filters WHERE kind=?",
-    [kind],
-  ).map((row) => row.pattern);
+  query(TABLES.filters.pick({ pattern: true }), "SELECT pattern FROM filters WHERE kind=?", [kind]).map(
+    (row) => row.pattern,
+  );
 
 export type Options = {
   redo?: boolean;
@@ -73,23 +59,15 @@ type Config = {
 
 function loadConfig(options: Options): Config {
   const settings = Object.fromEntries(
-    query(TABLES.settings, "SELECT key, value FROM settings").map((row) => [
-      row.key,
-      row.value,
-    ]),
+    query(TABLES.settings, "SELECT key, value FROM settings").map((row) => [row.key, row.value]),
   );
 
-  const floor = one(
-    TABLES.identity.pick({ compensation_floor: true }),
-    "SELECT compensation_floor FROM identity",
-  );
+  const floor = one(TABLES.identity.pick({ compensation_floor: true }), "SELECT compensation_floor FROM identity");
 
   return {
     include_seen: Boolean(options.include_seen),
     location_filter: options.location_filter !== false,
-    ...Object.fromEntries(
-      PATTERN_KINDS.map((kind) => [kind, compilePatterns(patterns(kind))]),
-    ),
+    ...Object.fromEntries(PATTERN_KINDS.map((kind) => [kind, compilePatterns(patterns(kind))])),
     agency_blocklist: new Set(patterns("agency_blocklist").map(normCompany)),
     max_age_days: options.max_age_days ?? Number(settings.max_age_days ?? 30),
     comp_floor: options.comp_floor ?? Number(floor?.compensation_floor ?? 0),
@@ -102,8 +80,7 @@ const belowCompFloor = (row: Posting, floor: number) => {
   return Boolean(top) && (top as number) < floor;
 };
 
-const paired = (company: string, title: string) =>
-  `${normCompany(company)} ${norm(title)}`;
+const paired = (company: string, title: string) => `${normCompany(company)} ${norm(title)}`;
 
 function verdict(
   row: Posting,
@@ -115,39 +92,24 @@ function verdict(
   const location = row.location || "";
 
   if (row.expired) return ["expired", null];
-  if (
-    config.agency_blocklist.has(normCompany(company)) ||
-    matchesAny(config.agency_name_patterns, company)
-  )
+  if (config.agency_blocklist.has(normCompany(company)) || matchesAny(config.agency_name_patterns, company))
     return ["agency", null];
   if (matchesAny(config.title_noise, title)) return ["noise", null];
   if (belowCompFloor(row, config.comp_floor)) return ["lowball", null];
 
-  if (config.title_include.length && !matchesAny(config.title_include, title))
-    return ["title", null];
+  if (config.title_include.length && !matchesAny(config.title_include, title)) return ["title", null];
   if (matchesAny(config.title_exclude, title)) return ["title", null];
 
   if (config.location_filter) {
-    const anchored =
-      matchesAny(config.us_tokens, location) ||
-      location.trim().toLowerCase() === "remote";
-    if (
-      config.location_exclude.length &&
-      !anchored &&
-      matchesAny(config.location_exclude, location)
-    )
+    const anchored = matchesAny(config.us_tokens, location) || location.trim().toLowerCase() === "remote";
+    if (config.location_exclude.length && !anchored && matchesAny(config.location_exclude, location))
       return ["location", null];
-    if (
-      config.location_include.length &&
-      !row.remote &&
-      !matchesAny(config.location_include, location)
-    )
+    if (config.location_include.length && !row.remote && !matchesAny(config.location_include, location))
       return ["location", null];
   }
 
   const days = ageDays(row.posted_at);
-  if (config.max_age_days && days !== null && days > config.max_age_days)
-    return ["stale", null];
+  if (config.max_age_days && days !== null && days > config.max_age_days) return ["stale", null];
 
   if (!config.include_seen) {
     if (seenKeys.has(row.key)) return ["seen", null];
@@ -181,34 +143,21 @@ function collapse(rows: Posting[], pinned: Set<string>) {
 }
 
 const pendingCount = () =>
-  one(
-    z.object({ n: z.number() }),
-    "SELECT COUNT(*) n FROM postings WHERE disposition IS NULL",
-  )!.n;
+  one(z.object({ n: z.number() }), "SELECT COUNT(*) n FROM postings WHERE disposition IS NULL")!.n;
 
 export function rule(options: Options = {}): Ruled {
   const declared = [...allowed("postings", "disposition")].sort();
   const mine = [...Object.keys(DISPOSITIONS), "kept"].sort();
   if (mine.join(",") !== declared.join(","))
-    throw new Error(
-      "DISPOSITIONS and the schema disagree about what a posting can be ruled",
-    );
+    throw new Error("DISPOSITIONS and the schema disagree about what a posting can be ruled");
 
   const config = loadConfig(options);
 
-  const where = options.redo
-    ? "WHERE disposition IS NOT 'kept'"
-    : "WHERE disposition IS NULL";
-  const pending = query(
-    Posting,
-    `SELECT ${POSTING_COLUMNS.join(",")} FROM postings ${where}`,
-  );
+  const where = options.redo ? "WHERE disposition IS NOT 'kept'" : "WHERE disposition IS NULL";
+  const pending = query(Posting, `SELECT ${POSTING_COLUMNS.join(",")} FROM postings ${where}`);
 
-  const counts: Record<string, number> = Object.fromEntries(
-    Object.keys(DISPOSITIONS).map((name) => [name, 0]),
-  );
-  if (!pending.length)
-    return { kept: 0, examined: 0, counts, pending: pendingCount() };
+  const counts: Record<string, number> = Object.fromEntries(Object.keys(DISPOSITIONS).map((name) => [name, 0]));
+  if (!pending.length) return { kept: 0, examined: 0, counts, pending: pendingCount() };
 
   const live = query(
     TABLES.postings.pick({ key: true, company: true, title: true }),
@@ -219,14 +168,12 @@ export function rule(options: Options = {}): Ruled {
     ? new Set<string>()
     : new Set([
         ...pinned,
-        ...query(
-          TABLES.postings.pick({ key: true }),
-          "SELECT key FROM postings WHERE canonical_key IS NOT NULL",
-        ).map((row) => row.key),
+        ...query(TABLES.postings.pick({ key: true }), "SELECT key FROM postings WHERE canonical_key IS NOT NULL").map(
+          (row) => row.key,
+        ),
       ]);
   const held = new Map<string, string>();
-  if (!config.include_seen)
-    for (const row of live) held.set(paired(row.company, row.title), row.key);
+  if (!config.include_seen) for (const row of live) held.set(paired(row.company, row.title), row.key);
 
   const survivors: Posting[] = [];
   const dispositions: [string, string | null, string][] = [];
@@ -246,8 +193,7 @@ export function rule(options: Options = {}): Ruled {
 
   for (const [row, siblings] of kept) {
     dispositions.push(["kept", null, row.key]);
-    for (const alias of siblings)
-      dispositions.push(["duplicate", row.key, alias]);
+    for (const alias of siblings) dispositions.push(["duplicate", row.key, alias]);
   }
 
   db().transaction(() => {
@@ -288,11 +234,7 @@ export type Found = Ruled & {
 };
 
 export function store(postings: Posting[]) {
-  const known = new Set(
-    query(TABLES.postings.pick({ key: true }), "SELECT key FROM postings").map(
-      (row) => row.key,
-    ),
-  );
+  const known = new Set(query(TABLES.postings.pick({ key: true }), "SELECT key FROM postings").map((row) => row.key));
   const insert = db().prepare(
     `INSERT INTO postings(${POSTING_COLUMNS.join(",")},first_fetched,last_fetched) ` +
       `VALUES(${POSTING_COLUMNS.map(() => "?").join(",")},date('now'),date('now')) ` +
@@ -322,19 +264,12 @@ export function unkeepable(terms: string[]) {
 }
 
 const unwanted = () => ({
-  notTitles: [
-    ...new Set(
-      ["title_exclude", "title_noise"].flatMap((kind) =>
-        patterns(kind).flatMap(literals),
-      ),
-    ),
-  ],
+  notTitles: [...new Set(["title_exclude", "title_noise"].flatMap((kind) => patterns(kind).flatMap(literals)))],
   notOrganizations: patterns("agency_blocklist"),
 });
 
 export async function search(aim: Aim): Promise<Found> {
-  if (!aim.terms.length)
-    throw new Error("name what to search for, short and literal");
+  if (!aim.terms.length) throw new Error("name what to search for, short and literal");
   const held = await sources.search({
     terms: aim.terms,
     locations: aim.locations?.length ? aim.locations : DEFAULTS.locations,
@@ -347,9 +282,7 @@ export async function search(aim: Aim): Promise<Found> {
 }
 
 export function replay(payload: unknown): Found {
-  const items = Array.isArray(payload)
-    ? payload
-    : ((payload as { items?: unknown[] })?.items ?? []);
+  const items = Array.isArray(payload) ? payload : ((payload as { items?: unknown[] })?.items ?? []);
   return found(sources.fromApify(items), []);
 }
 

@@ -9,8 +9,7 @@ type Shape = {
   singleRow?: boolean;
 };
 
-const col = <T extends z.ZodType>(shape: T, meta: Column = {}) =>
-  shape.meta(meta) as T;
+const col = <T extends z.ZodType>(shape: T, meta: Column = {}) => shape.meta(meta) as T;
 const dated = "a year, a year and month, or a full date";
 
 const since = (name: string) =>
@@ -77,9 +76,7 @@ export const TABLES = {
         kind: "REAL",
         sql: "CHECK (comp_max >= 0)",
       }),
-      comp_period: z
-        .enum(["HOURLY", "DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY", "YEARLY"])
-        .nullable(),
+      comp_period: z.enum(["HOURLY", "DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY", "YEARLY"]).nullable(),
       raw: z.string().nullable(),
       first_fetched: col(z.string(), {
         sql: "DEFAULT (date('now')) CHECK (first_fetched IS date(first_fetched))",
@@ -94,18 +91,7 @@ export const TABLES = {
         takes: "a date, as YYYY-MM-DD",
       }),
       disposition: z
-        .enum([
-          "kept",
-          "title",
-          "location",
-          "stale",
-          "seen",
-          "duplicate",
-          "expired",
-          "agency",
-          "noise",
-          "lowball",
-        ])
+        .enum(["kept", "title", "location", "stale", "seen", "duplicate", "expired", "agency", "noise", "lowball"])
         .nullable(),
       canonical_key: col(z.string().nullable(), {
         sql: "REFERENCES postings(key) ON DELETE SET NULL",
@@ -241,23 +227,9 @@ export const TABLES = {
           "                                       AND earliest_daily_start <= '23:59')",
         takes: "a 24-hour time, as HH:MM",
       }),
-      notice_period: z
-        .enum([
-          "none",
-          "1_week",
-          "2_weeks",
-          "3_weeks",
-          "1_month",
-          "2_months",
-          "3_months",
-        ])
-        .nullable(),
-      employment_type: z
-        .enum(["full_time", "part_time", "contract", "internship", "temporary"])
-        .nullable(),
-      remote_preference: z
-        .enum(["remote", "hybrid", "on_site", "no_preference"])
-        .nullable(),
+      notice_period: z.enum(["none", "1_week", "2_weeks", "3_weeks", "1_month", "2_months", "3_months"]).nullable(),
+      employment_type: z.enum(["full_time", "part_time", "contract", "internship", "temporary"]).nullable(),
+      remote_preference: z.enum(["remote", "hybrid", "on_site", "no_preference"]).nullable(),
       willing_to_relocate: col(z.number().nullable(), {
         sql: "CHECK (willing_to_relocate IN (0,1))",
         takes: "0 or 1",
@@ -271,9 +243,7 @@ export const TABLES = {
         takes: "a three-letter currency code, like USD",
       }),
 
-      gender: z
-        .enum(["male", "female", "non_binary", "decline_to_say"])
-        .nullable(),
+      gender: z.enum(["male", "female", "non_binary", "decline_to_say"]).nullable(),
       race_ethnicity: z
         .enum([
           "american_indian_or_alaska_native",
@@ -287,13 +257,7 @@ export const TABLES = {
         ])
         .nullable(),
       hispanic_or_latino: z.enum(["yes", "no", "decline_to_say"]).nullable(),
-      veteran_status: z
-        .enum([
-          "protected_veteran",
-          "not_a_protected_veteran",
-          "decline_to_say",
-        ])
-        .nullable(),
+      veteran_status: z.enum(["protected_veteran", "not_a_protected_veteran", "decline_to_say"]).nullable(),
       disability_status: z.enum(["yes", "no", "decline_to_say"]).nullable(),
     })
     .meta({
@@ -488,9 +452,7 @@ export const VIEWS = {
   }),
 };
 
-export const DERIVED: Partial<
-  Record<keyof typeof VIEWS, { where: string; order?: string }>
-> = {
+export const DERIVED: Partial<Record<keyof typeof VIEWS, { where: string; order?: string }>> = {
   prospects: { where: "disposition = 'kept'" },
   triage: {
     where: "disposition = 'kept'",
@@ -514,9 +476,7 @@ export const options = (table: Table, column: string): string[] => {
   return inner instanceof z.ZodEnum ? inner.options.map(String) : [];
 };
 
-export const SECTIONS = ORDER.filter(
-  (table) => (TABLES[table].meta() as Shape | undefined)?.singleRow,
-);
+export const SECTIONS = ORDER.filter((table) => (TABLES[table].meta() as Shape | undefined)?.singleRow);
 
 export const columns = (table: Table) => Object.keys(TABLES[table].shape);
 
@@ -526,9 +486,7 @@ export function takes(table: Table, column: string) {
   const held = TABLES[table].shape[column as never] as z.ZodType | undefined;
   const said = (held?.meta() as Column | undefined)?.takes;
   if (said) return said;
-  return bare(held ?? text) instanceof z.ZodNumber
-    ? "a whole number"
-    : "anything but an empty answer";
+  return bare(held ?? text) instanceof z.ZodNumber ? "a whole number" : "anything but an empty answer";
 }
 
 type Held = { name: string; notnull: number; pk: number; hidden: number };
@@ -541,16 +499,10 @@ export function align(database: Database) {
     const single = (shape.meta() as Shape | undefined)?.singleRow;
     const expected = single ? ["id", ...declared] : declared;
 
-    const missing = found
-      .map((column) => column.name)
-      .filter((column) => !expected.includes(column));
-    const extra = expected.filter(
-      (column) => !found.some((held) => held.name === column),
-    );
-    if (missing.length)
-      wrong.push(`${name}: not declared — ${missing.join(", ")}`);
-    if (extra.length)
-      wrong.push(`${name}: no such column — ${extra.join(", ")}`);
+    const missing = found.map((column) => column.name).filter((column) => !expected.includes(column));
+    const extra = expected.filter((column) => !found.some((held) => held.name === column));
+    if (missing.length) wrong.push(`${name}: not declared — ${missing.join(", ")}`);
+    if (extra.length) wrong.push(`${name}: no such column — ${extra.join(", ")}`);
 
     if (!(name in TABLES)) continue;
     for (const column of found) {
@@ -558,9 +510,7 @@ export function align(database: Database) {
       if (!held || column.hidden) continue;
       const nullable = !column.notnull && !column.pk;
       if (held.safeParse(null).success !== nullable)
-        wrong.push(
-          `${name}.${column.name}: SQL says ${nullable ? "nullable" : "NOT NULL"}`,
-        );
+        wrong.push(`${name}.${column.name}: SQL says ${nullable ? "nullable" : "NOT NULL"}`);
     }
   }
   if (wrong.length)

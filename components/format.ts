@@ -1,5 +1,4 @@
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function shortDate(iso: string | null | undefined) {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? "");
@@ -24,16 +23,13 @@ export function shortPay(raw: string | null | undefined) {
   if (/hour/i.test(rest)) {
     return end ? `$${low}–${high}/hr` : `$${low}/hr`;
   }
-  const span = end
-    ? `$${thousands(start)}–${thousands(end)}k`
-    : `$${thousands(start)}k`;
+  const span = end ? `$${thousands(start)}–${thousands(end)}k` : `$${thousands(start)}k`;
   return span;
 }
 
 const ZIP = /,?\s+\d{5}(?:-\d{4})?\b/g;
 
-export const shortPlace = (raw: string | null | undefined) =>
-  raw ? raw.replace(ZIP, "") : raw;
+export const shortPlace = (raw: string | null | undefined) => (raw ? raw.replace(ZIP, "") : raw);
 
 export type When = { year: number; month: number | null };
 
