@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "../core/db.ts";
-import { TABLES, type Table } from "../core/schema.ts";
+import { TABLES, numeric, type Table } from "../core/schema.ts";
 
 const WRITABLE = new Set<Table>([
   "identity",
@@ -28,25 +28,22 @@ const failed = (error: unknown) => ({
       : String((error as Error).message).replace(/\s+/g, " "),
 });
 
-type Held = { name: string; type: string; hidden: number };
-
-function writable(table: string) {
+function writable(table: string): Table {
   if (!WRITABLE.has(table as Table)) throw new Error(`${table} is not editable from the dashboard`);
-  return (db().pragma(`table_xinfo(${table})`) as Held[]).filter((column) => !column.hidden);
+  return table as Table;
 }
-
-const bind = (column: Held, raw: string) =>
-  raw === "" || raw === null || raw === undefined
-    ? null
-    : column.type === "INTEGER" || column.type === "REAL"
-      ? Number(raw)
-      : raw;
 
 const marshalled = (table: string, values: Record<string, string>) =>
   Object.fromEntries(
-    writable(table)
-      .filter((column) => column.name in values)
-      .map((column) => [column.name, bind(column, values[column.name])]),
+    Object.keys(TABLES[writable(table)].shape)
+      .filter((name) => name in values)
+      .map((name) => {
+        const raw = values[name];
+        return [
+          name,
+          raw === "" || raw === null || raw === undefined ? null : numeric(table as Table, name) ? Number(raw) : raw,
+        ];
+      }),
   );
 
 export async function save(table: string, rowid: number | null, values: Record<string, string>): Promise<Saved> {

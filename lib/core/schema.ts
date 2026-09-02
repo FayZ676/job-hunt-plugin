@@ -489,6 +489,8 @@ const meta = (table: Table, column: string) => (shapeOf(table, column)?.meta() ?
 
 export const ask = (table: Table, column: string): Ask => meta(table, column).ui ?? {};
 
+export const numeric = (table: Table, column: string) => bare(shapeOf(table, column) ?? text) instanceof z.ZodNumber;
+
 export const options = (table: Table, column: string): string[] => {
   const inner = bare(shapeOf(table, column) ?? text);
   return inner instanceof z.ZodEnum ? inner.options.map(String) : [];
