@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import { one, rows } from "../core/db.ts";
-import { TABLES, VIEWS, options, withRowid, type Rowed, type Table } from "../core/schema.ts";
+import { TABLES, VIEWS, ask, grouped, options, withRowid, type Rowed, type Table } from "../core/schema.ts";
 
-export { options };
+export { ask, grouped, options };
 
 const listing = <T extends Table>(table: T, order = "") =>
   rows(withRowid(table), `SELECT rowid AS rowid, * FROM ${table} ${order}`);

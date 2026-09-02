@@ -1,12 +1,24 @@
 import type { Database } from "better-sqlite3";
 import { z } from "zod";
 
-type Column = { sql?: string; takes?: string; kind?: string; note?: string };
+export type Ask = {
+  type?: "email" | "tel" | "url" | "time" | "number";
+  pattern?: string;
+  placeholder?: string;
+  min?: number;
+  step?: number;
+  flag?: true;
+};
+
+type Group = { label: string; from: string; fold?: boolean };
+
+type Column = { sql?: string; takes?: string; kind?: string; note?: string; ui?: Ask };
 type Shape = {
   note?: string;
   constraints?: string[];
   indexes?: string[];
   singleRow?: boolean;
+  groups?: Group[];
 };
 
 const col = <T extends z.ZodType>(shape: T, meta: Column = {}) => shape.meta(meta) as T;
@@ -17,7 +29,10 @@ const since = (name: string) =>
   `OR date(${name} || '-01-01') IS NOT NULL)`;
 
 const filled = (name: string) => `CHECK (trim(${name}) <> '')`;
+const flag = (name: string) =>
+  col(z.number().nullable(), { sql: `CHECK (${name} IN (0,1))`, takes: "0 or 1", ui: { flag: true } });
 const url = (name: string) => `CHECK (${name} LIKE 'http%://%.%')`;
+const LINK: Ask = { type: "url", pattern: "https?://.+\\..+", placeholder: "https://" };
 const owned = (by: string) => `REFERENCES ${by} ON DELETE CASCADE`;
 
 export const TABLES = {
@@ -186,61 +201,53 @@ export const TABLES = {
       email: col(z.string().nullable(), {
         sql: "CHECK (email LIKE '_%@_%._%')",
         takes: "an email address",
+        ui: { type: "email", pattern: ".+@.+\\..+" },
       }),
       phone: col(z.string().nullable(), {
         sql: "CHECK (NOT phone GLOB '*[A-Za-z]*' AND length(phone) >= 7)",
         takes: "a phone number — digits and separators, no words",
+        ui: { type: "tel", pattern: "[^A-Za-z]{7,}", placeholder: "555-555-0100" },
       }),
-      location: col(z.string().nullable(), { sql: filled("location") }),
+      location: col(z.string().nullable(), { sql: filled("location"), ui: { placeholder: "City, State" } }),
       street_address: col(z.string().nullable(), {
         sql: filled("street_address"),
       }),
       linkedin: col(z.string().nullable(), {
         sql: url("linkedin"),
         takes: "a URL, starting http",
+        ui: LINK,
       }),
       github: col(z.string().nullable(), {
         sql: url("github"),
         takes: "a URL, starting http",
+        ui: LINK,
       }),
 
-      authorized_in_country_of_residence: col(z.number().nullable(), {
-        sql: "CHECK (authorized_in_country_of_residence IN (0,1))",
-        takes: "0 or 1",
-      }),
-      legal_right_to_work_without_sponsorship: col(z.number().nullable(), {
-        sql: "CHECK (legal_right_to_work_without_sponsorship IN (0,1))",
-        takes: "0 or 1",
-      }),
-      requires_sponsorship_now_or_future: col(z.number().nullable(), {
-        sql: "CHECK (requires_sponsorship_now_or_future IN (0,1))",
-        takes: "0 or 1",
-      }),
-      over_18: col(z.number().nullable(), {
-        sql: "CHECK (over_18 IN (0,1))",
-        takes: "0 or 1",
-      }),
+      authorized_in_country_of_residence: flag("authorized_in_country_of_residence"),
+      legal_right_to_work_without_sponsorship: flag("legal_right_to_work_without_sponsorship"),
+      requires_sponsorship_now_or_future: flag("requires_sponsorship_now_or_future"),
+      over_18: flag("over_18"),
 
       earliest_daily_start: col(z.string().nullable(), {
         sql:
           "CHECK (earliest_daily_start GLOB '[0-2][0-9]:[0-5][0-9]'\n" +
           "                                       AND earliest_daily_start <= '23:59')",
         takes: "a 24-hour time, as HH:MM",
+        ui: { type: "time" },
       }),
       notice_period: z.enum(["none", "1_week", "2_weeks", "3_weeks", "1_month", "2_months", "3_months"]).nullable(),
       employment_type: z.enum(["full_time", "part_time", "contract", "internship", "temporary"]).nullable(),
       remote_preference: z.enum(["remote", "hybrid", "on_site", "no_preference"]).nullable(),
-      willing_to_relocate: col(z.number().nullable(), {
-        sql: "CHECK (willing_to_relocate IN (0,1))",
-        takes: "0 or 1",
-      }),
+      willing_to_relocate: flag("willing_to_relocate"),
       compensation_floor: col(z.number().nullable(), {
         sql: "CHECK (compensation_floor >= 0)",
         takes: "a whole number, 0 or more",
+        ui: { type: "number", min: 0, step: 1, placeholder: "120000" },
       }),
       compensation_currency: col(z.string().nullable(), {
         sql: "CHECK (compensation_currency GLOB '[A-Z][A-Z][A-Z]')",
         takes: "a three-letter currency code, like USD",
+        ui: { pattern: "[A-Z]{3}", placeholder: "USD" },
       }),
 
       gender: z.enum(["male", "female", "non_binary", "decline_to_say"]).nullable(),
@@ -262,6 +269,12 @@ export const TABLES = {
     })
     .meta({
       singleRow: true,
+      groups: [
+        { label: "How to reach you", from: "full_name" },
+        { label: "Work authorization", from: "authorized_in_country_of_residence" },
+        { label: "When you could start, and what you would take", from: "earliest_daily_start" },
+        { label: "Demographics", from: "gender", fold: true },
+      ],
       note:
         "Who the applicant is, in the order a form asks: contact, then the yes/no\n" +
         "questions every form repeats, then when you could start, then the optional\n" +
@@ -470,23 +483,46 @@ export const withRowid = <T extends Table>(table: T) =>
 const bare = (shape: z.ZodType): z.ZodType =>
   shape instanceof z.ZodNullable ? bare(shape.unwrap() as z.ZodType) : shape;
 
+const shapeOf = (table: Table, column: string) => TABLES[table].shape[column as never] as z.ZodType | undefined;
+
+const meta = (table: Table, column: string) => (shapeOf(table, column)?.meta() ?? {}) as Column;
+
+export const ask = (table: Table, column: string): Ask => meta(table, column).ui ?? {};
+
 export const options = (table: Table, column: string): string[] => {
-  const held = TABLES[table].shape[column as never] as z.ZodType | undefined;
-  const inner = held && bare(held);
+  const inner = bare(shapeOf(table, column) ?? text);
   return inner instanceof z.ZodEnum ? inner.options.map(String) : [];
 };
 
 export const SECTIONS = ORDER.filter((table) => (TABLES[table].meta() as Shape | undefined)?.singleRow);
+
+export const grouped = (table: Table) => {
+  const declared = (TABLES[table].meta() as Shape | undefined)?.groups ?? [];
+  const names = columns(table);
+  const missing = declared.filter((group) => !names.includes(group.from));
+  if (missing.length)
+    throw new Error(`${table} groups start at no such column: ${missing.map((group) => group.from).join(", ")}`);
+
+  const groups = declared.map((group) => ({ label: group.label, fold: group.fold, names: [] as string[] }));
+  let open = groups[0];
+  for (const name of names) {
+    const starts = declared.findIndex((group) => group.from === name);
+    if (starts !== -1) open = groups[starts];
+    open.names.push(name);
+  }
+  return groups;
+};
 
 export const columns = (table: Table) => Object.keys(TABLES[table].shape);
 
 export function takes(table: Table, column: string) {
   const listed = options(table, column);
   if (listed.length) return `one of ${listed.join(", ")}`;
-  const held = TABLES[table].shape[column as never] as z.ZodType | undefined;
-  const said = (held?.meta() as Column | undefined)?.takes;
+  const said = meta(table, column).takes;
   if (said) return said;
-  return bare(held ?? text) instanceof z.ZodNumber ? "a whole number" : "anything but an empty answer";
+  return bare(shapeOf(table, column) ?? text) instanceof z.ZodNumber
+    ? "a whole number"
+    : "anything but an empty answer";
 }
 
 type Held = { name: string; notnull: number; pk: number; hidden: number };

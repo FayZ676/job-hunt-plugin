@@ -48,9 +48,9 @@ of one single-row table** — `identity`, which carries contact details, work au
 could start, the compensation floor and the optional EEO answers — one column per question a form can
 ask, so `<section>.<name>` is a table and a column. `experience` answers the same way but is a view:
 the totals count themselves off `employers`, so a stored number cannot go stale or disagree with the
-resume. `lib/core/schema.ts` reads those declarations for both the dashboard's controls and the CLI's
-errors, so there is one copy and not two, and a field added in SQL arrives in both on the next
-connect.
+resume. The dashboard's controls and the CLI's errors are both read off `lib/core/schema.ts`, so
+there is one copy and not two: a column added there arrives in both on the next connect, and the
+Profile page groups it by where it was declared.
 
 **Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves
 `127.0.0.1:8765` — every job opening on its full application with each drafted essay and flagged

@@ -1,53 +1,15 @@
 import Field from "@/components/edit/Field";
-import { EMAIL, LINK, YES_NO, title, type Column } from "@/components/edit/columns";
+import { YES_NO, title, type Column } from "@/components/edit/columns";
 import { Card, Disclosure, Sheet, Split, Stack, type Band, type Note } from "@/components/ui";
-import { identity, instructions, options } from "@/lib/web/queries";
-
-type Group = { label?: string; note?: string; fields: Column[] };
+import { ask, grouped, identity, instructions, options } from "@/lib/web/queries";
 
 const held = () => identity() as unknown as Record<string, unknown>;
 
-const choice = (name: string) => ({ name, options: options("identity", name) });
-
-const GROUPS: () => Group[] = () => [
-  {
-    label: "How to reach you",
-    fields: [
-      { name: "full_name" },
-      { name: "preferred_name" },
-      { name: "last_name" },
-      { name: "email", ...EMAIL },
-      { name: "phone", type: "tel", pattern: "[^A-Za-z]{7,}", placeholder: "555-555-0100" },
-      { name: "location", placeholder: "City, State" },
-      { name: "street_address" },
-      { name: "linkedin", ...LINK },
-      { name: "github", ...LINK },
-    ],
-  },
-  {
-    label: "Work authorization",
-    fields: [
-      { name: "authorized_in_country_of_residence", options: YES_NO },
-      { name: "legal_right_to_work_without_sponsorship", options: YES_NO },
-      { name: "requires_sponsorship_now_or_future", options: YES_NO },
-      { name: "over_18", options: YES_NO },
-    ],
-  },
-  {
-    label: "When you could start, and what you would take",
-    fields: [
-      { name: "earliest_daily_start", type: "time" },
-      choice("notice_period"),
-      choice("employment_type"),
-      choice("remote_preference"),
-      { name: "willing_to_relocate", options: YES_NO },
-      { name: "compensation_floor", type: "number", min: 0, step: 1, placeholder: "120000" },
-      { name: "compensation_currency", pattern: "[A-Z]{3}", placeholder: "USD" },
-    ],
-  },
-];
-
-const OPTIONAL = ["gender", "race_ethnicity", "hispanic_or_latino", "veteran_status", "disability_status"];
+const asked = (name: string): Column => {
+  const { flag, ...hint } = ask("identity", name);
+  const listed = options("identity", name);
+  return { name, ...hint, options: flag ? YES_NO : listed.length ? listed : undefined };
+};
 
 const noted =
   (row: Record<string, unknown>) =>
@@ -74,22 +36,29 @@ const noted =
   };
 
 export function Identity() {
-  const row = held();
-  const note = noted(row);
-  const band = (group: Group): Band => ({ label: group.label, note: group.note, notes: group.fields.map(note) });
-  const [reach, ...asked] = GROUPS();
+  const note = noted(held());
+  const band = (group: { label?: string; names: string[] }): Band => ({
+    label: group.label,
+    notes: group.names.map(asked).map(note),
+  });
+  const [reach, ...rest] = grouped("identity");
+  const folded = rest.filter((group) => group.fold);
 
   return (
     <Split
       rail={
         <>
-          <Sheet bands={asked.map(band)} />
+          <Sheet bands={rest.filter((group) => !group.fold).map(band)} />
 
-          <Stack>
-            <Disclosure summary="Demographics">
-              <Sheet flush bands={[{ notes: OPTIONAL.map(choice).map(note) }]} />
-            </Disclosure>
-          </Stack>
+          {folded.length > 0 && (
+            <Stack>
+              {folded.map((group) => (
+                <Disclosure key={group.label} summary={group.label}>
+                  <Sheet flush bands={[{ notes: group.names.map(asked).map(note) }]} />
+                </Disclosure>
+              ))}
+            </Stack>
+          )}
         </>
       }
     >
