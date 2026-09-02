@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import {
   Check,
   Circle,
@@ -14,11 +15,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { TABLES } from "@/lib/core/schema";
+
+type Status = NonNullable<z.infer<typeof TABLES.postings.shape.status>>;
+type FormStatus = NonNullable<z.infer<typeof TABLES.staged.shape.status>>;
+
 export type Stage = "waiting" | "live" | "closed";
 
 type Reading = { label: string; stage: Stage; rank: number; icon: LucideIcon };
 
-const READINGS: Record<string, Reading> = {
+const READINGS: Record<Status, Reading> = {
   shortlisted: { label: "needs your call", stage: "waiting", rank: 0, icon: CircleDot },
   staged: { label: "ready to send", stage: "waiting", rank: 1, icon: Send },
   interviewing: { label: "interviewing", stage: "live", rank: 2, icon: MessagesSquare },
@@ -31,15 +37,16 @@ const READINGS: Record<string, Reading> = {
   closed: { label: "closed", stage: "closed", rank: 9, icon: Lock },
 };
 
-const FORM_READINGS: Record<string, Reading> = {
+const FORM_READINGS: Record<FormStatus, Reading> = {
   ready: { label: "ready to send", stage: "waiting", rank: 0, icon: Send },
   blocked: { label: "blocked", stage: "waiting", rank: 1, icon: CircleAlert },
 };
 
 const UNKNOWN: Reading = { label: "unread", stage: "closed", rank: 99, icon: CircleDashed };
 
-export const reading = (status: string | null | undefined): Reading =>
-  (status && (READINGS[status] ?? FORM_READINGS[status])) || UNKNOWN;
+const ALL: Record<string, Reading> = { ...READINGS, ...FORM_READINGS };
+
+export const reading = (status: string | null | undefined): Reading => (status && ALL[status]) || UNKNOWN;
 
 export const ORDER = Object.keys(READINGS);
 
