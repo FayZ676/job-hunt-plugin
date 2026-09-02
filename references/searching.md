@@ -1,15 +1,14 @@
 # Searching
 
-Phase 1: finding the openings. One command, `job-search`, does the whole phase — it calls the paid
-API, stores everything that came back as it arrived, then rules on every stored row and promotes the
-survivors to prospects. Storing is not a step you run; the raw layer is kept so a filter's cost stays
-queryable, not so you can re-fetch it.
+Phase 1: finding the openings. `job-search` does the whole phase — one paid Apify call, everything
+that came back stored as it arrived, then every stored row ruled and the survivors promoted to
+prospects. Storing is not a step you run; the raw layer is kept so a filter's cost stays queryable,
+not so you can re-fetch it.
 
-One command, `job-search`: who is hiring for the work you name, anywhere. It calls one paid Apify
-actor, `fantastic-jobs/career-site-job-listing-api`, which indexes 175k company career sites across 54 ATSes — Greenhouse, Lever and Ashby, and also Workday, iCIMS,
-SuccessFactors, Oracle Cloud, BambooHR, Rippling, SmartRecruiters, Eightfold. There is no ATS left
-to check by hand, and no aggregator in the path: every row's `url` is the employer's own posting,
-with the description already attached.
+The actor indexes 175k company career sites across 54 ATSes — Greenhouse, Lever and Ashby, and also
+Workday, iCIMS, SuccessFactors, Oracle Cloud, BambooHR, Rippling, SmartRecruiters, Eightfold. There
+is no ATS left to check by hand, and no aggregator in the path: every row's `url` is the employer's
+own posting, with the description already attached.
 
 ## The bill is the filter
 
@@ -35,31 +34,16 @@ thing the request cannot know is `title_include`, so **the run warns when a sear
 not survive it**: those jobs are bought and then dropped. Fix the disagreement in one direction or
 the other; do not pay for it twice a week.
 
-```bash
-job-search "AI Engineer"                    # US, last 7 days
-job-search "AI Engineer" --remote --since 24h --max 100
-job-search "AI Engineer" --location "Oregon, United States"
-```
-
 **What you search for comes off `job-score instructions`** — the same words the scorer reads, so
 discovery and scoring cannot drift apart. Say them the way a search box wants them, short and
 literal; the prose around them is for the scorer, not for the API.
 
-`--since` is `1h`, `24h`, `7d` or `6m`; `6m` is the backfill worth running once, on the first run,
-and rarely again.
+`--since 6m` is the backfill worth running once, on the first run, and rarely again.
 
 **A misspelled or abbreviated `--location` returns nothing rather than failing** — spell it out:
 `"New York, New York, United States"`, `"London, England, United Kingdom"`, or `"United States"`.
 
-`--remote` asks the API for jobs a remote worker can hold. Without it a title search returns mostly
-on-site and hybrid, because that is mostly what exists.
-
-## Traps
-
-| Symptom | Cause | Fix |
-| ------- | ----- | --- |
-| A search returns far less than `--max` | Nothing else matched; `--max` is a ceiling | Widen `--since`, or drop `--remote` |
-| Everything comes back on-site | No `--remote` | Pass it |
+**Pass `--remote` or most of what comes back is on-site**, because that is mostly what exists.
 
 ## Every row keeps its verdict
 
@@ -73,8 +57,7 @@ only one that is not a drop; every other value names the filter that dropped the
 **Part of this chain runs before the call.** The title and agency filters ride along in the search
 request, so a drop count near zero means the pushdown worked, not that the filter is dead.
 
-`job-search rule` runs the same chain over stored postings with no network — the free half, for
-after a filter change.
+`job-search rule` is the free half: the same chain over stored postings, for after a filter change.
 
 ## The filters
 
@@ -132,7 +115,6 @@ employer; a company that starts posting directly comes off it.
 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
+| A search returns far less than `--max` | Nothing else matched; `--max` is a ceiling, not a target | Widen `--since`, or drop `--remote` |
 | A role appears twice | Precedence dedupe missed | The index spells the company differently on each row — reconcile the spelling |
 | A foreign role survives the location filter | The location says only "Remote" | Not catchable mechanically; the description read at scoring is the backstop |
-| Nothing pending | Every posting already has a disposition | `--redo` re-rules them, or search again |
-| A filter change seems to do nothing | Rows were already decided | `--redo`; without it only pending rows are considered |

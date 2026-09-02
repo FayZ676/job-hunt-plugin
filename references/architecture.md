@@ -17,13 +17,13 @@ TypeScript directly, so there is nothing to build.
 **One module per phase, under `cli/`.** Each runs on its own, so any step can be redone without the
 ones before it.
 
-| Phase                 | Module          | Subcommands                                    |
-| --------------------- | --------------- | ---------------------------------------------- |
-| 1 — Search            | `cli/search.ts` | (default) `rule` `dispositions`                |
-| 2 — Score             | `cli/score.ts`  | `triage` `instructions` `show` `set` `pending` |
-| 3 — Resume            | `cli/resume.ts` | `spec` `build`                                 |
-| 4 — Stage             | `cli/stage.ts`  | `add` `show` `list` `drop`                     |
-| 5 — Review and submit | `cli/submit.ts` | `review` `record` `rejected`                   |
+| Phase                 | Module          |
+| --------------------- | --------------- |
+| 1 — Search            | `cli/search.ts` |
+| 2 — Score             | `cli/score.ts`  |
+| 3 — Resume            | `cli/resume.ts` |
+| 4 — Stage             | `cli/stage.ts`  |
+| 5 — Review and submit | `cli/submit.ts` |
 
 **One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
 the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`, `posting.ts`,

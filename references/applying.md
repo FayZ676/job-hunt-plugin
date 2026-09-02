@@ -121,22 +121,11 @@ uncommitted typeahead, a radio group that looks answered because one option is v
 input that never received the upload.
 
 Screenshot the completed form into `$CAREER/resumes/`; that screenshot is what the user reviews.
-Then record the application, one `--field` per answer:
-
-```bash
-job-stage add <key> \
-  --url <apply-url> --screenshot <png> \
-  --field 'Work authorization|Yes|policy' \
-  --field 'Why this company?|…|judgment|needs-review'
-```
+Then record the application with `job-stage add`, one `--field` per answer.
 
 `job-profile answers` and `job-profile missing` are where the identity and policy answers come from,
-and which of them are still `NULL`.
-
-`ready` means every field is filled; `blocked` means a `NULL` in the profile or a question nothing
-answers. **You do not assert which** — a field staged with no value derives `blocked` and names
-itself in `blocked_on`; `--blocked-on` covers a block no empty field shows. Keep the browser tab
-open; the staged rows survive a lost session and refilling from them is cheap.
+and which of them are still `NULL`. Keep the browser tab open; the staged rows survive a lost session
+and refilling from them is cheap.
 
 **A start date is computed, not stored.** No employer is `current` and they can start at once;
 otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier
@@ -198,28 +187,13 @@ browser_snapshot
 
 A confirmation reads like "Thank you for applying" or "Application received", usually with the page
 replaced. **Validation errors mean nothing was submitted** — repair the named fields and re-present
-the application for approval; never resubmit silently. Set `applied` only against a confirmation you
-have seen in a snapshot:
-
-```bash
-job-submit record <key> \
-  --confirmation "Thank you for applying — confirmation #A12"
-```
-
-That is the one step that sets `applied`; it moves the resume into `submitted/` with it.
+the application for approval; never resubmit silently. Then `job-submit record`, quoting a
+confirmation you have seen in a snapshot.
 
 ## Recording a rejection
 
-Only a reported rejection. Do nothing for a role that is merely quiet.
-
-```bash
-job-submit rejected <key> --note "3 days, no interview — resume screen"
-```
-
-That records the rejection and **deletes that resume's `.pdf` and `.json` from
-`$CAREER/resumes/submitted/`** — the record still says an application went out, and the dead document
-is gone. Note the shape in `--note` — days from submission, and whether any interview stage
-happened.
+Only a reported rejection. Do nothing for a role that is merely quiet. `job-submit rejected` takes
+the shape in `--note` — days from submission, and whether any interview stage happened.
 
 ## Traps
 

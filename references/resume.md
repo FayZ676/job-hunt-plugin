@@ -2,7 +2,7 @@
 
 Phase 3 in detail: turning the profile tables into a one-page PDF targeted at one job description.
 This file is the whole guide — what may go on a resume, how it is written, what to check before it
-ships, and the spec `resume.py` builds from.
+ships, and the spec `job-resume` builds from.
 
 **The deliverable is the `.pdf`.** Never hand back a markdown resume; the `.json` spec written along
 the way is a build input, kept next to the PDF so a later tweak is an edit and a rebuild.
@@ -170,13 +170,11 @@ evidence than any listicle, and reproducible against `prospects` at any time.
 ## Build
 
 ```bash
-job-resume build "$CAREER/resumes/<slug>.json" --key <key> --density tight
 pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
 ```
 
-`resume.py` owns all formatting and requires Typst and Poppler. If the layout needs to change, change
-`resume.py` so every future resume inherits it. It parses `**bold**` and `[label](url)` only —
-backticks render literally.
+`lib/core/typst.ts` owns every formatting decision and requires Typst and Poppler. If the layout
+needs to change, change it there so every future resume inherits it.
 
 **Always read the rendered image, and aim for one *full* page.** Page count alone misses an orphaned
 two-line section or a Skills block that ate the bottom third. Where there is a visible gap above the
@@ -184,13 +182,12 @@ bottom margin, add the next-most-relevant content — another real bullet, a Per
 the Publications paragraph — rebuild, and look again. Expect two or three cycles. Two pages only for
 a senior, staff, or research JD, and then filled.
 
-To fit, in order: `--density tight` (`normal` and `roomy` exist for shorter content); cut the least
-relevant bullets; tighten wording so bullets stop before wrapping one word onto a new line; margins
-in the spec, never below 0.4in.
+To fit, in that order: `--density tight`; cut the least relevant bullets; tighten wording so bullets
+stop before wrapping one word onto a new line; margins in the spec, never below 0.4in.
 
-`--key` records the absolute path on the prospect as part of the build; without it the PDF is written
-and nothing is recorded. Then give the gap report. Phase 5 moves the files into `submitted/`, so
-`$CAREER/resumes/` stays a worklist of resumes that have not gone out.
+Build with `--key` or the PDF is written and nothing is recorded. Then give the gap report. Phase 5
+moves the files into `submitted/`, so `$CAREER/resumes/` stays a worklist of resumes that have not
+gone out.
 Offer, without doing: a matching cover letter, and writing anything newly surfaced back into the
 profile tables.
 

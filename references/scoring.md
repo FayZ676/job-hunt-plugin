@@ -3,22 +3,6 @@
 Phase 2: judging every prospect against the profile. Prospects in, a score and the sentence that
 earned it out. Nothing here fetches, and nothing here sets a status — the threshold does that.
 
-## Contents
-
-- What scoring reads — standing facts, and prose that carries no numbers
-- The order of a run — triage cheap, read before scoring, hard stops first
-- The scale — the one number the app owns, and where the rest comes from
-- The reason — who reads it later, and what it has to survive
-- Re-scoring — what a changed criterion does not do on its own
-- Traps
-
-```bash
-job-score instructions          # everything scoring reads, in one place
-job-score triage --status new
-job-score show <key> <key>
-job-score set <key> --score 9 --reason "the JD language that drove it, quoted"
-```
-
 ## What scoring reads
 
 Two inputs, and `job-score instructions` prints both: the standing facts assembled off `identity` —
@@ -80,7 +64,6 @@ Rows already past triage — staged, applied, interviewing — are history, not 
 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
-| A prospect has no description | The source dropped it, not evidence about the job | Search again; do not score it zero |
 | Everything lands 7 or 8 | Scoring how good the posting is, not how well it fits them | The profile is the yardstick, not the market |
 | The shortlist is too big or too small | The threshold, not the scores | `settings.shortlist_threshold` |
 | A hard stop scored well on content | Hard stops were applied last | They are a gate, not a term in a sum |

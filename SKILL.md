@@ -52,7 +52,10 @@ Two files are not a phase and are read when they apply:
 | `references/storage.md` | Any query, any write to the profile, anything the user asks about their search |
 | `references/architecture.md` | Changing the code, or installing it |
 
-**The code is the manual for anything it already decides**, so no file above restates it:
+**The code is the manual for anything it already decides**, so no file above restates it. Every
+`job-*` command takes `--help`, and that is the contract — what a phase accepts, what it defaults to,
+and what it gives back. Read it before invoking rather than reading the source, and never carry a
+flag from a file here that `--help` does not list.
 
 ```bash
 $Q --schema                      # every table, view, CHECK and trigger; $Q is job-q
@@ -61,6 +64,5 @@ job-resume spec                  # the resume spec, and every section type
 job-profile missing              # every NULL, each one a hard stop
 ```
 
-Every `job-*` command takes `--help`, and each phase runs on its own, so any step can be redone
-without the ones before it. **The expensive step is Phase 1** — one paid call per search, billed per
+Each phase runs on its own, so any step can be redone without the ones before it. **The expensive step is Phase 1** — one paid call per search, billed per
 job returned. Everything after it is free to repeat.
