@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CircleHelp, Play, User, type LucideIcon } from "lucide-react";
+import { Briefcase, CircleHelp, Database, Play, User, type LucideIcon } from "lucide-react";
 import Glyph from "./Glyph";
 import Wordmark from "./Wordmark";
 
@@ -55,10 +55,15 @@ export default function Nav({ db }: { db: string }) {
           })}
         </ul>
 
-        <p title={db} className="hidden min-w-0 shrink items-baseline gap-2 lg:flex">
-          <span className="eyebrow shrink-0">Database</span>
-          <span className="truncate font-mono text-micro text-soft">{db}</span>
-        </p>
+        <span
+          data-tip={db}
+          className="tooltip tooltip-left shrink-0 text-soft
+            before:max-w-[min(28rem,80vw)] before:whitespace-normal before:break-all
+            before:font-mono before:text-micro"
+        >
+          <span className="sr-only">Database at {db}</span>
+          <Glyph icon={Database} size={16} />
+        </span>
       </div>
     </nav>
   );
