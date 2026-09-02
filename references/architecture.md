@@ -8,26 +8,17 @@ npm link --prefix "$HOME/.claude/skills/job"      # the job-* commands, on PATH
 ```
 
 That puts every phase on `PATH` as `job-search`, `job-score`, `job-resume`, `job-stage`,
-`job-submit`, `job-q`, `job-profile` and `job-paths` — the names used throughout this skill. Every
-one of them takes `--help`. The same install serves `/job ui`. Node 22.18 or newer runs the
-TypeScript directly, so there is nothing to build.
+`job-submit`, `job-q`, `job-profile` and `job-paths` — the names used throughout this skill. The
+same install serves `/job ui`. Node 22.18 or newer runs the TypeScript directly, so there is nothing
+to build.
 
 ## Modules
 
-**One module per phase, under `cli/`.** Each runs on its own, so any step can be redone without the
-ones before it.
-
-| Phase                 | Module          |
-| --------------------- | --------------- |
-| 1 — Search            | `cli/search.ts` |
-| 2 — Score             | `cli/score.ts`  |
-| 3 — Resume            | `cli/resume.ts` |
-| 4 — Stage             | `cli/stage.ts`  |
-| 5 — Review and submit | `cli/submit.ts` |
+**One module per phase, under `cli/`.**
 
 **One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
 the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`, `posting.ts`,
-`apify.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per phase that has logic of its own:
+`sources.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per phase that has logic of its own:
 **`lib/x.ts` decides and returns a value, `cli/x.ts` parses argv and prints it**, so a page and a
 command can call the one function. `lib/web/` is the dashboard's own half. `sql/logic.sql` sits under
 none of them, applied on every connect from a page or a phase, so neither side owns it.
@@ -47,8 +38,9 @@ concatenated onto the rendered DDL. `job-q --schema` prints both.
 
 A column is a Zod field plus `.meta()`: `sql` is the DDL after the type (`CHECK`, `DEFAULT`,
 `REFERENCES`), and `takes` is the English a wrong answer is refused with. An enum field generates
-its own `CHECK (x IN (…))`, so the options are declared once and reach the DDL, the dashboard's
-controls and the CLI's errors from there.
+its own `CHECK (x IN (…))`, and `ui` carries what only a form needs — input type, placeholder, an
+HTML pattern — so a column is declared once and reaches the DDL, the dashboard's controls and the
+CLI's errors from there.
 
 **Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
 exists, so a new column leaves every database that has already been opened exactly as it was, and

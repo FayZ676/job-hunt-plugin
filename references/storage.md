@@ -33,20 +33,18 @@ job-q --json "SELECT * FROM staged"
 `$Q` stands for `job-q` throughout this skill and its references.
 
 **Read `--schema` before writing SQL** — it documents every table, and its `CHECK`s make an invalid
-row impossible to write. Three behaviors it encodes and you must not fight:
+row impossible to write. Two things it does not say:
 
-- **Triggers write `events`** on insert and on every status change. Never insert there yourself,
-  except to add a `note` the transition alone does not say.
-- **Setting `score` sets `status`** against `shortlist_threshold`, so the two cannot disagree.
+- **Insert into `events` only to add a `note`** the status change alone does not carry; the triggers
+  write the rest.
 - **`triage` omits `description` on purpose.** Pull descriptions one at a time, for survivors only:
   `SELECT * FROM prospects` is almost always a mistake, and `SELECT * FROM postings` more so.
 
 ## The profile
 
 **Every column says what it holds**, and `$Q --schema` is where it says it. **The profile answers out
-of one single-row table** — `identity`, which carries contact details, work authorization, when you
-could start, the compensation floor and the optional EEO answers — one column per question a form can
-ask, so `<section>.<name>` is a table and a column. `experience` answers the same way but is a view:
+of one single-row table** — `identity`, one column per question a form can ask, so
+`<section>.<name>` is a table and a column. `experience` answers the same way but is a view:
 the totals count themselves off `employers`, so a stored number cannot go stale or disagree with the
 resume. The dashboard's controls and the CLI's errors are both read off `lib/core/schema.ts`, so
 there is one copy and not two: a column added there arrives in both on the next connect, and the
@@ -57,9 +55,8 @@ Profile page groups it by where it was declared.
 field, and the whole profile with its `NULL`s called out. **The Profile page writes.** Every box on it
 saves the moment it loses focus, and emptying one sets `NULL` — the user correcting their own answers
 is the one thing they should never need you for. Everything a phase decides — postings, scores,
-staged forms — is read-only there: `lib/web/actions.ts` names the profile tables it may write and
-refuses every other one, because the invariants that make those writes safe live here, not in a web
-page.
+staged forms — is read-only there, because the invariants that make a write safe live here, not in
+a web page.
 
 **So read the profile before you write it, always.** The user may have edited it in the page since you
 last looked, and a stale read overwrites their correction.

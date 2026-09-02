@@ -51,13 +51,8 @@ literal; the prose around them is for the scorer, not for the API.
 and one that cannot state a fact leaves the default, so the filter reading it never trips. A new
 mechanism inherits every filter for free.
 
-Every row gets a `disposition`, so what a filter cost stays answerable after the run. `kept` is the
-only one that is not a drop; every other value names the filter that dropped the row.
-
-**Part of this chain runs before the call.** The title and agency filters ride along in the search
-request, so a drop count near zero means the pushdown worked, not that the filter is dead.
-
-`job-search rule` is the free half: the same chain over stored postings, for after a filter change.
+Because the title and agency filters ride along in the search request, **a drop count near zero
+means the pushdown worked, not that the filter is dead.**
 
 ## The filters
 

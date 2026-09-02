@@ -15,17 +15,15 @@ no seed. The filters come out of the interview below, in their words, not from a
 starter list they would have to discover and correct.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
-NULL until answered: the profile is the single-row tables in `lib/core/schema.ts`, one per section,
-and the columns are the schema — not something an interview or the dashboard adds to. They talk;
-you answer with `job-profile set <section>.<name> <value>`, which names the table and the column —
-one answer per call. If a form genuinely asks something no column covers, add the field to
+NULL until answered — not something an interview or the dashboard adds to. They talk; you answer
+with `job-profile set`, one answer per call. If a form genuinely asks something no column covers,
+add the field to
 `lib/core/schema.ts` and `ALTER TABLE` it into the live database; it then appears on the Profile
 page, inside whichever group it was declared in, on the next connect.
 
 **Translate the answer into the column's shape**, rather than filing the sentence they said: "two
 weeks after an offer" is `identity.notice_period 2_weeks`. There is no start-date column — notice
 and whether an employer is still `current` are what a start date gets computed from.
-A column given a new shape or a new choice updates both the CLI and the dashboard.
 
 Never hand them a file to edit, and never make the first pass a form — the interview is a
 conversation. Afterwards they revise themselves in the dashboard, whose Profile page writes every
@@ -80,9 +78,8 @@ command -v pdftoppm || echo "brew install poppler"
 [ -s "$HOME/.claude/skills/job/.env.local" ] || echo "APIFY_TOKEN=… needed in the skill's .env.local"
 ```
 
-**The Apify token is required, not optional** — it is the only way postings arrive. It goes in
-`.env.local` in the skill directory, which is git-ignored and read by both the commands and the
-dashboard.
+**The Apify token is required, not optional** — it is the only way postings arrive. Its
+`.env.local` is git-ignored, and read by both the commands and the dashboard.
 
 **5. Do a dry run.** `job-search "<a role they named>" --max 25`, then query `triage`. Keep the
 first run small: it is billed per job returned, and the point is to see whether the filters aim

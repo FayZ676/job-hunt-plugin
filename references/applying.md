@@ -3,17 +3,6 @@
 Reaching, reading and filling a form with the Playwright MCP tools. Phase 4 fills; only Phase 5
 submits.
 
-## Contents
-
-- Who answers a field — the three tiers, and what a judgment question may assume
-- Reaching the form — apply URLs per ATS, and waiting for it to render
-- Filling — field types, Yes/No shapes, typeaheads, stale refs, resume upload
-- Before you stop — the required-field re-check and the screenshot
-- Lever specifics — hCaptcha, the hidden resume input, the EEO reveal
-- Workday specifics — the per-employer account, the five-step flow, mid-flow required fields
-- Submitting — Phase 5 only, what counts as a confirmation, and recording a rejection
-- Traps — published bands, application limits, cover letters, login walls
-
 ## Who answers a field
 
 Every field is one of three tiers, and the tier decides who answers it:

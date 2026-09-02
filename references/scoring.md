@@ -28,10 +28,9 @@ and the score is wrong** — do not quietly compensate for prose you would have 
 
 ## The scale
 
-`settings.shortlist_threshold` — 7 by default — is the only number the app owns: at or above it the
-status becomes `shortlisted`, below it `skipped`, written by a trigger the moment a score lands. So
-the live question between a 6 and a 7 is not how good the posting is but **whether they should spend
-an hour of their morning applying to it.**
+`settings.shortlist_threshold` — 7 by default — is the only number the app owns. So the live
+question between a 6 and a 7 is not how good the posting is but **whether they should spend an hour
+of their morning applying to it.**
 
 Every other gradation comes off their prose, which already ranks what costs nothing, what is a mark
 against, and what is a hard stop. Read the ranking there rather than inventing a rubric here.

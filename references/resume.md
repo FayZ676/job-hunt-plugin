@@ -7,17 +7,6 @@ ships, and the spec `job-resume` builds from.
 **The deliverable is the `.pdf`.** Never hand back a markdown resume; the `.json` spec written along
 the way is a build input, kept next to the PDF so a later tweak is an edit and a rebuild.
 
-## Contents
-
-- Sources and restrictions — what may become a claim, and what may never
-- Process — JD in, mapping, selection, draft, build, gap report
-- Writing — bullet rules, word choice, the one-pass test
-- Check on every build — the list every defect that shipped turned into
-- The shape to start from — the structure of the strongest build so far
-- What the market asks for — measured across 112 real JDs
-- Build — `job-resume build`, and reading the rendered page
-- The spec — what belongs in each section (`job-resume spec` owns the format)
-
 ## Sources and restrictions
 
 **The profile tables are the only source.** `profile` supplies the header block and `education` the
@@ -173,8 +162,8 @@ evidence than any listicle, and reproducible against `prospects` at any time.
 pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
 ```
 
-`lib/core/typst.ts` owns every formatting decision and requires Typst and Poppler. If the layout
-needs to change, change it there so every future resume inherits it.
+`lib/core/typst.ts` owns every formatting decision. If the layout needs to change, change it there
+so every future resume inherits it.
 
 **Always read the rendered image, and aim for one *full* page.** Page count alone misses an orphaned
 two-line section or a Skills block that ate the bottom third. Where there is a visible gap above the
