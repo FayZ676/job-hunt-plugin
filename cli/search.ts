@@ -1,17 +1,21 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import fs from "node:fs";
-import { Command } from "commander";
-
-import { open } from "../lib/core/db.ts";
-import { DEFAULTS, DISPOSITIONS, type Found, replay, rule, search } from "../lib/search.ts";
+import { DEFAULTS, DISPOSITIONS, type Found, type Ruled, replay, rule, search } from "../lib/search.ts";
 import * as sources from "../lib/core/sources.ts";
-import { collect, fail, guard } from "./kit.ts";
+import { collect, fail, phase } from "./kit.ts";
 
 const dropped = (counts: Record<string, number>) =>
   Object.entries(counts)
     .filter(([, n]) => n)
     .map(([name, n]) => `${name} ${n}`)
     .join(" | ");
+
+function ruled(held: Ruled) {
+  console.log(`NEW PROSPECTS: ${held.kept}   (from ${held.examined} ruled)`);
+  const drops = dropped(held.counts);
+  if (drops) console.log(`dropped: ${drops}`);
+  if (held.pending) console.log(`\n${held.pending} postings still pending`);
+}
 
 function report(found: Found) {
   if (found.unkeepable.length) {
@@ -22,23 +26,19 @@ function report(found: Found) {
     console.log("  drop them, or widen title_include\n");
   }
   console.log(`FETCHED ${found.fetched} postings (${found.fresh} new)`);
-  console.log(`NEW PROSPECTS: ${found.kept}   (from ${found.examined} ruled)`);
-  const drops = dropped(found.counts);
-  if (drops) console.log(`dropped: ${drops}`);
-  if (found.pending) console.log(`\n${found.pending} postings still pending`);
+  ruled(found);
 }
 
-const program = new Command("job-search")
-  .description(
-    `Phase 1 — find the openings. One paid call, then every rule the filters carry.
+const { program, runs } = phase(
+  "job-search",
+  `Phase 1 — find the openings. One paid call, then every rule the filters carry.
 
   job-search "AI Engineer"                  across every career site
   job-search "AI Engineer" --location "Oregon, United States"
   job-search "AI Engineer" --remote --since 24h
   job-search rule --redo --no-location-filter   rule stored postings again, no network
   job-search dispositions                   every verdict, in the order ruled`,
-  )
-  .option("--db <path>");
+);
 
 const since = (held: string) => {
   if (!(sources.SINCE as readonly string[]).includes(held))
@@ -54,8 +54,7 @@ program
   .option("--max <n>", "jobs returned -- this is the bill", Number, DEFAULTS.max)
   .option("--file <path>", "replay a saved dataset instead of spending credit")
   .action(
-    guard(async (terms: string[], options) => {
-      open(program.opts().db);
+    runs(async (terms: string[], options) => {
       if (options.file) return report(replay(JSON.parse(fs.readFileSync(options.file, "utf8"))));
       if (!terms.length) fail("name what to search for, short and literal; `job-score instructions` says what");
 
@@ -92,9 +91,8 @@ program
   .option("--max-age-days <n>", "override the stored age limit for one run", Number)
   .option("--comp-floor <n>", "override identity.compensation_floor for one run", Number)
   .action(
-    guard((options) => {
-      open(program.opts().db);
-      const ruled = rule({
+    runs((options) => {
+      const held = rule({
         redo: Boolean(options.redo),
         include_seen: Boolean(options.includeSeen),
         location_filter: options.locationFilter !== false,
@@ -102,12 +100,8 @@ program
         comp_floor: options.compFloor ?? null,
       });
 
-      if (!ruled.examined) return console.log("nothing pending in postings — search first, or pass --redo");
-
-      console.log(`NEW PROSPECTS: ${ruled.kept}   (from ${ruled.examined} postings)`);
-      const drops = dropped(ruled.counts);
-      if (drops) console.log(`dropped: ${drops}`);
-      if (ruled.pending) console.log(`\n${ruled.pending} postings still pending`);
+      if (!held.examined) return console.log("nothing pending in postings — search first, or pass --redo");
+      ruled(held);
     }),
   );
 

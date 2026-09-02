@@ -1,12 +1,9 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { Command } from "commander";
-
-import { open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
 import { answers, clear, missing, set } from "../lib/profile.ts";
-import { guard } from "./kit.ts";
+import { phase } from "./kit.ts";
 
-const program = new Command("job-profile").description("Read and answer the search profile.").option("--db <path>");
+const { program, runs } = phase("job-profile", "Read and answer the search profile.");
 
 program
   .command("set")
@@ -14,8 +11,7 @@ program
   .argument("<section>.<name>")
   .argument("<value>")
   .action(
-    guard((field: string, value: string, options) => {
-      open(program.opts().db);
+    runs((field: string, value: string, options) => {
       set(field, value);
       console.log(`${field} = ${value}`);
     }),
@@ -26,8 +22,7 @@ program
   .description("drop an answer — the field goes back to blocking")
   .argument("<section>.<name>")
   .action(
-    guard((field: string, options) => {
-      open(program.opts().db);
+    runs((field: string, options) => {
       clear(field);
       console.log(`${field} unanswered — it blocks any form that asks for it`);
     }),
@@ -38,8 +33,7 @@ program
   .description("what the profile answers")
   .option("--json")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       printRows(answers(), options.json);
     }),
   );
@@ -49,8 +43,7 @@ program
   .description("every unanswered field — each one blocks")
   .option("--json")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       const rows = missing();
       printRows(rows, options.json);
       if (rows.length && !options.json)

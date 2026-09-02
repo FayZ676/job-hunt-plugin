@@ -1,14 +1,11 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { Command } from "commander";
-
-import { open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
 import { instructions, prospect, record, triage, unscored } from "../lib/score.ts";
-import { guard } from "./kit.ts";
+import { phase } from "./kit.ts";
 
-const program = new Command("job-score")
-  .description(
-    `Phase 2 — score every prospect against the search profile.
+const { program, runs } = phase(
+  "job-score",
+  `Phase 2 — score every prospect against the search profile.
 
   job-score triage                        the cheap list: no descriptions, on purpose
   job-score triage --status new
@@ -18,8 +15,7 @@ const program = new Command("job-score")
   job-score pending                       what is still unscored and will come back tomorrow
 
 A score sets the status by the threshold in settings, so the two cannot disagree.`,
-  )
-  .option("--db <path>");
+);
 
 program
   .command("triage")
@@ -28,8 +24,7 @@ program
   .option("--limit <n>", "", Number)
   .option("--json")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       printRows(triage(options), options.json);
     }),
   );
@@ -38,8 +33,7 @@ program
   .command("instructions")
   .description("everything scoring reads: standing profile facts, then the instructions")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       const { standing, text } = instructions();
       if (standing.length) {
         console.log("From the profile, and not up for debate:");
@@ -55,8 +49,7 @@ program
   .description("full description for the prospects that survived triage")
   .argument("<key...>")
   .action(
-    guard((keys: string[], options) => {
-      open(program.opts().db);
+    runs((keys: string[], options) => {
       for (const key of keys) {
         const row = prospect(key);
         if (!row) {
@@ -87,8 +80,7 @@ program
   .requiredOption("--score <n>", "", Number)
   .requiredOption("--reason <text>")
   .action(
-    guard((key: string, options) => {
-      open(program.opts().db);
+    runs((key: string, options) => {
       const after = record(key, Number(options.score), options.reason);
       console.log(`${key}  ${after.score}  ${after.status}`);
     }),
@@ -99,8 +91,7 @@ program
   .description("prospects with no score yet")
   .option("--json")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       const rows = unscored();
       printRows(rows, options.json);
       if (rows.length && !options.json)

@@ -1,14 +1,11 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { Command } from "commander";
-
-import { open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
 import { record, rejected, review } from "../lib/submit.ts";
-import { guard } from "./kit.ts";
+import { phase } from "./kit.ts";
 
-const program = new Command("job-submit")
-  .description(
-    `Phase 5 — present what is staged, submit only what the user names, record it.
+const { program, runs } = phase(
+  "job-submit",
+  `Phase 5 — present what is staged, submit only what the user names, record it.
 
   job-submit review                      the approval table: one row per staged application
   job-submit record KEY --confirmation "Application received — #A12"
@@ -16,16 +13,14 @@ const program = new Command("job-submit")
 
 Recording an application moves its resume into submitted/ in the same step that
 sets \`applied\`; a rejection deletes that file, and checks it did not come back.`,
-  )
-  .option("--db <path>");
+);
 
 program
   .command("review")
   .description("the approval table the user reads before naming any")
   .option("--json")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       const waiting = review();
       printRows(waiting as unknown as Record<string, unknown>[], options.json);
       if (waiting.length && !options.json) {
@@ -41,8 +36,7 @@ program
   .argument("<key>")
   .requiredOption("--confirmation <text>", "what the confirmation page said — clicking the button is not evidence")
   .action(
-    guard((key: string, options) => {
-      open(program.opts().db);
+    runs((key: string, options) => {
       const done = record(key, options.confirmation);
       console.log(`${key}  applied`);
       console.log(`  resume  ${done.resume}`);
@@ -56,8 +50,7 @@ program
   .argument("<key>")
   .requiredOption("--note <text>")
   .action(
-    guard((key: string, options) => {
-      open(program.opts().db);
+    runs((key: string, options) => {
       const gone = rejected(key, options.note);
       console.log(`${key}  rejected`);
       for (const held of gone.deleted) console.log(`  deleted ${held}`);

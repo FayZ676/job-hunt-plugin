@@ -1,10 +1,7 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { Command } from "commander";
-
-import { open } from "../lib/core/db.ts";
 import { printRows } from "../lib/core/table.ts";
 import { TIERS, add, drop, list, show, type Field } from "../lib/stage.ts";
-import { collect, fail, guard } from "./kit.ts";
+import { collect, fail, phase } from "./kit.ts";
 
 function parseField(raw: string): Field {
   const parts = raw.split("|");
@@ -18,9 +15,9 @@ function parseField(raw: string): Field {
   };
 }
 
-const program = new Command("job-stage")
-  .description(
-    `Phase 4 — fill the form, record it, and stop with a finger over the button.
+const { program, runs } = phase(
+  "job-stage",
+  `Phase 4 — fill the form, record it, and stop with a finger over the button.
 
   job-stage add KEY --url URL --screenshot shot.png
       --field 'Legal right to work without sponsorship?|Yes|policy'
@@ -31,8 +28,7 @@ const program = new Command("job-stage")
 
 \`ready\` and \`blocked\` are derived, never asserted: a field staged with no value
 blocks the application and names itself in blocked_on.`,
-  )
-  .option("--db <path>");
+);
 
 program
   .command("add")
@@ -43,8 +39,7 @@ program
   .option("--field <label|value|tier[|flag]>", `tier is one of ${TIERS().join(", ")}`, collect, [])
   .option("--blocked-on <what>", "what is missing, when the block is not an empty field")
   .action(
-    guard((key: string, options) => {
-      open(program.opts().db);
+    runs((key: string, options) => {
       const staged = add(key, {
         url: options.url,
         screenshot: options.screenshot,
@@ -63,8 +58,7 @@ program
   .argument("<key>")
   .option("--json")
   .action(
-    guard((key: string, options) => {
-      open(program.opts().db);
+    runs((key: string, options) => {
       const { application, fields } = show(key);
       console.log(`${application.company} — ${application.title}  [${application.key}]  ${application.status}`);
       if (application.blocked_on) console.log(`  blocked_on: ${application.blocked_on}`);
@@ -80,8 +74,7 @@ program
   .description("everything staged, and what each is blocked on")
   .option("--json")
   .action(
-    guard((options) => {
-      open(program.opts().db);
+    runs((options) => {
       printRows(list(), options.json);
     }),
   );
@@ -91,8 +84,7 @@ program
   .description("unstage, back to shortlisted")
   .argument("<key>")
   .action(
-    guard((key: string, options) => {
-      open(program.opts().db);
+    runs((key: string, options) => {
       drop(key);
       console.log(`${key} unstaged`);
     }),

@@ -1,10 +1,8 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { Command } from "commander";
-
 import { open } from "../lib/core/db.ts";
 import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES } from "../lib/core/typst.ts";
 import { build } from "../lib/resume.ts";
-import { guard } from "./kit.ts";
+import { guard, phase } from "./kit.ts";
 
 const SPEC_HELP = (types: string) =>
   `A resume spec is content only -- job-resume owns every formatting decision.
@@ -28,9 +26,9 @@ those into separate items).
 Section types:
 ${types}`;
 
-const program = new Command("job-resume")
-  .description(
-    `Phase 3 — build the tailored one-page PDF, and record it on the prospect.
+const { program } = phase(
+  "job-resume",
+  `Phase 3 — build the tailored one-page PDF, and record it on the prospect.
 
   job-resume spec                            the spec contract, and every section type
   job-resume build spec.json                 render to spec.pdf
@@ -39,8 +37,7 @@ const program = new Command("job-resume")
 
 Recording stores an absolute path, because a relative one breaks the next run
 started somewhere else.`,
-  )
-  .option("--db <path>");
+);
 
 program
   .command("spec")
