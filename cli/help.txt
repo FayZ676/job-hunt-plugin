@@ -7,10 +7,10 @@ commands:
   (none)                      run all five phases: search, score, resume, stage, submit
   setup                       first-run setup: create $CAREER, build the profile, set the filters
   search                      search and rule only
-  score                       score the prospects already found
-  resume [JD, URL, or key]    tailor a resume for every shortlisted role, or one you name
-  apply [key or URL]          stage every shortlisted application, or one you name, before submit
-  submit                      review what is staged and submit only what you name
+  score [key]                 score the prospects already found
+  resume [JD, URL, or key]    tailor a resume for every shortlisted role
+  apply [key or URL]          stage every shortlisted application, stopping before submit
+  submit [key]                review what is staged and submit only what you name
   ui                          serve the dashboard on 127.0.0.1:8765; run the phases and edit your profile there
   help                        this message
 

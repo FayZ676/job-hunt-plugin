@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Actions from "./Actions";
 import { notFound } from "next/navigation";
 import { Badge, Card, Out, Prose, Score, ScreenHead, Section, Sheet, Split, Stamp } from "@/components/ui";
 import { shortDate } from "@/components/format";
@@ -92,6 +93,8 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
       </ScreenHead>
 
       <Split pinned rail={facts}>
+        <Actions jobKey={posting.key} status={posting.status} />
+
         {posting.reason && (
           <Section title="Why this score">
             <Card readout>

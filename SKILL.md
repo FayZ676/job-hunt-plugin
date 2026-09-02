@@ -1,7 +1,7 @@
 ---
 name: job
 description: Searches every company career site for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "search and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
-argument-hint: [setup|search|score|resume [JD|url|key]|apply [key|url]|submit|ui|help]
+argument-hint: [setup|search|score [key]|resume [JD|url|key]|apply [key|url]|submit [key]|ui|help]
 ---
 
 # Job routine
@@ -35,10 +35,10 @@ Nothing below overrides these.
 | `/job setup` | First-run setup | `references/setup.md` |
 | `/job` | All five phases | each phase's file, as it starts |
 | `/job search` | Phase 1 — find the openings, and rule on them | `references/searching.md` |
-| `/job score` | Phase 2 — judge every prospect against the profile | `references/scoring.md` |
+| `/job score [key]` | Phase 2 over every prospect, or the one named | `references/scoring.md` |
 | `/job resume [JD, URL, or key]` | Phase 3 over every `shortlisted` posting, or the one named | `references/resume.md` |
 | `/job apply [key or URL]` | Phases 3–4 over every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
-| `/job submit` | Phase 5 over whatever is already staged | `references/applying.md` |
+| `/job submit [key]` | Phase 5 over what is staged, or the one named | `references/applying.md` |
 | `/job ui` | Serve the dashboard — `npm run dev` in the skill directory, on `127.0.0.1:8765`; the profile is edited there | `references/storage.md` |
 | `/job help` | `cat "$HOME/.claude/skills/job/cli/help.txt"` and nothing else — no run, no queries, no commentary | |
 

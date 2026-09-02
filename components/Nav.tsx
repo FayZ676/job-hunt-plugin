@@ -20,14 +20,8 @@ export default function Nav({ db }: { db: string }) {
   return (
     <nav aria-label="Sections" className="sticky top-0 z-40 border-b border-base-300 bg-base-100">
       <div className="mx-auto flex max-w-[104rem] items-center gap-4 px-4 py-2 md:px-6">
-        <p className="flex shrink-0 items-center gap-2">
+        <p className="flex shrink-0 items-center">
           <Wordmark size={17} />
-          <span
-            className="font-display text-mini font-semibold uppercase
-            tracking-[0.14em]"
-          >
-            Job
-          </span>
         </p>
 
         <span aria-hidden className="h-4 w-px shrink-0 bg-base-300" />
