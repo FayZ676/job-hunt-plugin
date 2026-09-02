@@ -1,17 +1,6 @@
 import { z } from "zod";
 
-import { DERIVED, ORDER, TABLES, VIEWS } from "./schema.ts";
-
-type Column = { sql?: string; takes?: string; kind?: string; note?: string };
-type Shape = {
-  note?: string;
-  constraints?: string[];
-  indexes?: string[];
-  singleRow?: boolean;
-};
-
-const bare = (shape: z.ZodType): z.ZodType =>
-  shape instanceof z.ZodNullable ? bare(shape.unwrap() as z.ZodType) : shape;
+import { DERIVED, ORDER, TABLES, VIEWS, bare, type Column, type Shape } from "./schema.ts";
 
 const kindOf = (shape: z.ZodType, said?: string) => said ?? (bare(shape) instanceof z.ZodNumber ? "INTEGER" : "TEXT");
 

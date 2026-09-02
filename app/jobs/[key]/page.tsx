@@ -3,11 +3,9 @@ import { notFound } from "next/navigation";
 import { Badge, Card, Out, Prose, Score, ScreenHead, Section, Sheet, Split, Stamp } from "@/components/ui";
 import { shortDate } from "@/components/format";
 import { reading } from "@/components/status";
-import { prospect } from "@/lib/web/queries";
+import { options, prospect } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
-
-const TIERS = ["identity", "policy", "judgment"] as const;
 
 const PAPER = "pane w-full rounded-box border border-base-300 bg-white";
 
@@ -128,17 +126,19 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
 
               <Sheet
                 readout
-                bands={TIERS.map((tier) => ({
-                  label: tier,
-                  notes: found.fields
-                    .filter((field) => field.tier === tier)
-                    .map((answer) => ({
-                      label: answer.label,
-                      value: <Prose>{answer.value}</Prose>,
-                      flag: answer.flag,
-                      mark: Boolean(answer.flag),
-                    })),
-                })).filter((band) => band.notes.length > 0)}
+                bands={options("staged_fields", "tier")
+                  .map((tier) => ({
+                    label: tier,
+                    notes: found.fields
+                      .filter((field) => field.tier === tier)
+                      .map((answer) => ({
+                        label: answer.label,
+                        value: <Prose>{answer.value}</Prose>,
+                        flag: answer.flag,
+                        mark: Boolean(answer.flag),
+                      })),
+                  }))
+                  .filter((band) => band.notes.length > 0)}
               />
             </div>
           </Section>

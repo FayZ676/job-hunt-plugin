@@ -12,8 +12,8 @@ export type Ask = {
 
 type Group = { label: string; from: string; fold?: boolean };
 
-type Column = { sql?: string; takes?: string; kind?: string; note?: string; ui?: Ask };
-type Shape = {
+export type Column = { sql?: string; takes?: string; kind?: string; note?: string; ui?: Ask };
+export type Shape = {
   note?: string;
   constraints?: string[];
   indexes?: string[];
@@ -480,7 +480,7 @@ export type Rowed<T extends Table> = z.infer<(typeof TABLES)[T]> & {
 export const withRowid = <T extends Table>(table: T) =>
   TABLES[table].extend({ rowid: int }) as unknown as z.ZodType<Rowed<T>>;
 
-const bare = (shape: z.ZodType): z.ZodType =>
+export const bare = (shape: z.ZodType): z.ZodType =>
   shape instanceof z.ZodNullable ? bare(shape.unwrap() as z.ZodType) : shape;
 
 const shapeOf = (table: Table, column: string) => TABLES[table].shape[column as never] as z.ZodType | undefined;
