@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Ledger, { type LedgerColumn } from "./Ledger";
+import { Button } from "./ui";
 
 export type Facet = {
   key: string;
@@ -108,26 +109,12 @@ export default function FilterableTable({
       {pages > 1 && (
         <div className="flex items-center gap-4">
           <div className="flex gap-1.5">
-            <button
-              type="button"
-              disabled={here === 0}
-              onClick={() => setPage(here - 1)}
-              className="rounded-field border border-base-300 px-2.5 py-1 text-xs
-                      transition-colors hover:border-base-content disabled:opacity-40
-                      disabled:hover:border-base-300"
-            >
+            <Button disabled={here === 0} onClick={() => setPage(here - 1)}>
               Previous
-            </button>
-            <button
-              type="button"
-              disabled={here === pages - 1}
-              onClick={() => setPage(here + 1)}
-              className="rounded-field border border-base-300 px-2.5 py-1 text-xs
-                      transition-colors hover:border-base-content disabled:opacity-40
-                      disabled:hover:border-base-300"
-            >
+            </Button>
+            <Button disabled={here === pages - 1} onClick={() => setPage(here + 1)}>
               Next
-            </button>
+            </Button>
           </div>
           <p aria-live="polite" className="tnum text-xs text-soft">
             Page {here + 1} of {pages} · showing {shown.length} of {rows.length}

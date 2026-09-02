@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { save } from "@/lib/web/actions";
+import { Button } from "@/components/ui";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 import { Control } from "./Field";
@@ -80,15 +81,9 @@ export default function Adder({
       </div>
 
       <div className="flex items-center gap-3 text-sm">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={add}
-          className="rounded-field border border-base-content bg-base-content px-2.5 py-1
-                  text-xs text-base-100 transition-opacity disabled:opacity-40"
-        >
+        <Button tone="firm" disabled={busy} onClick={add}>
           {label}
-        </button>
+        </Button>
         <button
           type="button"
           onClick={() => setOpen(false)}

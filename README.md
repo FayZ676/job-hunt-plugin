@@ -113,8 +113,8 @@ You can start with just Node and add the rest before your first resume.
 | `/job` | All five phases |
 | `/job search` | Find the openings and rule on them |
 | `/job score` | Score the prospects already found |
-| `/job resume <JD, URL, or key>` | Build one resume |
-| `/job apply <key or URL>` | Build and stage one application, stopping before submit |
+| `/job resume [JD, URL, or key]` | Build a resume for every shortlisted role, or one you name |
+| `/job apply [key or URL]` | Stage every shortlisted application, or one you name, before submit |
 | `/job submit` | Review and submit whatever is staged |
 | `/job ui` | Serve the dashboard, and edit your profile in it |
 | `/job help` | Print the command list |

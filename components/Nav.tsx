@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CircleHelp, Database, Play, User, type LucideIcon } from "lucide-react";
+import { Briefcase, Database, Play, User, type LucideIcon } from "lucide-react";
 import Glyph from "./Glyph";
+import ThemeToggle from "./ThemeToggle";
 import Wordmark from "./Wordmark";
 
 type Item = { href: string; label: string; icon: LucideIcon };
@@ -12,7 +13,6 @@ const SECTIONS: Item[] = [
   { href: "/run", label: "Run", icon: Play },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
   { href: "/profile", label: "Profile", icon: User },
-  { href: "/help", label: "Help", icon: CircleHelp },
 ];
 
 export default function Nav({ db }: { db: string }) {
@@ -54,6 +54,8 @@ export default function Nav({ db }: { db: string }) {
             );
           })}
         </ul>
+
+        <ThemeToggle />
 
         <span
           data-tip={db}

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import Glyph from "./Glyph";
 import { reading } from "./status";
 
@@ -83,6 +83,26 @@ export const Card = ({
   >
     {children}
   </div>
+);
+
+export const Button = ({
+  tone = "quiet",
+  children,
+  className = "",
+  ...rest
+}: { tone?: "quiet" | "firm" } & ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    type="button"
+    {...rest}
+    className={`rounded-field px-2.5 py-1 text-xs transition-colors disabled:opacity-40
+      ${
+        tone === "firm"
+          ? "border border-base-content bg-base-content text-base-100"
+          : "border border-base-300 hover:border-base-content disabled:hover:border-base-300"
+      } ${className}`}
+  >
+    {children}
+  </button>
 );
 
 export const Empty = ({ children }: { children: ReactNode }) => (

@@ -1,14 +1,8 @@
-import Search from "./Search";
-import { ScreenHead } from "@/components/ui";
-import { SINCE } from "@/lib/core/sources";
+import Console from "./Console";
+import { phases } from "@/lib/web/phases";
 
 export const dynamic = "force-dynamic";
 
 export default function RunPage() {
-  return (
-    <div className="max-w-4xl">
-      <ScreenHead headline="Search for openings" />
-      <Search windows={SINCE} />
-    </div>
-  );
+  return <Console phases={phases()} />;
 }

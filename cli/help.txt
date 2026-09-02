@@ -8,10 +8,10 @@ commands:
   setup                       first-run setup: create $CAREER, build the profile, set the filters
   search                      search and rule only
   score                       score the prospects already found
-  resume <JD, URL, or key>    build one tailored resume as a PDF
-  apply <key or URL>          build and stage one application, stopping before submit
+  resume [JD, URL, or key]    tailor a resume for every shortlisted role, or one you name
+  apply [key or URL]          stage every shortlisted application, or one you name, before submit
   submit                      review what is staged and submit only what you name
-  ui                          serve the dashboard on 127.0.0.1:8765; edit your profile there
+  ui                          serve the dashboard on 127.0.0.1:8765; run the phases and edit your profile there
   help                        this message
 
 notes:
