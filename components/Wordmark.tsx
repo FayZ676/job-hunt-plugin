@@ -7,7 +7,7 @@ export default function Wordmark({ size = 17, className = "" }: { size?: number;
     >
       <span className="text-soft">/</span>
       <span className="font-semibold text-base-content">job</span>
-      <span aria-hidden className="ml-[0.14em] inline-block h-[0.95em] w-[0.5em] bg-blip" />
+      <span aria-hidden className="ml-[0.14em] inline-block h-[0.95em] w-[0.5em] bg-mark" />
     </span>
   );
 }

@@ -31,28 +31,39 @@ export default function Console({ phases, opening }: { phases: Phase[]; opening:
           <Section title="Actions">
             <Stack>
               {phases.map(({ id, does }) => {
-                const busy = running === id;
-                return (
+                const command = (
+                  <span className="font-mono text-sm">
+                    <span className="text-soft">/job</span>
+                    {id !== "all" && ` ${id}`}
+                  </span>
+                );
+                const said = <span className="col-start-2 text-xs text-soft">{does}</span>;
+
+                return running === id ? (
                   <div
                     key={id}
                     className="grid grid-cols-[0.375rem_minmax(0,1fr)_auto] items-center gap-x-2.5
-                      gap-y-2 border-b border-base-200 px-3 py-3 last:border-0"
+                      gap-y-1 border-b border-base-200 bg-base-200 px-3 py-2.5 last:border-0"
                   >
-                    <Mark on={busy} />
-                    <span className="min-w-0 truncate font-mono text-sm">
-                      <span className="text-soft">/job</span>
-                      {id !== "all" && ` ${id}`}
-                    </span>
-                    {busy ? (
-                      <Button onClick={stop}>Stop</Button>
-                    ) : (
-                      <Button disabled={Boolean(running)} onClick={() => start(id)}>
-                        Run
-                      </Button>
-                    )}
-
-                    <p className="col-span-2 col-start-2 -mt-1 text-xs text-soft">{does}</p>
+                    <Mark on />
+                    {command}
+                    <Button onClick={stop}>Stop</Button>
+                    {said}
                   </div>
+                ) : (
+                  <button
+                    key={id}
+                    type="button"
+                    disabled={Boolean(running)}
+                    onClick={() => start(id)}
+                    className="grid w-full grid-cols-[0.375rem_minmax(0,1fr)] items-center gap-x-2.5
+                      gap-y-1 border-b border-base-200 px-3 py-2.5 text-left transition-colors
+                      last:border-0 hover:bg-base-200 disabled:hover:bg-transparent"
+                  >
+                    <Mark />
+                    {command}
+                    {said}
+                  </button>
                 );
               })}
             </Stack>
