@@ -114,6 +114,10 @@
     outline: 2px solid var(--color-base-content);
     outline-offset: 2px;
   }
+
+  :where(button, summary, [role="button"], label:has(> input[type="checkbox"])):not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @utility eyebrow {
