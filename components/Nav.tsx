@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Briefcase, CircleHelp, Play, User, type LucideIcon } from "lucide-react";
 import Glyph from "./Glyph";
-import Mark from "./Mark";
+import Wordmark from "./Wordmark";
 
 type Item = { href: string; label: string; icon: LucideIcon };
 
@@ -21,7 +21,7 @@ export default function Nav({ db }: { db: string }) {
     <nav aria-label="Sections" className="sticky top-0 z-40 border-b border-base-300 bg-base-100">
       <div className="mx-auto flex max-w-[104rem] items-center gap-4 px-4 py-2 md:px-6">
         <p className="flex shrink-0 items-center gap-2">
-          <Mark size={17} />
+          <Wordmark size={17} />
           <span
             className="font-display text-mini font-semibold uppercase
             tracking-[0.14em]"
