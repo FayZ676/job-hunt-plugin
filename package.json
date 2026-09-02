@@ -23,7 +23,6 @@
     "build": "next build",
     "start": "next start -p 8765",
     "typecheck": "tsc --noEmit",
-    "schema": "node --disable-warning=ExperimentalWarning scripts/schema.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

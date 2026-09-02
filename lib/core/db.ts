@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+import { tables } from "./ddl.ts";
 import { ROOT } from "./root.ts";
 import { align } from "./schema.ts";
 
@@ -21,12 +22,9 @@ export const PATHS = {
   submitted: SUBMITTED,
 };
 
-const SQL = path.join(ROOT, "sql");
-
 const held = globalThis as { db?: Database.Database; ddl?: string };
 
-export const ddl = () =>
-  (held.ddl ??= ["tables", "logic"].map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8")).join("\n"));
+export const ddl = () => (held.ddl ??= `${tables()}\n${fs.readFileSync(path.join(ROOT, "sql", "logic.sql"), "utf8")}`);
 
 export function connect(at: string = DB) {
   fs.mkdirSync(path.dirname(at) || ".", { recursive: true });

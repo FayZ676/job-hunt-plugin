@@ -1,6 +1,6 @@
 -- Behavior the schema cannot declare: the triggers that keep history and couple
 -- score to status, and the views whose bodies are not a column list.
--- Tables, indexes and the views derived from them are generated into sql/tables.sql.
+-- Tables, indexes and the views derived from them are rendered from lib/core/ddl.ts.
 
 CREATE TRIGGER IF NOT EXISTS on_kept AFTER UPDATE OF disposition ON postings
 WHEN new.disposition = 'kept' AND old.disposition IS NOT 'kept'

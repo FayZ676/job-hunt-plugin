@@ -27,11 +27,10 @@ ones before it.
 
 **One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
 the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`, `posting.ts`,
-`sources.ts`, `typst.ts`. Beside it sits one file per phase that has logic of its own: **`lib/x.ts`
-decides and returns a value, `cli/x.ts` parses argv and prints it**, so a page and a command can call
-the one function. `lib/web/` is the dashboard's own half. `sql/` sits under none of them:
-`tables.sql` and `logic.sql` are applied on every connect, from a page or a phase, so neither side
-owns the file that defines both.
+`apify.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per phase that has logic of its own:
+**`lib/x.ts` decides and returns a value, `cli/x.ts` parses argv and prints it**, so a page and a
+command can call the one function. `lib/web/` is the dashboard's own half. `sql/logic.sql` sits under
+none of them, applied on every connect from a page or a phase, so neither side owns it.
 
 **The pages under `app/` are the only thing that writes the profile.** A page reads the rows it
 renders through `lib/web/queries.ts`, and a server action in `lib/web/actions.ts` writes the one
@@ -40,10 +39,11 @@ displays, so what can reach the database is the part of the tree you can point a
 
 ## Changing the schema
 
-**`lib/core/schema.ts` is the only place a column is declared.** `npm run schema` writes
-`sql/tables.sql` from it — the type, nullability, every `CHECK`, the indexes, and the views whose
-body is just a column list. Never edit `sql/tables.sql` by hand; the next regenerate discards it.
-Triggers and the views with real SQL in them live in `sql/logic.sql`, which is hand-written.
+**`lib/core/schema.ts` is the only place a column is declared.** `lib/core/ddl.ts` renders the DDL
+from it on every connect — the type, nullability, every `CHECK`, the indexes, and the views whose
+body is just a column list. There is no generated file to keep in step and nothing to run after an
+edit. Triggers and the views with real SQL in them live in `sql/logic.sql`, which is hand-written and
+concatenated onto the rendered DDL. `job-q --schema` prints both.
 
 A column is a Zod field plus `.meta()`: `sql` is the DDL after the type (`CHECK`, `DEFAULT`,
 `REFERENCES`), and `takes` is the English a wrong answer is refused with. An enum field generates
@@ -52,8 +52,8 @@ controls and the CLI's errors from there.
 
 **Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
 exists, so a new column leaves every database that has already been opened exactly as it was, and
-`align` then refuses to open it. So a column change is: edit `lib/core/schema.ts`, `npm run schema`,
-and `ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(job-paths db)"`,
+`align` then refuses to open it. So a column change is: edit `lib/core/schema.ts`, then
+`ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(job-paths db)"`,
 never `job-q` — the check runs before the SQL does, so `job-q` refuses to open the database that
 needs fixing.
 
