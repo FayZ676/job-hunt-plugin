@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const holds = (dir: string) => fs.existsSync(path.join(dir, "sql", "job.sql"));
+const holds = (dir: string) =>
+  fs.existsSync(path.join(dir, "sql", "logic.sql"));
 
 const upward = (from: string | undefined) => {
   if (typeof from !== "string") return null;
@@ -12,7 +13,8 @@ const upward = (from: string | undefined) => {
 };
 
 export const ROOT =
-  [import.meta.dirname, process.cwd()].map(upward).find(Boolean) ?? process.cwd();
+  [import.meta.dirname, process.cwd()].map(upward).find(Boolean) ??
+  process.cwd();
 
 const ENV_FILE = path.join(ROOT, ".env.local");
 if (fs.existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);

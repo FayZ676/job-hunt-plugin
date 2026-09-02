@@ -28,8 +28,9 @@ those into separate items).
 Section types:
 ${types}`;
 
-const program = new Command("job-resume").description(
-  `Phase 3 — build the tailored one-page PDF, and record it on the prospect.
+const program = new Command("job-resume")
+  .description(
+    `Phase 3 — build the tailored one-page PDF, and record it on the prospect.
 
   job-resume spec                            the spec contract, and every section type
   job-resume build spec.json                 render to spec.pdf
@@ -37,16 +38,22 @@ const program = new Command("job-resume").description(
   job-resume build spec.json out.pdf --density tight --keep-typ
 
 Recording stores an absolute path, because a relative one breaks the next run
-started somewhere else.`);
+started somewhere else.`,
+  )
+  .option("--db <path>");
 
 program
   .command("spec")
   .description("print the spec contract and every section type")
   .action(() => {
-    const width = Math.max(...Object.keys(SECTION_TYPES).map((held) => held.length));
+    const width = Math.max(
+      ...Object.keys(SECTION_TYPES).map((held) => held.length),
+    );
     const types = Object.entries(SECTION_TYPES)
-      .map(([name, [payload, shape]]) =>
-        `  ${name.padEnd(width)}  ${payload}\n  ${"".padEnd(width)}  renders as ${shape}`)
+      .map(
+        ([name, [payload, shape]]) =>
+          `  ${name.padEnd(width)}  ${payload}\n  ${"".padEnd(width)}  renders as ${shape}`,
+      )
       .join("\n");
     console.log(SPEC_HELP(types));
   });
@@ -57,19 +64,24 @@ program
   .argument("<spec>")
   .argument("[out]", "default: <spec>.pdf")
   .option("--key <key>", "record the PDF on this prospect")
-  .option("--density <density>", `one of ${Object.keys(DENSITY).join(", ")}`, "normal")
+  .option(
+    "--density <density>",
+    `one of ${Object.keys(DENSITY).join(", ")}`,
+    "normal",
+  )
   .option("--keep-typ", "write the .typ alongside the PDF")
-  .option("--db <path>")
-  .action(guard((specPath: string, outPath: string | undefined, options) => {
-    const built = build(specPath, outPath, {
-      density: options.density,
-      keepTyp: options.keepTyp,
-      key: options.key,
-      database: options.key ? open(options.db) : undefined,
-    });
-    console.log(`wrote ${built.out} (density: ${built.density})`);
-    if (built.recorded !== null)
-      console.log(`recorded on ${options.key} (${built.recorded})`);
-  }));
+  .action(
+    guard((specPath: string, outPath: string | undefined, options) => {
+      if (options.key) open(program.opts().db);
+      const built = build(specPath, outPath, {
+        density: options.density,
+        keepTyp: options.keepTyp,
+        key: options.key,
+      });
+      console.log(`wrote ${built.out} (density: ${built.density})`);
+      if (built.recorded !== null)
+        console.log(`recorded on ${options.key} (${built.recorded})`);
+    }),
+  );
 
 program.parseAsync();

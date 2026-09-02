@@ -27,7 +27,7 @@ const SQL = path.join(ROOT, "sql");
 const held = globalThis as { db?: Database.Database; ddl?: string };
 
 export const ddl = () =>
-  (held.ddl ??= ["job", "profile"]
+  (held.ddl ??= ["tables", "logic"]
     .map((part) => fs.readFileSync(path.join(SQL, `${part}.sql`), "utf8"))
     .join("\n"));
 
@@ -35,9 +35,8 @@ export function connect(at: string = DB) {
   fs.mkdirSync(path.dirname(at) || ".", { recursive: true });
   const opened = new Database(at);
   opened.pragma("foreign_keys = ON");
-  const sql = ddl();
-  opened.exec(sql);
-  align(opened, sql);
+  opened.exec(ddl());
+  align(opened);
   return opened;
 }
 
@@ -70,9 +69,11 @@ export const rows = <T extends z.ZodType>(
   sql: string,
   args: unknown[] = [],
 ): z.infer<T>[] =>
-  (db()
-    .prepare(sql)
-    .all(...args) as unknown[]).map((row) => parsed(shape, sql, row));
+  (
+    db()
+      .prepare(sql)
+      .all(...args) as unknown[]
+  ).map((row) => parsed(shape, sql, row));
 
 export const one = <T extends z.ZodType>(
   shape: T,
@@ -82,5 +83,7 @@ export const one = <T extends z.ZodType>(
   const found = db()
     .prepare(sql)
     .get(...args);
-  return found === undefined || found === null ? null : parsed(shape, sql, found);
+  return found === undefined || found === null
+    ? null
+    : parsed(shape, sql, found);
 };

@@ -1,12 +1,15 @@
-import type { Database } from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 
-import { SUBMITTED, absolute } from "./core/db.ts";
+import { SUBMITTED, absolute, db, one, rows } from "./core/db.ts";
+import { TABLES, VIEWS } from "./core/schema.ts";
 
 const companions = (pdf: string) => {
   const stem = pdf.slice(0, pdf.length - path.extname(pdf).length);
-  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) => fs.existsSync(held));
+  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) =>
+    fs.existsSync(held),
+  );
 };
 
 const move = (from: string, to: string) => {
@@ -18,40 +21,50 @@ const move = (from: string, to: string) => {
   }
 };
 
-export type Waiting = {
-  company: string; title: string; score: number | null;
-  status: string; blocked_on: string | null; key: string;
-};
+const Waiting = VIEWS.prospects
+  .pick({ company: true, title: true, score: true })
+  .extend(
+    TABLES.staged.pick({ status: true, blocked_on: true, key: true }).shape,
+  );
 
-export const review = (database: Database) =>
-  database
-    .prepare(
-      "SELECT p.company, p.title, p.score, s.status, s.blocked_on, s.key " +
-        "FROM staged s JOIN prospects p ON p.key=s.key " +
-        "WHERE p.status='staged' ORDER BY s.status, p.score DESC")
-    .all() as Waiting[];
+const Recordable = VIEWS.prospects
+  .pick({ key: true, company: true, title: true, resume: true, status: true })
+  .extend({
+    staged_status: TABLES.staged.shape.status,
+    blocked_on: TABLES.staged.shape.blocked_on,
+  });
 
-type Recordable = {
-  key: string; company: string; title: string; resume: string | null;
-  status: string; staged_status: string | null; blocked_on: string | null;
-};
+export type Waiting = z.infer<typeof Waiting>;
 
-export function record(database: Database, key: string, confirmation: string) {
+export const review = () =>
+  rows(
+    Waiting,
+    "SELECT p.company, p.title, p.score, s.status, s.blocked_on, s.key " +
+      "FROM staged s JOIN prospects p ON p.key=s.key " +
+      "WHERE p.status='staged' ORDER BY s.status, p.score DESC",
+  );
+
+export function record(key: string, confirmation: string) {
   const said = confirmation.trim();
   if (!said)
-    throw new Error("--confirmation cannot be empty: `applied` requires a confirmation page you saw");
+    throw new Error(
+      "--confirmation cannot be empty: `applied` requires a confirmation page you saw",
+    );
 
-  const row = database
-    .prepare(
-      "SELECT p.key, p.company, p.title, p.resume, p.status, s.status AS staged_status," +
-        "       s.blocked_on FROM prospects p LEFT JOIN staged s ON s.key=p.key WHERE p.key=?")
-    .get(key) as Recordable | undefined;
+  const row = one(
+    Recordable,
+    "SELECT p.key, p.company, p.title, p.resume, p.status, s.status AS staged_status," +
+      "       s.blocked_on FROM prospects p LEFT JOIN staged s ON s.key=p.key WHERE p.key=?",
+    [key],
+  );
   if (!row) throw new Error(`no prospect '${key}'`);
   if (row.status === "applied") throw new Error(`${key} is already applied`);
   if (row.staged_status === null || row.staged_status === undefined)
     throw new Error(`${key} was never staged — run job-stage add first`);
   if (row.staged_status !== "ready")
-    throw new Error(`${key} is ${row.staged_status}: ${row.blocked_on || "no reason recorded"}`);
+    throw new Error(
+      `${key} is ${row.staged_status}: ${row.blocked_on || "no reason recorded"}`,
+    );
   if (!row.resume) throw new Error(`${key} has no resume recorded`);
 
   const source = absolute(row.resume);
@@ -67,11 +80,11 @@ export function record(database: Database, key: string, confirmation: string) {
       move(held, target);
       moved.push([held, target]);
     }
-    database.transaction(() => {
-      database
+    db().transaction(() => {
+      db()
         .prepare("UPDATE postings SET status='applied', resume=? WHERE key=?")
         .run(resume, key);
-      database
+      db()
         .prepare("INSERT INTO events(key,status,note) VALUES(?,'applied',?)")
         .run(key, said);
     })();
@@ -84,18 +97,26 @@ export function record(database: Database, key: string, confirmation: string) {
   return { resume, confirmation: said };
 }
 
-export function rejected(database: Database, key: string, note: string) {
+export function rejected(key: string, note: string) {
   const said = note.trim();
-  const row = database
-    .prepare("SELECT key, resume, status FROM prospects WHERE key=?")
-    .get(key) as { resume: string | null } | undefined;
+  const row = one(
+    VIEWS.prospects.pick({ key: true, resume: true, status: true }),
+    "SELECT key, resume, status FROM prospects WHERE key=?",
+    [key],
+  );
   if (!row) throw new Error(`no prospect '${key}'`);
   if (!said)
-    throw new Error("--note cannot be empty: record the shape — days elapsed, and any interview stage");
+    throw new Error(
+      "--note cannot be empty: record the shape — days elapsed, and any interview stage",
+    );
 
-  database.transaction(() => {
-    database.prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?").run(key);
-    database.prepare("INSERT INTO events(key,status,note) VALUES(?,'rejected',?)").run(key, said);
+  db().transaction(() => {
+    db()
+      .prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?")
+      .run(key);
+    db()
+      .prepare("INSERT INTO events(key,status,note) VALUES(?,'rejected',?)")
+      .run(key, said);
   })();
 
   const deleted: string[] = [];

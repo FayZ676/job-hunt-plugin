@@ -9,7 +9,9 @@ import { collect, fail, guard } from "./kit.ts";
 function parseField(raw: string): Field {
   const parts = raw.split("|");
   if (parts.length < 3)
-    fail(`--field wants 'label|value|tier' or 'label|value|tier|flag', got '${raw}'`);
+    fail(
+      `--field wants 'label|value|tier' or 'label|value|tier|flag', got '${raw}'`,
+    );
   const [label, value, tier] = parts.slice(0, 3).map((part) => part.trim());
   return {
     label,
@@ -19,8 +21,9 @@ function parseField(raw: string): Field {
   };
 }
 
-const program = new Command("job-stage").description(
-  `Phase 4 — fill the form, record it, and stop with a finger over the button.
+const program = new Command("job-stage")
+  .description(
+    `Phase 4 — fill the form, record it, and stop with a finger over the button.
 
   job-stage add KEY --url URL --screenshot shot.png
       --field 'Legal right to work without sponsorship?|Yes|policy'
@@ -30,7 +33,9 @@ const program = new Command("job-stage").description(
   job-stage drop KEY                     unstage, back to shortlisted
 
 \`ready\` and \`blocked\` are derived, never asserted: a field staged with no value
-blocks the application and names itself in blocked_on.`);
+blocks the application and names itself in blocked_on.`,
+  )
+  .option("--db <path>");
 
 program
   .command("add")
@@ -38,56 +43,74 @@ program
   .argument("<key>")
   .requiredOption("--url <url>", "the apply URL the form was filled at")
   .requiredOption("--screenshot <path>", "the completed form, captured")
-  .option("--field <label|value|tier[|flag]>", `tier is one of ${TIERS().join(", ")}`, collect, [])
-  .option("--blocked-on <what>", "what is missing, when the block is not an empty field")
-  .option("--db <path>")
-  .action(guard((key: string, options) => {
-    const staged = add(open(options.db), key, {
-      url: options.url,
-      screenshot: options.screenshot,
-      fields: options.field.map(parseField),
-      blockedOn: options.blockedOn,
-    });
-    console.log(`${key}  ${staged.status}  ${staged.fields} fields`);
-    if (staged.blockedOn) console.log(`  blocked_on: ${staged.blockedOn}`);
-    if (staged.flagged.length)
-      console.log(`  flagged for review: ${staged.flagged.join("; ")}`);
-  }));
+  .option(
+    "--field <label|value|tier[|flag]>",
+    `tier is one of ${TIERS().join(", ")}`,
+    collect,
+    [],
+  )
+  .option(
+    "--blocked-on <what>",
+    "what is missing, when the block is not an empty field",
+  )
+  .action(
+    guard((key: string, options) => {
+      open(program.opts().db);
+      const staged = add(key, {
+        url: options.url,
+        screenshot: options.screenshot,
+        fields: options.field.map(parseField),
+        blockedOn: options.blockedOn,
+      });
+      console.log(`${key}  ${staged.status}  ${staged.fields} fields`);
+      if (staged.blockedOn) console.log(`  blocked_on: ${staged.blockedOn}`);
+      if (staged.flagged.length)
+        console.log(`  flagged for review: ${staged.flagged.join("; ")}`);
+    }),
+  );
 
 program
   .command("show")
   .description("every field staged for one application")
   .argument("<key>")
   .option("--json")
-  .option("--db <path>")
-  .action(guard((key: string, options) => {
-    const { application, fields } = show(open(options.db), key);
-    console.log(
-      `${application.company} — ${application.title}  [${application.key}]  ${application.status}`);
-    if (application.blocked_on) console.log(`  blocked_on: ${application.blocked_on}`);
-    console.log(`  ${application.url || ""}`);
-    console.log(`  resume     ${application.resume}`);
-    console.log(`  screenshot ${application.screenshot}\n`);
-    printRows(fields, options.json);
-  }));
+  .action(
+    guard((key: string, options) => {
+      open(program.opts().db);
+      const { application, fields } = show(key);
+      console.log(
+        `${application.company} — ${application.title}  [${application.key}]  ${application.status}`,
+      );
+      if (application.blocked_on)
+        console.log(`  blocked_on: ${application.blocked_on}`);
+      console.log(`  ${application.url || ""}`);
+      console.log(`  resume     ${application.resume}`);
+      console.log(`  screenshot ${application.screenshot}\n`);
+      printRows(fields, options.json);
+    }),
+  );
 
 program
   .command("list")
   .description("everything staged, and what each is blocked on")
   .option("--json")
-  .option("--db <path>")
-  .action(guard((options) => {
-    printRows(list(open(options.db)), options.json);
-  }));
+  .action(
+    guard((options) => {
+      open(program.opts().db);
+      printRows(list(), options.json);
+    }),
+  );
 
 program
   .command("drop")
   .description("unstage, back to shortlisted")
   .argument("<key>")
-  .option("--db <path>")
-  .action(guard((key: string, options) => {
-    drop(open(options.db), key);
-    console.log(`${key} unstaged`);
-  }));
+  .action(
+    guard((key: string, options) => {
+      open(program.opts().db);
+      drop(key);
+      console.log(`${key} unstaged`);
+    }),
+  );
 
 program.parseAsync();

@@ -1,14 +1,54 @@
-import type { Database } from "better-sqlite3";
 import fs from "node:fs";
+import { z } from "zod";
 
-import { absolute, ddl } from "./core/db.ts";
-import { vocabulary } from "./core/ddl.ts";
+import { absolute, db, one, rows } from "./core/db.ts";
+import { TABLES, VIEWS, options } from "./core/schema.ts";
 
 const CLOSED = ["applied", "rejected", "closed"];
 
-export const TIERS = () => [...vocabulary(ddl(), "staged_fields", "tier")].sort();
+export const TIERS = () => [...options("staged_fields", "tier")].sort();
 
-export type Field = { label: string; value: string; tier: string; flag: string | null };
+const Ready = VIEWS.prospects.pick({
+  key: true,
+  company: true,
+  title: true,
+  status: true,
+  resume: true,
+});
+
+const Answer = TABLES.staged_fields.pick({
+  tier: true,
+  label: true,
+  value: true,
+  flag: true,
+});
+
+const Application = TABLES.staged
+  .pick({
+    key: true,
+    url: true,
+    status: true,
+    blocked_on: true,
+    screenshot: true,
+  })
+  .extend(
+    VIEWS.prospects.pick({ company: true, title: true, resume: true }).shape,
+  );
+
+const Waiting = TABLES.staged
+  .pick({ key: true, status: true, blocked_on: true })
+  .extend(
+    VIEWS.prospects.pick({ company: true, title: true, score: true }).shape,
+  )
+  .extend({ prospect: VIEWS.prospects.shape.status });
+
+export type Field = {
+  label: string;
+  value: string;
+  tier: string;
+  flag: string | null;
+};
+export type Application = z.infer<typeof Application>;
 
 export type Filling = {
   url: string;
@@ -24,103 +64,121 @@ export type Staged = {
   flagged: string[];
 };
 
-export type Application = {
-  key: string;
-  company: string;
-  title: string;
-  url: string | null;
-  status: string;
-  blocked_on: string | null;
-  screenshot: string | null;
-  resume: string | null;
-};
-
-export function add(database: Database, key: string, filling: Filling): Staged {
-  const row = database
-    .prepare("SELECT key, company, title, status, resume FROM prospects WHERE key=?")
-    .get(key) as { status: string; resume: string | null } | undefined;
+export function add(key: string, filling: Filling): Staged {
+  const row = one(
+    Ready,
+    "SELECT key, company, title, status, resume FROM prospects WHERE key=?",
+    [key],
+  );
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (CLOSED.includes(row.status))
+  if (row.status && CLOSED.includes(row.status))
     throw new Error(`${key} is already ${row.status} — nothing to stage`);
   if (!row.resume)
-    throw new Error(`${key} has no resume — build it first: job-resume build <spec> --key ${key}`);
+    throw new Error(
+      `${key} has no resume — build it first: job-resume build <spec> --key ${key}`,
+    );
   if (!fs.existsSync(absolute(row.resume)))
-    throw new Error(`the resume recorded for ${key} is not on disk: ${row.resume}`);
+    throw new Error(
+      `the resume recorded for ${key} is not on disk: ${row.resume}`,
+    );
 
   const screenshot = absolute(filling.screenshot);
   if (!fs.existsSync(screenshot))
-    throw new Error(`no screenshot at ${screenshot} — Phase 4 ends with the filled form captured`);
+    throw new Error(
+      `no screenshot at ${screenshot} — Phase 4 ends with the filled form captured`,
+    );
 
   if (!filling.fields.length)
     throw new Error(
-      "stage at least one --field: an application with no recorded answers is not staged");
+      "stage at least one --field: an application with no recorded answers is not staged",
+    );
 
   const tiers = TIERS();
   for (const field of filling.fields) {
     if (!field.label) throw new Error("a field needs a label");
     if (!tiers.includes(field.tier))
-      throw new Error(`tier must be one of ${tiers.join(", ")}, got '${field.tier}' on '${field.label}'`);
+      throw new Error(
+        `tier must be one of ${tiers.join(", ")}, got '${field.tier}' on '${field.label}'`,
+      );
   }
 
-  const empty = filling.fields.filter((field) => !field.value).map((field) => field.label);
+  const empty = filling.fields
+    .filter((field) => !field.value)
+    .map((field) => field.label);
   const blockedOn =
-    filling.blockedOn || (empty.length ? `no answer for: ${empty.join("; ")}` : null);
+    filling.blockedOn ||
+    (empty.length ? `no answer for: ${empty.join("; ")}` : null);
   const status = blockedOn ? "blocked" : "ready";
 
-  database.transaction(() => {
-    database
+  db().transaction(() => {
+    db()
       .prepare(
         "INSERT INTO staged(key,url,screenshot,status,blocked_on) VALUES(?,?,?,?,?) " +
           "ON CONFLICT(key) DO UPDATE SET url=excluded.url," +
-          "  screenshot=excluded.screenshot, status=excluded.status, blocked_on=excluded.blocked_on")
+          "  screenshot=excluded.screenshot, status=excluded.status, blocked_on=excluded.blocked_on",
+      )
       .run(key, filling.url, screenshot, status, blockedOn);
-    database.prepare("DELETE FROM staged_fields WHERE key=?").run(key);
-    const insert = database.prepare(
-      "INSERT INTO staged_fields(key,label,value,tier,flag) VALUES(?,?,?,?,?)");
+    db().prepare("DELETE FROM staged_fields WHERE key=?").run(key);
+    const insert = db().prepare(
+      "INSERT INTO staged_fields(key,label,value,tier,flag) VALUES(?,?,?,?,?)",
+    );
     for (const field of filling.fields)
       insert.run(key, field.label, field.value || null, field.tier, field.flag);
-    database.prepare("UPDATE postings SET status='staged' WHERE key=?").run(key);
+    db().prepare("UPDATE postings SET status='staged' WHERE key=?").run(key);
   })();
 
   return {
     status,
     blockedOn,
     fields: filling.fields.length,
-    flagged: filling.fields.filter((field) => field.flag).map((field) => field.label),
+    flagged: filling.fields
+      .filter((field) => field.flag)
+      .map((field) => field.label),
   };
 }
 
-export function show(database: Database, key: string) {
-  const application = database
-    .prepare(
-      "SELECT s.key, p.company, p.title, s.url, s.status, s.blocked_on, s.screenshot," +
-        "       p.resume FROM staged s JOIN prospects p ON p.key=s.key WHERE s.key=?")
-    .get(key) as Application | undefined;
+export function show(key: string) {
+  const application = one(
+    Application,
+    "SELECT s.key, p.company, p.title, s.url, s.status, s.blocked_on, s.screenshot," +
+      "       p.resume FROM staged s JOIN prospects p ON p.key=s.key WHERE s.key=?",
+    [key],
+  );
   if (!application) throw new Error(`nothing staged for '${key}'`);
   return {
     application,
-    fields: database
-      .prepare("SELECT tier, label, value, flag FROM staged_fields WHERE key=? ORDER BY rowid")
-      .all(key) as Record<string, unknown>[],
+    fields: rows(
+      Answer,
+      "SELECT tier, label, value, flag FROM staged_fields WHERE key=? ORDER BY rowid",
+      [key],
+    ),
   };
 }
 
-export const list = (database: Database) =>
-  database
-    .prepare(
-      "SELECT s.key, p.company, p.title, p.score, s.status, p.status AS prospect, " +
-        "       s.blocked_on FROM staged s JOIN prospects p ON p.key=s.key " +
-        "ORDER BY s.status, p.score DESC")
-    .all() as Record<string, unknown>[];
+export const list = () =>
+  rows(
+    Waiting,
+    "SELECT s.key, p.company, p.title, p.score, s.status, p.status AS prospect, " +
+      "       s.blocked_on FROM staged s JOIN prospects p ON p.key=s.key " +
+      "ORDER BY s.status, p.score DESC",
+  );
 
-export function drop(database: Database, key: string) {
-  if (!database.prepare("SELECT 1 FROM staged WHERE key=?").get(key))
+export function drop(key: string) {
+  if (
+    !one(
+      TABLES.staged.pick({ key: true }),
+      "SELECT key FROM staged WHERE key=?",
+      [key],
+    )
+  )
     throw new Error(`nothing staged for '${key}'`);
-  database.transaction(() => {
-    database.prepare("DELETE FROM staged_fields WHERE key=?").run(key);
-    database.prepare("DELETE FROM staged WHERE key=?").run(key);
-    database
-      .prepare("UPDATE postings SET status='shortlisted' WHERE key=? AND status='staged'")
+  db().transaction(() => {
+    db().prepare("DELETE FROM staged_fields WHERE key=?").run(key);
+    db().prepare("DELETE FROM staged WHERE key=?").run(key);
+    db()
+      .prepare(
+        "UPDATE postings SET status='shortlisted' WHERE key=? AND status='staged'",
+      )
       .run(key);
   })();
 }

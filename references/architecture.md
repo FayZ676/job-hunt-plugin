@@ -29,9 +29,9 @@ ones before it.
 the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`, `posting.ts`,
 `sources.ts`, `typst.ts`. Beside it sits one file per phase that has logic of its own: **`lib/x.ts`
 decides and returns a value, `cli/x.ts` parses argv and prints it**, so a page and a command can call
-the one function. `lib/web/` is the dashboard's own half. `sql/` sits under none of them: `job.sql`
-and `profile.sql` are applied on every connect, from a page or a phase, so neither side owns the file
-that defines both.
+the one function. `lib/web/` is the dashboard's own half. `sql/` sits under none of them:
+`tables.sql` and `logic.sql` are applied on every connect, from a page or a phase, so neither side
+owns the file that defines both.
 
 **The pages under `app/` are the only thing that writes the profile.** A page reads the rows it
 renders through `lib/web/queries.ts`, and a server action in `lib/web/actions.ts` writes the one
@@ -40,14 +40,20 @@ displays, so what can reach the database is the part of the tree you can point a
 
 ## Changing the schema
 
-**`sql/*.sql` is the only place a column is declared.** `lib/core/tables.generated.ts` is written
-by `npm run schema`, which reads the DDL — every column, its nullability, and any `CHECK (x IN (…))`
-as a real enum. Never edit it by hand; the next regenerate discards the edit.
+**`lib/core/schema.ts` is the only place a column is declared.** `npm run schema` writes
+`sql/tables.sql` from it — the type, nullability, every `CHECK`, the indexes, and the views whose
+body is just a column list. Never edit `sql/tables.sql` by hand; the next regenerate discards it.
+Triggers and the views with real SQL in them live in `sql/logic.sql`, which is hand-written.
+
+A column is a Zod field plus `.meta()`: `sql` is the DDL after the type (`CHECK`, `DEFAULT`,
+`REFERENCES`), and `takes` is the English a wrong answer is refused with. An enum field generates
+its own `CHECK (x IN (…))`, so the options are declared once and reach the DDL, the dashboard's
+controls and the CLI's errors from there.
 
 **Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
-exists, so editing `sql/*.sql` leaves every database that has already been opened exactly as it was,
-and `align` then refuses to open it. So a column change is: edit the DDL, `npm run schema`, and
-`ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(job-paths db)"`,
+exists, so a new column leaves every database that has already been opened exactly as it was, and
+`align` then refuses to open it. So a column change is: edit `lib/core/schema.ts`, `npm run schema`,
+and `ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(job-paths db)"`,
 never `job-q` — the check runs before the SQL does, so `job-q` refuses to open the database that
 needs fixing.
 
