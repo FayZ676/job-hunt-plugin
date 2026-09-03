@@ -62,6 +62,8 @@ export const asked = (id: string, argument: string) =>
 
 export const runnable = (id: string) => BY_ID.has(id);
 
+export const shown = (id: string, argument: string) => (BY_ID.get(id)?.asks ? argument : asked(id, argument));
+
 export const offered = (status: string | null | undefined) =>
   ACTIONS.filter((action) => action.accepts.some((allowed) => allowed === status));
 

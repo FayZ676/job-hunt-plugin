@@ -1,124 +1,116 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { Square } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
 import { Button, Empty, Prose, Stamp } from "@/components/ui";
+import type { Line } from "@/lib/web/runs";
 
-export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string; note?: string };
-
-export type Asked = { body: string; note?: string };
-
-type Heard = { lines: Line[]; session?: string };
-
-function read(line: string): Heard {
-  let held: any;
+const parse = (line: string): Line | null => {
   try {
-    held = JSON.parse(line);
+    return JSON.parse(line) as Line;
   } catch {
-    return { lines: [] };
+    return null;
   }
+};
 
-  const session = typeof held.session_id === "string" ? held.session_id : undefined;
-  const heard = (lines: Line[]): Heard => ({ lines, session });
-
-  if (held.type === "assistant") {
-    const blocks: any[] = held.message?.content ?? [];
-    const said = blocks
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-    return heard(said ? [{ kind: "said" as const, body: said }] : []);
-  }
-
-  if (held.type === "result") {
-    const body = String(held.result ?? "").trim();
-    return heard(held.is_error && body ? [{ kind: "wrong", body }] : []);
-  }
-
-  if (held.type === "stderr") return heard([{ kind: "aside", body: String(held.text).trim() }]);
-  if (held.type === "exit" && held.code) return heard([{ kind: "wrong", body: `claude exited ${held.code}` }]);
-  return heard([]);
+async function told(body: unknown): Promise<string> {
+  const answered = await fetch("/run/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!answered.ok) throw new Error(await answered.text());
+  const { run } = (await answered.json()) as { run: string };
+  return run;
 }
 
 export function useRun() {
   const router = useRouter();
-  const [running, setRunning] = useState<string | null>(null);
+  const [run, setRun] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
-  const [session, setSession] = useState<string | null>(null);
+  const [streaming, setStreaming] = useState(false);
   const control = useRef<AbortController | null>(null);
   const thread = useRef("");
 
-  const run = async (action: string, argument: string, asked: Asked | undefined, resume: string | null) => {
-    const held = new AbortController();
-    control.current = held;
-    setRunning(action);
+  const open = useCallback(
+    async (id: string) => {
+      control.current?.abort();
+      const watching = new AbortController();
+      control.current = watching;
 
-    const opening: Line[] = asked ? [{ kind: "asked", ...asked }] : [];
-    setLines((standing) => (resume ? [...standing, ...opening] : opening));
+      setRun(id);
+      setLines([]);
+      setStreaming(true);
 
-    let ended = "Finished";
-    let seen: string | null = null;
+      try {
+        const answered = await fetch(`/run/stream?run=${id}`, { signal: watching.signal });
+        if (!answered.ok || !answered.body) throw new Error(await answered.text());
 
-    try {
-      const answered = await fetch("/run/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, argument, resume }),
-        signal: held.signal,
-      });
-      if (!answered.ok || !answered.body) throw new Error(await answered.text());
-
-      const reader = answered.body.getReader();
-      const decoder = new TextDecoder();
-      let rest = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        rest += decoder.decode(value, { stream: true });
-        const parts = rest.split("\n");
-        rest = parts.pop() ?? "";
-        for (const part of parts) {
-          const { lines: fresh, session: id } = read(part);
-          if (id) seen = id;
-          if (fresh.some((line) => line.kind === "wrong")) ended = "Failed";
+        const reader = answered.body.getReader();
+        const decoder = new TextDecoder();
+        let rest = "";
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          rest += decoder.decode(value, { stream: true });
+          const parts = rest.split("\n");
+          rest = parts.pop() ?? "";
+          const fresh = parts.map(parse).filter(Boolean) as Line[];
           if (fresh.length) setLines((standing) => [...standing, ...fresh]);
         }
-      }
-    } catch (error) {
-      ended = held.signal.aborted ? "Stopped" : "Failed";
-      if (!held.signal.aborted)
+      } catch (error) {
+        if (watching.signal.aborted) return;
         setLines((standing) => [...standing, { kind: "wrong", body: (error as Error).message }]);
-    }
+      }
 
-    if (ended !== "Finished") setLines((standing) => [...standing, { kind: "end", body: ended }]);
-    if (seen) setSession(seen);
+      if (watching.signal.aborted) return;
+      setStreaming(false);
+      router.refresh();
+    },
+    [router],
+  );
 
-    control.current = null;
-    setRunning(null);
-    router.refresh();
-  };
+  const send = useCallback(
+    async (body: unknown) => {
+      try {
+        const id = await told(body);
+        router.refresh();
+        return open(id);
+      } catch (error) {
+        control.current?.abort();
+        setRun(null);
+        setStreaming(false);
+        setLines([{ kind: "wrong", body: (error as Error).message }]);
+      }
+    },
+    [open, router],
+  );
 
   return {
     lines,
-    running,
-    session,
-    start: (action: string, argument = "", asked?: Asked) => {
+    run,
+    working: streaming && lines.at(-1)?.kind !== "end",
+    open,
+    start: (action: string, argument = "", note?: string) => {
       thread.current = action;
-      setSession(null);
-      return run(action, argument, asked, null);
+      return send({ action, argument, note });
     },
-    reply: (words: string) => run(thread.current || "feedback", words, { body: words }, session),
+    reply: (words: string) => send({ run, argument: words }),
     clear: (action: string) => {
       thread.current = action;
-      setSession(null);
+      control.current?.abort();
+      control.current = null;
+      setRun(null);
+      setStreaming(false);
       setLines([]);
     },
-    stop: () => control.current?.abort(),
+    stop: () => {
+      if (run) void told({ stop: run });
+    },
   };
 }
 
@@ -237,6 +229,7 @@ function Composer({
   );
 }
 
+// TODO: Rename this component.
 export function Output({
   lines,
   empty,

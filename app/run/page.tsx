@@ -1,5 +1,6 @@
 import Console from "./Console";
 import { ACTIONS, runnable } from "@/lib/core/actions";
+import { listing } from "@/lib/web/runs";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function RunPage({ searchParams }: PageProps<"/run">) {
   return (
     <Console
       actions={ACTIONS}
+      runs={listing()}
       opening={action && runnable(action) ? { action, argument: first(asked.key) ?? "" } : null}
     />
   );
