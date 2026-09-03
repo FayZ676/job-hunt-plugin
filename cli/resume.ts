@@ -2,7 +2,7 @@
 import { open } from "../lib/core/db.ts";
 import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES } from "../lib/core/typst.ts";
 import { build } from "../lib/resume.ts";
-import { guard, phase } from "./kit.ts";
+import { guard, action } from "./kit.ts";
 
 const SPEC_HELP = (types: string) =>
   `A resume spec is content only -- job-resume owns every formatting decision.
@@ -26,9 +26,9 @@ those into separate items).
 Section types:
 ${types}`;
 
-const { program } = phase(
+const { program } = action(
   "job-resume",
-  `Phase 3 — build the tailored one-page PDF, and record it on the prospect.
+  `Build the tailored one-page PDF, and record it on the prospect.
 
   job-resume spec                            the spec contract, and every section type
   job-resume build spec.json                 render to spec.pdf

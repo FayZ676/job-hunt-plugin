@@ -7,11 +7,11 @@ import { Square } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import { Output, useRun } from "@/components/run";
 import { Button, Section, Stack, Stamp } from "@/components/ui";
-import type { Phase } from "@/lib/web/phases";
+import type { Action } from "@/lib/web/actions";
 
-export type Opening = { phase: string; argument: string };
+export type Opening = { action: string; argument: string };
 
-export default function Console({ phases, opening }: { phases: Phase[]; opening: Opening | null }) {
+export default function Console({ actions, opening }: { actions: Action[]; opening: Opening | null }) {
   const router = useRouter();
   const { lines, running, argument, start, stop } = useRun();
   const opened = useRef(false);
@@ -20,7 +20,7 @@ export default function Console({ phases, opening }: { phases: Phase[]; opening:
     if (!opening || opened.current) return;
     opened.current = true;
     router.replace("/run");
-    start(opening.phase, opening.argument);
+    start(opening.action, opening.argument);
   }, [opening, router, start]);
 
   return (
@@ -32,7 +32,7 @@ export default function Console({ phases, opening }: { phases: Phase[]; opening:
         <div className="flex flex-col gap-8">
           <Section title="Actions">
             <Stack>
-              {phases.map(({ id, does }) => {
+              {actions.map(({ id, does }) => {
                 const command = (
                   <span className="min-w-0 truncate font-mono text-sm">
                     <span className="text-soft">/job</span>

@@ -1,6 +1,6 @@
 # Application forms per ATS
 
-Reaching, reading and filling a form with the Playwright MCP tools. Phase 4 fills; only Phase 5
+Reaching, reading and filling a form with the Playwright MCP tools. `job-stage` fills; only `job-submit`
 submits.
 
 ## Who answers a field
@@ -120,14 +120,14 @@ and refilling from them is cheap.
 otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier
 application — the answer moves with the day the form is asked.
 
-**Then stop.** Do not click Submit, Apply, Continue, or Next in Phase 4. On a multi-page form, stop
+**Then stop.** Do not click Submit, Apply, Continue, or Next while staging. On a multi-page form, stop
 at the end of the first page and record the page count.
 
 ## Lever specifics
 
 **hCaptcha gates the submit button**, and **the challenge is never attempted** — a captcha is an
 explicit request for a person. Fill the form, save the staged record, and hand the open tab over: on
-a Lever posting, Phase 5 means *they* click submit.
+a Lever posting, `job-submit` means *they* click submit.
 
 **The resume input is hidden and overlaid by the captcha iframe**, so a normal click times out with
 "subtree intercepts pointer events". Click it through the page instead:
@@ -163,7 +163,7 @@ page was complete. **Work Experience, Education and Skills are optional** when a
 
 ## Submitting
 
-Phase 5 only, and only for applications the user named. **A key given with the command is that
+Submitting only, and only for applications the user named. **A key given with the command is that
 naming** — submit that one and nothing else, with no table and no question. Otherwise present every
 staged application in one table — company, title, score, status, and whatever is named in
 `blocked_on` (`job-submit review`). Keep it to that table; the user reads the applications themselves

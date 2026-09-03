@@ -84,7 +84,7 @@ export function record(key: string, score: number, reason: string) {
   if (!reason.trim()) throw new Error("a reason cannot be empty: name the JD language that drove the score");
   if (!(row.description ?? "").trim())
     throw new Error(
-      `${key} has no description — scoring off a title is what this phase exists ` +
+      `${key} has no description — scoring off a title is what this action exists ` +
         "to prevent. Search again: every source now carries its description",
     );
 

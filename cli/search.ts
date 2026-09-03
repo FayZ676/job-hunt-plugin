@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import { DEFAULTS, DISPOSITIONS, type Found, type Ruled, replay, rule, search } from "../lib/search.ts";
 import * as sources from "../lib/core/sources.ts";
-import { collect, fail, phase } from "./kit.ts";
+import { collect, fail, action } from "./kit.ts";
 
 const dropped = (counts: Record<string, number>) =>
   Object.entries(counts)
@@ -29,9 +29,9 @@ function report(found: Found) {
   ruled(found);
 }
 
-const { program, runs } = phase(
+const { program, runs } = action(
   "job-search",
-  `Phase 1 — find the openings. One paid call, then every rule the filters carry.
+  `Find the openings. One paid call, then every rule the filters carry.
 
   job-search "AI Engineer"                  across every career site
   job-search "AI Engineer" --location "Oregon, United States"

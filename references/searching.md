@@ -1,6 +1,6 @@
 # Searching
 
-Phase 1: finding the openings. `job-search` does the whole phase — one paid Apify call, everything
+Finding the openings. `job-search` does the whole action — one paid Apify call, everything
 that came back stored as it arrived, then every stored row ruled and the survivors promoted to
 prospects. Storing is not a step you run; the raw layer is kept so a filter's cost stays queryable,
 not so you can re-fetch it.

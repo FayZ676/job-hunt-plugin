@@ -23,9 +23,9 @@ Nothing below overrides these.
    a ceiling, not an opening position.
 4. **`applied` requires a confirmation page you have seen.** Clicking the button is not evidence.
 5. **Essays and screening answers are drafted, never auto-accepted.**
-6. **Chat output is minimal.** Only two things belong in chat: the Phase 5 approval prompt, and
+6. **Chat output is minimal.** Only two things belong in chat: the submit approval prompt, and
    whatever blocks progress and needs the user — named specifically, which role and which field. No
-   progress narration, no phase transitions, no summaries; the run entry is the record. A run with
+   progress narration, no action transitions, no summaries; the run entry is the record. A run with
    nothing to ask about produces no chat output at all. `/job help` is the one exception.
 
 ## Modes
@@ -33,19 +33,19 @@ Nothing below overrides these.
 | Invocation | Runs | Read first |
 | ---------- | ---- | ---------- |
 | `/job setup` | First-run setup | `references/setup.md` |
-| `/job` | All five phases | each phase's file, as it starts |
-| `/job search` | Phase 1 — find the openings, and rule on them | `references/searching.md` |
-| `/job score [key]` | Phase 2 over every prospect, or the one named | `references/scoring.md` |
-| `/job resume [JD, URL, or key]` | Phase 3 over every `shortlisted` posting, or the one named | `references/resume.md` |
-| `/job apply [key or URL]` | Phases 3–4 over every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
-| `/job submit [key]` | Phase 5 over what is staged, or the one named | `references/applying.md` |
+| `/job` | Every action, in order | each action's file, as it starts |
+| `/job search` | Find the openings, and rule on them | `references/searching.md` |
+| `/job score [key]` | Score every prospect, or the one named | `references/scoring.md` |
+| `/job resume [JD, URL, or key]` | Build a resume for every `shortlisted` posting, or the one named | `references/resume.md` |
+| `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
+| `/job submit [key]` | Submit what is staged, or the one named | `references/applying.md` |
 | `/job ui` | Serve the dashboard — `npm run dev` in the skill directory, on `127.0.0.1:8765`; the profile is edited there | `references/storage.md` |
 | `/job help` | `cat "$HOME/.claude/skills/job/cli/help.txt"` and nothing else — no run, no queries, no commentary | |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
 means adding it to the table above and to `help.txt`.
 
-Two files are not a phase and are read when they apply:
+Two files are not an action and are read when they apply:
 
 | File | Read before |
 | ---- | ----------- |
@@ -53,9 +53,9 @@ Two files are not a phase and are read when they apply:
 | `references/architecture.md` | Changing the code, or installing it |
 
 **The code is the manual for anything it already decides**, so no file above restates it. Every
-`job-*` command takes `--help`, and that is the contract — what a phase accepts, what it defaults to,
-and what it gives back. Read it before invoking rather than reading the source, and never carry a
-flag from a file here that `--help` does not list.
+`job-*` command takes `--help`, and that is the contract — what an action accepts, what it
+defaults to, and what it gives back. Read it before invoking rather than reading the source, and
+never carry a flag from a file here that `--help` does not list.
 
 ```bash
 $Q --schema                      # every table, view, CHECK and trigger; $Q is job-q
@@ -64,5 +64,6 @@ job-resume spec                  # the resume spec, and every section type
 job-profile missing              # every NULL, each one a hard stop
 ```
 
-Each phase runs on its own, so any step can be redone without the ones before it. **The expensive step is Phase 1** — one paid call per search, billed per
-job returned. Everything after it is free to repeat.
+Each action is self-contained and knows nothing of the others, so any step can be redone without
+the ones before it. **The expensive one is `search`** — one paid call, billed per job returned.
+Everything after it is free to repeat.

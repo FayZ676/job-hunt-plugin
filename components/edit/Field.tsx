@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { save } from "@/lib/web/actions";
+import { save } from "@/lib/web/edit";
 import { answered } from "./answered";
 import { title, type Column } from "./columns";
 import { say } from "@/components/Toaster";

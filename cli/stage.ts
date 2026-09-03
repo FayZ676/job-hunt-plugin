@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { printRows } from "../lib/core/table.ts";
 import { TIERS, add, drop, list, show, type Field } from "../lib/stage.ts";
-import { collect, fail, phase } from "./kit.ts";
+import { collect, fail, action } from "./kit.ts";
 
 function parseField(raw: string): Field {
   const parts = raw.split("|");
@@ -15,9 +15,9 @@ function parseField(raw: string): Field {
   };
 }
 
-const { program, runs } = phase(
+const { program, runs } = action(
   "job-stage",
-  `Phase 4 — fill the form, record it, and stop with a finger over the button.
+  `Fill the form, record it, and stop with a finger over the button.
 
   job-stage add KEY --url URL --screenshot shot.png
       --field 'Legal right to work without sponsorship?|Yes|policy'

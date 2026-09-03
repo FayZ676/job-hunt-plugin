@@ -1,11 +1,11 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { printRows } from "../lib/core/table.ts";
 import { instructions, prospect, record, triage, unscored } from "../lib/score.ts";
-import { phase } from "./kit.ts";
+import { action } from "./kit.ts";
 
-const { program, runs } = phase(
+const { program, runs } = action(
   "job-score",
-  `Phase 2 — score every prospect against the search profile.
+  `Score every prospect against the search profile.
 
   job-score triage                        the cheap list: no descriptions, on purpose
   job-score triage --status new

@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 import { ROOT } from "@/lib/core/root";
-import { asked, phases } from "@/lib/web/phases";
+import { asked, actions } from "@/lib/web/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,16 +11,16 @@ const outermost = (held: NodeJS.ProcessEnv) =>
   ) as NodeJS.ProcessEnv;
 
 export async function POST(request: Request) {
-  const { phase, argument = "" } = (await request.json()) as { phase: string; argument?: string };
+  const { action, argument = "" } = (await request.json()) as { action: string; argument?: string };
 
-  if (!phases().some((held) => held.id === phase)) return new Response(`no such phase: ${phase}`, { status: 400 });
+  if (!actions().some((held) => held.id === action)) return new Response(`no such action: ${action}`, { status: 400 });
   if (/[\n\r]/.test(argument)) return new Response("an argument is one line", { status: 400 });
 
   const child = spawn(
     "claude",
     [
       "-p",
-      asked(phase, argument.trim()),
+      asked(action, argument.trim()),
       "--output-format",
       "stream-json",
       "--verbose",

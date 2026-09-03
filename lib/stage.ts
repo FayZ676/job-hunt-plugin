@@ -70,7 +70,7 @@ export function add(key: string, filling: Filling): Staged {
 
   const screenshot = absolute(filling.screenshot);
   if (!fs.existsSync(screenshot))
-    throw new Error(`no screenshot at ${screenshot} — Phase 4 ends with the filled form captured`);
+    throw new Error(`no screenshot at ${screenshot} — staging ends with the filled form captured`);
 
   if (!filling.fields.length)
     throw new Error("stage at least one --field: an application with no recorded answers is not staged");

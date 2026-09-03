@@ -1,11 +1,11 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { printRows } from "../lib/core/table.ts";
 import { record, rejected, review } from "../lib/submit.ts";
-import { phase } from "./kit.ts";
+import { action } from "./kit.ts";
 
-const { program, runs } = phase(
+const { program, runs } = action(
   "job-submit",
-  `Phase 5 — present what is staged, submit only what the user names, record it.
+  `Present what is staged, submit only what the user names, record it.
 
   job-submit review                      the approval table: one row per staged application
   job-submit record KEY --confirmation "Application received — #A12"

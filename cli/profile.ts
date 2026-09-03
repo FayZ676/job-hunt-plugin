@@ -1,9 +1,9 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { printRows } from "../lib/core/table.ts";
 import { answers, clear, missing, set } from "../lib/profile.ts";
-import { phase } from "./kit.ts";
+import { action } from "./kit.ts";
 
-const { program, runs } = phase("job-profile", "Read and answer the search profile.");
+const { program, runs } = action("job-profile", "Read and answer the search profile.");
 
 program
   .command("set")

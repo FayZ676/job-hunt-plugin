@@ -1,30 +1,30 @@
 # The app
 
-Read before changing the code. Nothing here is needed to run a phase.
+Read before changing the code. Nothing here is needed to run an action.
 
 ```bash
 npm install --prefix "$HOME/.claude/skills/job"   # dependencies
 npm link --prefix "$HOME/.claude/skills/job"      # the job-* commands, on PATH
 ```
 
-That puts every phase on `PATH` as `job-search`, `job-score`, `job-resume`, `job-stage`,
+That puts every action on `PATH` as `job-search`, `job-score`, `job-resume`, `job-stage`,
 `job-submit`, `job-q`, `job-profile` and `job-paths` — the names used throughout this skill. The
 same install serves `/job ui`. Node 22.18 or newer runs the TypeScript directly, so there is nothing
 to build.
 
 ## Modules
 
-**One module per phase, under `cli/`.**
+**One module per action, under `cli/`.**
 
 **One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
 the SQL, and what a column takes), `db.ts` (paths and connect), `text.ts`, `table.ts`, `posting.ts`,
-`sources.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per phase that has logic of its own:
+`sources.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per action that has logic of its own:
 **`lib/x.ts` decides and returns a value, `cli/x.ts` parses argv and prints it**, so a page and a
 command can call the one function. `lib/web/` is the dashboard's own half. `sql/logic.sql` sits under
-none of them, applied on every connect from a page or a phase, so neither side owns it.
+none of them, applied on every connect from a page or an action, so neither side owns it.
 
 **The pages under `app/` are the only thing that writes the profile.** A page reads the rows it
-renders through `lib/web/queries.ts`, and a server action in `lib/web/actions.ts` writes the one
+renders through `lib/web/queries.ts`, and a server action in `lib/web/edit.ts` writes the one
 column it was given. Everything under `components/edit/` writes and everything beside it only
 displays, so what can reach the database is the part of the tree you can point at.
 

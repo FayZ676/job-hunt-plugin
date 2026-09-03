@@ -8,14 +8,14 @@ import type { TABLES } from "@/lib/core/schema";
 
 type Status = NonNullable<z.infer<typeof TABLES.postings.shape.status>>;
 
-type Action = { phase: string; when: Status[]; confirm?: string };
+type Action = { id: string; when: Status[]; confirm?: string };
 
 const ACTIONS: Action[] = [
-  { phase: "score", when: ["new", "scored", "shortlisted", "skipped"] },
-  { phase: "resume", when: ["shortlisted", "staged"] },
-  { phase: "apply", when: ["shortlisted"] },
+  { id: "score", when: ["new", "scored", "shortlisted", "skipped"] },
+  { id: "resume", when: ["shortlisted", "staged"] },
+  { id: "apply", when: ["shortlisted"] },
   {
-    phase: "submit",
+    id: "submit",
     when: ["staged"],
     confirm: "Submit this application? It goes to the employer as it is staged.",
   },
@@ -30,16 +30,16 @@ export default function Actions({ jobKey, status }: { jobKey: string; status: St
   return (
     <Section title="Actions">
       <div className="flex flex-wrap items-center gap-1.5">
-        {offered.map(({ phase, confirm: ask }) => (
+        {offered.map(({ id, confirm: ask }) => (
           <Button
-            key={phase}
+            key={id}
             className="font-mono"
             onClick={() => {
               if (ask && !confirm(ask)) return;
-              router.push(`/run?run=${phase}&key=${encodeURIComponent(jobKey)}`);
+              router.push(`/run?run=${id}&key=${encodeURIComponent(jobKey)}`);
             }}
           >
-            <span className="text-soft">/job</span> {phase}
+            <span className="text-soft">/job</span> {id}
           </Button>
         ))}
       </div>

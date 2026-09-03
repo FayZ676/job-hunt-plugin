@@ -1,6 +1,6 @@
 # Resume writing
 
-Phase 3 in detail: turning the profile tables into a one-page PDF targeted at one job description.
+Turning the profile tables into a one-page PDF targeted at one job description.
 This file is the whole guide — what may go on a resume, how it is written, what to check before it
 ships, and the spec `job-resume` builds from.
 
@@ -174,7 +174,7 @@ a senior, staff, or research JD, and then filled.
 To fit, in that order: `--density tight`; cut the least relevant bullets; tighten wording so bullets
 stop before wrapping one word onto a new line; margins in the spec, never below 0.4in.
 
-Build with `--key` or the PDF is written and nothing is recorded. Then give the gap report. Phase 5
+Build with `--key` or the PDF is written and nothing is recorded. Then give the gap report. Submitting
 moves the files into `submitted/`, so `$CAREER/resumes/` stays a worklist of resumes that have not
 gone out.
 Offer, without doing: a matching cover letter, and writing anything newly surfaced back into the

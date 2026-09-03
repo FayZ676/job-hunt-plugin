@@ -1,6 +1,6 @@
 # Scoring
 
-Phase 2: judging every prospect against the profile. Prospects in, a score and the sentence that
+Judging every prospect against the profile. Prospects in, a score and the sentence that
 earned it out. Nothing here fetches, and nothing here sets a status — the threshold does that.
 
 ## What scoring reads
@@ -19,7 +19,7 @@ and the score is wrong** — do not quietly compensate for prose you would have 
 1. **Triage first, on titles and locations.** `triage` carries no descriptions on purpose: pulling a
    hundred descriptions to learn that eighty are the wrong role is the expensive way to read a title.
 2. **Read the description of everything you will score.** Scoring off a title is the failure this
-   phase exists to prevent — a "Software Engineer" JD that is 80% LLM work beats a "Senior AI
+   action exists to prevent — a "Software Engineer" JD that is 80% LLM work beats a "Senior AI
    Engineer" req that is really data plumbing.
 3. **Apply the hard stops first.** One of theirs is a zero regardless of how well the rest reads, and
    no amount of good elsewhere trades against it.

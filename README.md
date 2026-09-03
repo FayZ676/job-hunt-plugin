@@ -13,9 +13,11 @@ One command does the whole thing:
 
 ## What it actually does
 
-Five phases, in order.
+Five actions. Each is self-contained — it reads the database, does its one job, and writes back;
+none of them knows the others exist. Running them in order is what `/job` does for you, but any one
+of them stands alone, and any one can be redone without the ones before it.
 
-| Phase | What happens |
+| Action | What happens |
 |---|---|
 | **Search** | One search across 175,000 company career sites on 54 ATSes — Greenhouse and Lever, but also Workday, iCIMS and SuccessFactors, where most large employers actually post. Every result is the employer's own posting, description attached; no aggregator, no gig spam. Because it bills per job returned, your title and agency filters are pushed into the request, so most of what you'd reject is never bought. What came back lands in `postings` untouched, and the same run rules on each row; the ones it keeps are the prospects. |
 | **Score** | Triages on a cheap list with no descriptions, pulls full text only for the plausible ones, then scores 0–10 against your profile — citing the JD language that drove it. Everything is recorded, shortlisted or not, so nothing is reviewed twice. |
@@ -26,11 +28,11 @@ Five phases, in order.
 **The submit click is never unattended.** Everything before it is.
 
 It is one TypeScript app with two faces and one database under them. `cli/` stands between the jobs
-and the database: one module per phase — `search.ts`, `score.ts`, `resume.ts`, `stage.ts`,
+and the database: one module per action — `search.ts`, `score.ts`, `resume.ts`, `stage.ts`,
 `submit.ts` — so any step can be run or redone on its own, plus `q.ts` for SQL. `app/` is the
 Next.js dashboard that stands between you and the database, and is the only thing that writes your
 profile. `lib/` is what both use, and `sql/` belongs to neither: it is the one place the schema is
-described, applied on every connect from a page or a phase, and the typed mirror in `lib/` is
+described, applied on every connect from a page or an action, and the typed mirror in `lib/` is
 generated from it. The rules above are enforced in those modules, not just described: the
 scorer refuses a posting whose description was never read, staging refuses an application with no
 built resume, and nothing is marked applied without the confirmation text you saw.
@@ -45,7 +47,7 @@ npm install --prefix ~/.claude/skills/job
 npm link --prefix ~/.claude/skills/job
 ```
 
-The install brings in the dependencies and serves `/job ui`; the link puts the phases on your `PATH`
+The install brings in the dependencies and serves `/job ui`; the link puts the actions on your `PATH`
 as `job-search`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`, `job-profile` and
 `job-paths`. Node runs the TypeScript directly, so there is nothing to build.
 
@@ -110,7 +112,7 @@ You can start with just Node and add the rest before your first resume.
 | Command | What it runs |
 |---|---|
 | `/job setup` | First-run setup |
-| `/job` | All five phases |
+| `/job` | Every action, in order |
 | `/job search` | Find the openings and rule on them |
 | `/job score [key]` | Score the prospects already found, or the one you name |
 | `/job resume [JD, URL, or key]` | Build a resume for every shortlisted role, or one you name |
@@ -136,12 +138,12 @@ called out.
 bullets a resume draws on, your search criteria — saves
 the moment you leave it, and emptying a box takes the answer back to unanswered, which is a hard
 stop rather than a guess. Nothing else is: postings, scores and staged forms are read-only there,
-because the rules that make those writes safe live in the phases, not in a web page. The dashboard
+because the rules that make those writes safe live in the actions, not in a web page. The dashboard
 names the profile tables it may write and refuses every other one, and a write that arrives from
 another origin is refused before it reaches one, so another tab cannot reach in.
 
 It has one button. **Run** opens your terminal — Terminal on macOS, Windows Terminal on Windows — on
-an interactive `claude "/job"`, so the phases that need your approval still get to ask for it. The
+an interactive `claude "/job"`, so the actions that need your approval still get to ask for it. The
 page starts the skill; the skill does the writing, under the rules below. That endpoint is guarded
 by a per-session token and only ever runs a command from a fixed list, so a stray page in another
 browser tab cannot trigger it.

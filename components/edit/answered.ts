@@ -1,6 +1,6 @@
 "use client";
 
-import type { Saved } from "@/lib/web/actions";
+import type { Saved } from "@/lib/web/edit";
 
 export const answered = async (write: Promise<Saved>): Promise<Saved> => {
   try {

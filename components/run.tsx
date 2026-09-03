@@ -43,10 +43,10 @@ export function useRun() {
   const [lines, setLines] = useState<Line[]>([]);
   const control = useRef<AbortController | null>(null);
 
-  const start = async (phase: string, argument = "") => {
+  const start = async (action: string, argument = "") => {
     const held = new AbortController();
     control.current = held;
-    setRunning(phase);
+    setRunning(action);
     setArgument(argument);
     setLines([]);
 
@@ -56,7 +56,7 @@ export function useRun() {
       const answered = await fetch("/run/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phase, argument }),
+        body: JSON.stringify({ action, argument }),
         signal: held.signal,
       });
       if (!answered.ok || !answered.body) throw new Error(await answered.text());

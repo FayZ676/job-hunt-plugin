@@ -87,8 +87,8 @@ const view = (name: keyof typeof VIEWS) => {
 
 const answers = () => {
   const pairs = Object.keys(TABLES.identity.shape).map((held) => `'${held}', ${held}`);
-  return `-- Every question a form could ask, and whatever the profile says back. Phase 4
--- checks \`unanswered\` before staging; anything listed there blocks rather than
+  return `-- Every question a form could ask, and whatever the profile says back. Staging
+-- checks \`unanswered\` first; anything listed there blocks rather than
 -- gets guessed. Generated from the identity shape, so a column added there
 -- appears here on the next connect.
 DROP VIEW IF EXISTS unanswered;

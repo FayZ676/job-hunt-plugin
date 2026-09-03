@@ -1,5 +1,5 @@
 import Console from "./Console";
-import { phases } from "@/lib/web/phases";
+import { actions } from "@/lib/web/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -7,13 +7,13 @@ const first = (held: string | string[] | undefined) => (Array.isArray(held) ? he
 
 export default async function RunPage({ searchParams }: PageProps<"/run">) {
   const asked = await searchParams;
-  const phase = first(asked.run);
-  const known = phases();
+  const action = first(asked.run);
+  const known = actions();
 
   return (
     <Console
-      phases={known}
-      opening={phase && known.some((held) => held.id === phase) ? { phase, argument: first(asked.key) ?? "" } : null}
+      actions={known}
+      opening={action && known.some((held) => held.id === action) ? { action, argument: first(asked.key) ?? "" } : null}
     />
   );
 }

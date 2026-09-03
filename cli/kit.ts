@@ -19,7 +19,7 @@ export function guard(run: (...args: any[]) => unknown | Promise<unknown>) {
   };
 }
 
-export function phase(name: string, description: string) {
+export function action(name: string, description: string) {
   const program = new Command(name).description(description).option("--db <path>");
   const runs = (run: (...args: any[]) => unknown | Promise<unknown>) =>
     guard((...args: any[]) => {

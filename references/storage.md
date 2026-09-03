@@ -18,11 +18,11 @@ started somewhere else.
 ## One table, three writers
 
 `postings` holds every job ever fetched. The fetch owns the columns the source filled, the search
-owns `disposition`, and the later phases own `status` and what follows it — disjoint columns on one
+owns `disposition`, and the later actions own `status` and what follows it — disjoint columns on one
 row, so the raw record and the role being pursued cannot drift. `disposition` names the filter that
 ruled on each row, so "what did that filter cost me" is a query, and a changed filter re-rules what
 is stored instead of going back to the network. `prospects` is the view over the rows the search kept
-(`disposition='kept'`); it is what the later phases read.
+(`disposition='kept'`); it is what the later actions read.
 
 ```bash
 job-q --schema   # the manual: tables, views, CHECKs, triggers
@@ -54,7 +54,7 @@ Profile page groups it by where it was declared.
 `127.0.0.1:8765` — every job opening on its full application with each drafted essay and flagged
 field, and the whole profile with its `NULL`s called out. **The Profile page writes.** Every box on it
 saves the moment it loses focus, and emptying one sets `NULL` — the user correcting their own answers
-is the one thing they should never need you for. Everything a phase decides — postings, scores,
+is the one thing they should never need you for. Everything an action decides — postings, scores,
 staged forms — is read-only there, because the invariants that make a write safe live here, not in
 a web page.
 
