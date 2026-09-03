@@ -1,7 +1,7 @@
 # Application forms per ATS
 
-Reaching, reading and filling a form with the Playwright MCP tools. `job-stage` fills; only `job-submit`
-submits.
+Reaching, reading and filling a form with the Playwright MCP tools. This action ends with the form
+filled and staged; `job-submit` is what clicks.
 
 ## Who answers a field
 
@@ -160,30 +160,6 @@ Each step takes a few seconds to render, so wait before snapshotting.
 error after the first `Save and Continue`, so read the Errors Found panel rather than assuming the
 page was complete. **Work Experience, Education and Skills are optional** when a resume is attached.
 **The form carries a bot honeypot**, a hidden input labelled "for robots only" — leave it empty.
-
-## Submitting
-
-Submitting only, and only for applications the user named. **A key given with the command is that
-naming** — submit that one and nothing else, with no table and no question. Otherwise present every
-staged application in one table — company, title, score, status, and whatever is named in
-`blocked_on` (`job-submit review`). Keep it to that table; the user reads the applications themselves
-in the dashboard. Then ask which to submit, accepting "all", a subset, or none.
-
-```
-browser_click    → the submit button
-browser_wait_for → confirmation text
-browser_snapshot
-```
-
-A confirmation reads like "Thank you for applying" or "Application received", usually with the page
-replaced. **Validation errors mean nothing was submitted** — repair the named fields and re-present
-the application for approval; never resubmit silently. Then `job-submit record`, quoting a
-confirmation you have seen in a snapshot.
-
-## Recording a rejection
-
-Only a reported rejection. Do nothing for a role that is merely quiet. `job-submit rejected` takes
-the shape in `--note` — days from submission, and whether any interview stage happened.
 
 ## Traps
 
