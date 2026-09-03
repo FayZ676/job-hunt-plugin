@@ -86,7 +86,7 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
         headline={posting.title}
       >
         <p className="mt-2 flex items-center gap-3 text-sm">
-          {posting.score !== null && <Score value={posting.score} />}
+          {posting.score !== null && <Score value={posting.score} why={posting.reason} />}
           <Badge>{posting.status}</Badge>
           <Stamp>{posting.key}</Stamp>
         </p>
@@ -94,14 +94,6 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
 
       <Split pinned rail={facts}>
         <Actions jobKey={posting.key} status={posting.status} />
-
-        {posting.reason && (
-          <Section title="Why this score">
-            <Card readout>
-              <Prose>{posting.reason}</Prose>
-            </Card>
-          </Section>
-        )}
 
         {staged && (
           <Section title="Staged application">

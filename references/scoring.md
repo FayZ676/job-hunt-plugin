@@ -37,10 +37,13 @@ against, and what is a hard stop. Read the ranking there rather than inventing a
 
 ## The reason
 
-One or two sentences, quoting the JD language that drove the score. It is shown on the job's page in
-the dashboard, so it is read later by a person deciding whether to trust the shortlist — and it is
-what tells you tomorrow whether a bad shortlist means a wrong score, a stale filter, or prose that
-needs a line. A reason that would fit any posting is a score that was not made.
+**Two short sentences, and stop.** The one thing that drove the score, in the JD's words, and the
+one thing working against it. It is read on the job's page by someone deciding in a glance whether
+to trust the shortlist, so a paragraph is a worse reason than a line, not a more thorough one.
+
+Summarising the posting is not scoring it — they can read the JD. Cut every clause that does not
+change the number: the title, the stage of the company, the stack, the caveats about how soft a gate
+is. A reason that would fit any posting is a score that was not made.
 
 Where the score turns on something still `NULL` — no compensation stated, no location — score on a
 stated assumption and say so in the reason.

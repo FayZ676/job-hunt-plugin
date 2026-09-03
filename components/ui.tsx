@@ -146,21 +146,31 @@ export const Badge = ({ children }: { children: string | null | undefined }) => 
   );
 };
 
-export const Score = ({ value }: { value: number | null }) => (
-  <span
-    className={`tnum font-mono text-sm ${
-      value === null
-        ? "text-soft"
-        : value >= 7
-          ? "font-semibold text-base-content"
-          : value >= 4
-            ? "text-base-content"
-            : "text-soft"
-    }`}
-  >
-    {value ?? "—"}
-  </span>
-);
+export const Score = ({ value, why }: { value: number | null; why?: string | null }) => {
+  const mark = (
+    <span
+      className={`tnum font-mono text-sm ${
+        value === null
+          ? "text-soft"
+          : value >= 7
+            ? "font-semibold text-base-content"
+            : value >= 4
+              ? "text-base-content"
+              : "text-soft"
+      }`}
+    >
+      {value ?? "—"}
+    </span>
+  );
+
+  if (!why) return mark;
+
+  return (
+    <span data-tip={why} className="tooltip tooltip-bottom tooltip-start cursor-help [&:before]:text-left">
+      {mark}
+    </span>
+  );
+};
 
 export const Stamp = ({ children }: { children: ReactNode }) => (
   <span className="tnum whitespace-nowrap font-mono text-xs text-soft">{children}</span>
