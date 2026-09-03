@@ -85,22 +85,27 @@ export const Card = ({
   </div>
 );
 
+const TONES = {
+  quiet: "border border-base-300 hover:border-base-content disabled:hover:border-base-300",
+  firm: "border border-base-content bg-base-content text-base-100",
+  grave: "border border-error/40 text-error hover:border-error hover:bg-error hover:text-error-content",
+};
+
 export const Button = ({
   tone = "quiet",
+  icon,
   children,
   className = "",
   ...rest
-}: { tone?: "quiet" | "firm" } & ButtonHTMLAttributes<HTMLButtonElement>) => (
+}: { tone?: "quiet" | "firm" | "grave"; icon?: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     type="button"
     {...rest}
     className={`rounded-field px-2.5 py-1 text-xs transition-colors disabled:opacity-40
-      ${
-        tone === "firm"
-          ? "border border-base-content bg-base-content text-base-100"
-          : "border border-base-300 hover:border-base-content disabled:hover:border-base-300"
-      } ${className}`}
+      ${icon ? "inline-flex items-center gap-1.5" : ""}
+      ${TONES[tone]} ${className}`}
   >
+    {icon}
     {children}
   </button>
 );
