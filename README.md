@@ -1,45 +1,30 @@
 # job-hunt
 
-A Claude Code skill that runs a job search end to end: it searches 175,000 company career sites for
-new openings, scores each one against a profile you never have to format, builds a tailored resume
-for the ones worth applying to, fills out the application form in the browser, and submits only what you
-approve.
-
-One command does the whole thing:
+A Claude Code skill that runs your job search end to end: it searches 175,000 company career sites
+for new openings, scores each one against your profile, tailors a resume for the ones worth
+applying to, fills the application form, and submits only what you approve. Every result is the
+employer's own posting — no aggregator, no gig spam.
 
 ```
 /job
 ```
 
-## What it actually does
+Five actions — search, score, resume, stage, submit — over one SQLite database. `/job` runs them in
+order; any one also runs on its own. It never submits without your approval for that application,
+and never writes an answer your profile doesn't support.
 
-Five actions. Each is self-contained — it reads the database, does its one job, and writes back;
-none of them knows the others exist. Running them in order is what `/job` does for you, but any one
-of them stands alone, and any one can be redone without the ones before it.
+## Requirements
 
-| Action | What happens |
-|---|---|
-| **Search** | One search across 175,000 company career sites on 54 ATSes — Greenhouse and Lever, but also Workday, iCIMS and SuccessFactors, where most large employers actually post. Every result is the employer's own posting, description attached; no aggregator, no gig spam. Because it bills per job returned, your title and agency filters are pushed into the request, so most of what you'd reject is never bought. What came back lands in `postings` untouched, and the same run rules on each row; the ones it keeps are the prospects. |
-| **Score** | Triages on a cheap list with no descriptions, pulls full text only for the plausible ones, then scores 0–10 against your profile — citing the JD language that drove it. Everything is recorded, shortlisted or not, so nothing is reviewed twice. |
-| **Resume** | Builds a role-specific resume straight to PDF, selecting the bullets in your profile that match this posting. It never invents a number your profile doesn't have. |
-| **Stage** | Opens the application form and fills every field your profile answers. An unanswered field is a hard stop, not a guess. Screening questions and essays get drafted and flagged, never auto-accepted. Stops with a finger over the submit button. |
-| **Submit** | Shows you everything staged, with every drafted essay in full, and asks which to send. Submits only what you name, then verifies the confirmation page. |
+- Node 22.18+
+- An [Apify](https://apify.com) token, as `APIFY_TOKEN=…` in `.env.local`. Searching is billed per
+  job returned (from $12/1,000); the free monthly credit covers a personal search.
+- [Typst](https://typst.app) and Poppler, for resumes: `brew install typst poppler`
+- A browser MCP server, for filling forms — such as
+  [Playwright MCP](https://github.com/microsoft/playwright-mcp)
 
-**The submit click is never unattended.** Everything before it is.
-
-It is one TypeScript app with two faces and one database under them. `cli/` stands between the jobs
-and the database: one module per action — `search.ts`, `score.ts`, `resume.ts`, `stage.ts`,
-`submit.ts` — so any step can be run or redone on its own, plus `q.ts` for SQL. `app/` is the
-Next.js dashboard that stands between you and the database, and is the only thing that writes your
-profile. `lib/` is what both use, and `sql/` belongs to neither: it is the one place the schema is
-described, applied on every connect from a page or an action, and the typed mirror in `lib/` is
-generated from it. The rules above are enforced in those modules, not just described: the
-scorer refuses a posting whose description was never read, staging refuses an application with no
-built resume, and nothing is marked applied without the confirmation text you saw.
+Node alone is enough to start. Add the rest before your first resume.
 
 ## Install
-
-Clone it into your skills directory, where Claude Code picks it up as `/job`:
 
 ```
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
@@ -47,140 +32,19 @@ npm install --prefix ~/.claude/skills/job
 npm link --prefix ~/.claude/skills/job
 ```
 
-The install brings in the dependencies and serves `/job ui`; the link puts the actions on your `PATH`
-as `job-search`, `job-score`, `job-resume`, `job-stage`, `job-submit`, `job-q`, `job-profile` and
-`job-paths`. Node runs the TypeScript directly, so there is nothing to build.
-
-Then, from anywhere:
-
-```
-/job setup
-```
-
-Setup interviews you — identity, work authorization, compensation floor, what roles you want, where
-you'll work, and your experience — and writes it into your profile. If you have a resume or LinkedIn
-export, hand it over and it drafts the whole thing for you to correct.
-
-That's the whole install. `/job search` works as soon as setup finishes.
-
-Adding a new place to look for jobs is one entry in `sources.REGISTRY` (`lib/sources.ts`) —
-a function that returns `Posting` objects. Filtering, deduping, scoring, resumes and applying are unchanged by it, because
-no step below fetching knows which source a row came from.
+Then `/job setup`, which interviews you and builds your profile — hand it a resume or LinkedIn
+export and it drafts the whole thing for you to correct. `/job help` lists every command; `/job ui`
+serves a dashboard for editing your profile and watching the actions run.
 
 ## Your files
 
-Setup creates one thing: **`~/data/job/job.db`**, a single SQLite database. That location is
-fixed and absolute, so `/job` behaves the same no matter where you run it; set `JOB_CAREER_DIR` to
-put it somewhere else.
+Everything lives in `~/data/job/`: one SQLite database, plus the resumes it builds. It sits outside
+this repository and is never committed — it has your phone number in it. `JOB_CAREER_DIR` moves it.
 
-It holds your profile — identity, the answers application forms ask for, your employers and
-projects, and what you're looking for — alongside every posting ever fetched, every prospect derived
-from one, your filters, staged applications, and the history of each role. You never edit it by hand: tell
-Claude about a job you had, paste a resume, upload a CV, and it writes the rows. You talk; the data
-stays consistent. There are no per-day run files — a search updates the database, and a question
-about your search is a query. Because the raw layer is kept, "what did that filter cost me?" is also
-a query, and a filter you change re-runs over this morning's fetch without touching the network.
+## Upgrading
 
-```
-you: which companies rejected me fastest?
-you: what did I apply to in August that's still quiet?
-you: stop showing me contract roles
-```
-
-Built resumes land in `~/data/job/resumes/`, moving to `submitted/` when an application goes out.
-That is the only output on disk — the database is the record, and reporting is a query answered in
-the conversation.
-
-Your career directory lives outside this repository, and nothing in it is ever committed. It has
-your phone number in it.
-
-## Requirements
-
-- **Everything:** Node 22.18+ and `npm install ~/.claude/skills/job`. SQLite comes with it.
-- **Resume building:** [Typst](https://typst.app) and Poppler (`brew install typst poppler`).
-- **Searching:** an [Apify](https://apify.com) token, as `APIFY_TOKEN=…` in a `.env.local` file in
-  this directory. Billed per job returned (from $12/1,000, less on a paid Apify plan), and the free
-  tier's monthly credit covers a personal search — a daily pass runs a few tens of jobs. `--max` is
-  the budget; `--file` replays a saved run for free.
-- **Filling application forms:** a browser MCP server such as
-  [Playwright MCP](https://github.com/microsoft/playwright-mcp).
-
-You can start with just Node and add the rest before your first resume.
-
-## Commands
-
-| Command | What it runs |
-|---|---|
-| `/job setup` | First-run setup |
-| `/job` | Every action, in order |
-| `/job search` | Find the openings and rule on them |
-| `/job score [key]` | Score the prospects already found, or the one you name |
-| `/job resume [JD, URL, or key]` | Build a resume for every shortlisted role, or one you name |
-| `/job apply [key or URL]` | Stage every shortlisted application, or one you name, before submit |
-| `/job submit [key]` | Review and submit what is staged, or the one you name |
-| `/job ui` | Serve the dashboard, and edit your profile in it |
-| `/job help` | Print the command list |
-
-## The dashboard
-
-Chat is how you change the search; the dashboard is how you see it — and how you change
-yourself, which is the part worth your attention.
-
-```
-/job ui
-```
-
-That serves a local page on `127.0.0.1`: the jobs, each one opening on its full application with
-every drafted essay and flagged field in it, and your whole profile with its unanswered fields
-called out.
-
-**The Profile page is editable.** Every box on it — your answers, your employers and projects, the
-bullets a resume draws on, your search criteria — saves
-the moment you leave it, and emptying a box takes the answer back to unanswered, which is a hard
-stop rather than a guess. Nothing else is: postings, scores and staged forms are read-only there,
-because the rules that make those writes safe live in the actions, not in a web page. The dashboard
-names the profile tables it may write and refuses every other one, and a write that arrives from
-another origin is refused before it reaches one, so another tab cannot reach in.
-
-It has one button. **Run** opens your terminal — Terminal on macOS, Windows Terminal on Windows — on
-an interactive `claude "/job"`, so the actions that need your approval still get to ask for it. The
-page starts the skill; the skill does the writing, under the rules below. That endpoint is guarded
-by a per-session token and only ever runs a command from a fixed list, so a stray page in another
-browser tab cannot trigger it.
-
-You can also just ask questions — "what's still waiting on me", "did anyone reject me this week" —
-and they're answered from the database.
-
-## The rules it won't break
-
-These are load-bearing, not decoration:
-
-- **It never submits without your approval** for that specific application, in that run. Silence is
-  not approval.
-- **It never writes an answer your profile doesn't support.** A missing answer is a hard stop, not a
-  guess — it will not infer a phone number, a salary, or a demographic answer.
-- **It never puts a number on a resume that isn't in your profile.** No rounding up.
-- **It answers honestly even when that ends the application.** A start time you can't commit to is
-  answered as a start time you can't commit to.
-- **It records an application as sent only after verifying a confirmation page.** Clicking the
-  button isn't evidence.
-
-## Tuning it
-
-Setup writes your title and location filters from the interview, so they describe your search from
-the first run. If they drift, say so — they are database rows, and Claude edits them for you. Those
-filters are also what keeps the search cheap: the titles you exclude are excluded before you are
-billed for them.
-
-The highest-leverage thing you can do is correct the profile when a search surfaces something you'd
-never apply to, or misses something you would. Its search profile is what every scoring
-pass reads.
-
-## Upgrading from earlier versions
-
-3.0 replaces the file-based store with a database, and the markdown profile with a structured one.
-Ask Claude to migrate an existing `career/` — it reads the old `index.md`, `search-profile.md` and
-`applications.jsonl`, and writes it all into the database.
+3.0 replaced the file-based store with a database, and the markdown profile with a structured one.
+Ask Claude to migrate an existing `career/`.
 
 ## License
 
