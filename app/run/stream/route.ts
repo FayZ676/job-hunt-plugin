@@ -5,22 +5,31 @@ import { asked, runnable } from "@/lib/core/actions";
 
 export const dynamic = "force-dynamic";
 
+const LONGEST = 8000;
+const SESSION = /^[0-9a-fA-F-]{36}$/;
+
 const outermost = (held: NodeJS.ProcessEnv) =>
   Object.fromEntries(
     Object.entries(held).filter(([name]) => !name.startsWith("CLAUDE_CODE") && name !== "CLAUDECODE"),
   ) as NodeJS.ProcessEnv;
 
 export async function POST(request: Request) {
-  const { action, argument = "" } = (await request.json()) as { action: string; argument?: string };
+  const {
+    action,
+    argument = "",
+    resume = null,
+  } = (await request.json()) as { action: string; argument?: string; resume?: string | null };
 
   if (!runnable(action)) return new Response(`no such action: ${action}`, { status: 400 });
-  if (/[\n\r]/.test(argument)) return new Response("an argument is one line", { status: 400 });
+  if (argument.length > LONGEST) return new Response(`an argument is at most ${LONGEST} characters`, { status: 400 });
+  if (resume !== null && !SESSION.test(resume)) return new Response("not a session id", { status: 400 });
 
   const child = spawn(
     "claude",
     [
       "-p",
-      asked(action, argument.trim()),
+      resume ? argument.trim() : asked(action, argument.trim()),
+      ...(resume ? ["--resume", resume] : []),
       "--output-format",
       "stream-json",
       "--verbose",

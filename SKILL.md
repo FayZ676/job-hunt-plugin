@@ -1,7 +1,7 @@
 ---
 name: job
 description: Searches every company career site for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "search and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
-argument-hint: [setup|search|score [key]|resume [JD|url|key]|apply [key|url]|submit [key]|ui|help]
+argument-hint: [setup|search|score [key]|resume [JD|url|key]|apply [key|url]|submit [key]|feedback <what is wrong>|ui|help]
 ---
 
 # Job routine
@@ -26,7 +26,8 @@ Nothing below overrides these.
 6. **Chat output is minimal.** Only two things belong in chat: the submit approval prompt, and
    whatever blocks progress and needs the user — named specifically, which role and which field. No
    progress narration, no action transitions, no summaries; the run entry is the record. A run with
-   nothing to ask about produces no chat output at all. `/job help` is the one exception.
+   nothing to ask about produces no chat output at all. `/job help` and `/job feedback` are the
+   exceptions — feedback is answered with what changed.
 
 ## Modes
 
@@ -39,6 +40,7 @@ Nothing below overrides these.
 | `/job resume [JD, URL, or key]` | Build a resume for every `shortlisted` posting, or the one named | `references/resume.md` |
 | `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
 | `/job submit [key]` | Submit what is staged, or the one named | `references/submitting.md` |
+| `/job feedback <what is wrong>` | Change what produced it — instructions, profile, filters, or this skill | `references/feedback.md` |
 | `/job ui` | Serve the dashboard — `npm run dev` in the skill directory, on `127.0.0.1:8765`; the profile is edited there | `references/storage.md` |
 | `/job help` | `job-help` and nothing else — no run, no queries, no commentary | |
 

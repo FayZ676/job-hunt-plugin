@@ -1,10 +1,11 @@
-import type { Status } from "./schema.ts";
+import { STATUSES, type Status } from "./schema.ts";
 
 export type Action = {
   id: string;
   does: string;
   argument: string;
   accepts: Status[];
+  asks?: string;
 };
 
 export const ACTIONS: Action[] = [
@@ -44,6 +45,13 @@ export const ACTIONS: Action[] = [
     does: "review what is staged and submit only what you name",
     argument: "[key]",
     accepts: ["staged"],
+  },
+  {
+    id: "feedback",
+    does: "take what you say is wrong and change what produced it",
+    argument: "<what is wrong>",
+    accepts: STATUSES,
+    asks: "Write a message ...",
   },
 ];
 
