@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       "--permission-mode",
       "bypassPermissions",
     ],
-    { cwd: ROOT, env: outermost(process.env) },
+    { cwd: ROOT, env: outermost(process.env), stdio: ["ignore", "pipe", "pipe"] },
   );
 
   const encoder = new TextEncoder();

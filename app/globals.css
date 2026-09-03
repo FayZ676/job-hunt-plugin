@@ -78,6 +78,17 @@
   --color-soft: var(--soft);
   --color-signal: var(--signal);
   --color-mark: #fa5f2f;
+  --animate-blink: blink 1.2s ease-in-out infinite;
+
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }
 
 :root {

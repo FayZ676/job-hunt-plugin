@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import Markdown from "@/components/Markdown";
 import { Empty, Prose, Stamp } from "@/components/ui";
 
-export type Line = { kind: "said" | "note" | "wrong"; body: string };
+export type Line = { kind: "said" | "aside" | "wrong" | "end"; body: string };
 
 function read(line: string): Line[] {
   let held: any;
@@ -22,22 +23,15 @@ function read(line: string): Line[] {
       .map((block) => block.text)
       .join("")
       .trim();
-    const tools = blocks.filter((block) => block.type === "tool_use").map((block) => block.name);
-    return [
-      ...(said ? [{ kind: "said" as const, body: said }] : []),
-      ...(tools.length ? [{ kind: "note" as const, body: tools.join(" · ") }] : []),
-    ];
+    return said ? [{ kind: "said" as const, body: said }] : [];
   }
 
-  if (held.type === "result")
-    return [
-      { kind: held.is_error ? ("wrong" as const) : ("said" as const), body: String(held.result ?? "").trim() },
-      ...(typeof held.total_cost_usd === "number"
-        ? [{ kind: "note" as const, body: `$${held.total_cost_usd.toFixed(2)}` }]
-        : []),
-    ].filter((line) => line.body);
+  if (held.type === "result") {
+    const body = String(held.result ?? "").trim();
+    return held.is_error && body ? [{ kind: "wrong", body }] : [];
+  }
 
-  if (held.type === "stderr") return [{ kind: "wrong", body: String(held.text).trim() }];
+  if (held.type === "stderr") return [{ kind: "aside", body: String(held.text).trim() }];
   if (held.type === "exit" && held.code) return [{ kind: "wrong", body: `claude exited ${held.code}` }];
   return [];
 }
@@ -55,6 +49,8 @@ export function useRun() {
     setRunning(phase);
     setArgument(argument);
     setLines([]);
+
+    let ended = "Finished";
 
     try {
       const answered = await fetch("/run/stream", {
@@ -75,12 +71,16 @@ export function useRun() {
         const parts = rest.split("\n");
         rest = parts.pop() ?? "";
         const fresh = parts.flatMap(read);
+        if (fresh.some((line) => line.kind === "wrong")) ended = "Failed";
         if (fresh.length) setLines((standing) => [...standing, ...fresh]);
       }
     } catch (error) {
+      ended = held.signal.aborted ? "Stopped" : "Failed";
       if (!held.signal.aborted)
         setLines((standing) => [...standing, { kind: "wrong", body: (error as Error).message }]);
     }
+
+    setLines((standing) => [...standing, { kind: "end", body: ended }]);
 
     control.current = null;
     setRunning(null);
@@ -90,17 +90,29 @@ export function useRun() {
   return { lines, running, argument, start, stop: () => control.current?.abort() };
 }
 
-export function Output({ lines, empty, className = "" }: { lines: Line[]; empty: string; className?: string }) {
+const TONE: Record<string, string> = { wrong: "text-error", aside: "text-soft" };
+
+export function Output({
+  lines,
+  empty,
+  working,
+  className = "",
+}: {
+  lines: Line[];
+  empty: string;
+  working?: boolean;
+  className?: string;
+}) {
   const tail = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const held = tail.current;
     if (held) held.scrollTop = held.scrollHeight;
-  }, [lines]);
+  }, [lines, working]);
 
   return (
     <div ref={tail} className={`flex flex-col overflow-auto ${className}`} aria-live="polite">
-      {lines.length === 0 ? (
+      {lines.length === 0 && !working ? (
         <div className="flex flex-1 items-center justify-center">
           <Empty>{empty}</Empty>
         </div>
@@ -108,13 +120,29 @@ export function Output({ lines, empty, className = "" }: { lines: Line[]; empty:
         <div className="divide-y divide-base-200">
           {lines.map((line, at) => (
             <div key={at} className="px-3 py-2">
-              {line.kind === "note" ? (
+              {line.kind === "end" ? (
                 <Stamp>{line.body}</Stamp>
+              ) : line.kind === "said" ? (
+                <Markdown>{line.body}</Markdown>
               ) : (
-                <Prose className={line.kind === "wrong" ? "text-error" : ""}>{line.body}</Prose>
+                <Prose className={TONE[line.kind]}>{line.body}</Prose>
               )}
             </div>
           ))}
+          {working && (
+            <div className="flex items-center gap-2 px-3 py-2 text-sm text-soft">
+              Working
+              <span aria-hidden className="flex items-center gap-1">
+                {[0, 200, 400].map((delay) => (
+                  <span
+                    key={delay}
+                    className="size-1.5 animate-blink bg-mark"
+                    style={{ animationDelay: `${delay}ms` }}
+                  />
+                ))}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

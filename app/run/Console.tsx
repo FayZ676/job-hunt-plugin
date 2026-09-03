@@ -2,9 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Square } from "lucide-react";
 
+import Glyph from "@/components/Glyph";
 import { Output, useRun } from "@/components/run";
-import { Button, Mark, Section, Stack, Stamp } from "@/components/ui";
+import { Button, Section, Stack, Stamp } from "@/components/ui";
 import type { Phase } from "@/lib/web/phases";
 
 export type Opening = { phase: string; argument: string };
@@ -42,12 +44,14 @@ export default function Console({ phases, opening }: { phases: Phase[]; opening:
                 return running === id ? (
                   <div
                     key={id}
-                    className="grid grid-cols-[minmax(0,1fr)_auto_0.375rem] items-center gap-x-2.5
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5
                       gap-y-1 border-b border-base-200 bg-base-200 px-3 py-2.5 last:border-0"
                   >
                     {command}
-                    <Button onClick={stop}>Stop</Button>
-                    <Mark on />
+                    <Button onClick={stop} className="inline-flex items-center gap-1.5">
+                      <Glyph icon={Square} size={11} className="fill-current" />
+                      Stop
+                    </Button>
                     {said}
                   </div>
                 ) : (
@@ -56,12 +60,11 @@ export default function Console({ phases, opening }: { phases: Phase[]; opening:
                     type="button"
                     disabled={Boolean(running)}
                     onClick={() => start(id)}
-                    className="grid w-full grid-cols-[minmax(0,1fr)_0.375rem] items-center gap-x-2.5
+                    className="grid w-full grid-cols-[minmax(0,1fr)] items-center gap-x-2.5
                       gap-y-1 border-b border-base-200 px-3 py-2.5 text-left transition-colors
                       last:border-0 hover:bg-base-200 disabled:hover:bg-transparent"
                   >
                     {command}
-                    <Mark />
                     {said}
                   </button>
                 );
@@ -76,7 +79,8 @@ export default function Console({ phases, opening }: { phases: Phase[]; opening:
               <Output
                 className="pane"
                 lines={lines}
-                empty={running ? "Waiting for the first output." : "Run an action to watch it here."}
+                working={Boolean(running)}
+                empty="Run an action to watch it here."
               />
             </Stack>
           </Section>
