@@ -1,10 +1,9 @@
 import fs from "node:fs";
 import { z } from "zod";
 
+import { requires } from "./core/actions.ts";
 import { absolute, db, one, rows } from "./core/db.ts";
 import { TABLES, VIEWS, options } from "./core/schema.ts";
-
-const CLOSED = ["applied", "rejected", "closed"];
 
 export const TIERS = () => [...options("staged_fields", "tier")].sort();
 
@@ -63,7 +62,7 @@ export type Staged = {
 export function add(key: string, filling: Filling): Staged {
   const row = one(Ready, "SELECT key, company, title, status, resume FROM prospects WHERE key=?", [key]);
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (row.status && CLOSED.includes(row.status)) throw new Error(`${key} is already ${row.status} — nothing to stage`);
+  requires("apply", key, row.status);
   if (!row.resume) throw new Error(`${key} has no resume — build it first: job-resume build <spec> --key ${key}`);
   if (!fs.existsSync(absolute(row.resume)))
     throw new Error(`the resume recorded for ${key} is not on disk: ${row.resume}`);

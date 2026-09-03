@@ -16,7 +16,8 @@
     "job-score": "cli/score.ts",
     "job-resume": "cli/resume.ts",
     "job-stage": "cli/stage.ts",
-    "job-submit": "cli/submit.ts"
+    "job-submit": "cli/submit.ts",
+    "job-help": "cli/help.ts"
   },
   "scripts": {
     "dev": "next dev -p 8765",

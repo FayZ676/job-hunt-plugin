@@ -7,7 +7,7 @@ import { Square } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import { Output, useRun } from "@/components/run";
 import { Button, Section, Stack, Stamp } from "@/components/ui";
-import type { Action } from "@/lib/web/actions";
+import type { Action } from "@/lib/core/actions";
 
 export type Opening = { action: string; argument: string };
 

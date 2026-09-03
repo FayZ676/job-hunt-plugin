@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
 
+import { requires } from "./core/actions.ts";
 import { SUBMITTED, absolute, db, one, rows } from "./core/db.ts";
 import { TABLES, VIEWS } from "./core/schema.ts";
 
@@ -49,7 +50,7 @@ export function record(key: string, confirmation: string) {
     [key],
   );
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (row.status === "applied") throw new Error(`${key} is already applied`);
+  requires("submit", key, row.status);
   if (row.staged_status === null || row.staged_status === undefined)
     throw new Error(`${key} was never staged — run job-stage add first`);
   if (row.staged_status !== "ready")

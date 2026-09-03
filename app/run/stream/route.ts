@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 import { ROOT } from "@/lib/core/root";
-import { asked, actions } from "@/lib/web/actions";
+import { asked, runnable } from "@/lib/core/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ const outermost = (held: NodeJS.ProcessEnv) =>
 export async function POST(request: Request) {
   const { action, argument = "" } = (await request.json()) as { action: string; argument?: string };
 
-  if (!actions().some((held) => held.id === action)) return new Response(`no such action: ${action}`, { status: 400 });
+  if (!runnable(action)) return new Response(`no such action: ${action}`, { status: 400 });
   if (/[\n\r]/.test(argument)) return new Response("an argument is one line", { status: 400 });
 
   const child = spawn(

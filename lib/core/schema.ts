@@ -397,6 +397,8 @@ export const TABLES = {
 
 export type Table = keyof typeof TABLES;
 
+export type Status = NonNullable<z.infer<typeof TABLES.postings.shape.status>>;
+
 export const ORDER: Table[] = [
   "settings",
   "filters",

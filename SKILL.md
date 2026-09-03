@@ -40,10 +40,10 @@ Nothing below overrides these.
 | `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
 | `/job submit [key]` | Submit what is staged, or the one named | `references/applying.md` |
 | `/job ui` | Serve the dashboard — `npm run dev` in the skill directory, on `127.0.0.1:8765`; the profile is edited there | `references/storage.md` |
-| `/job help` | `cat "$HOME/.claude/skills/job/cli/help.txt"` and nothing else — no run, no queries, no commentary | |
+| `/job help` | `job-help` and nothing else — no run, no queries, no commentary | |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
-means adding it to the table above and to `help.txt`.
+means adding it to the table above and to `lib/core/actions.ts`.
 
 Two files are not an action and are read when they apply:
 

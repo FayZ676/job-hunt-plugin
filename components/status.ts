@@ -15,9 +15,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { TABLES } from "@/lib/core/schema";
+import { TABLES, type Status } from "@/lib/core/schema";
 
-type Status = NonNullable<z.infer<typeof TABLES.postings.shape.status>>;
 type FormStatus = NonNullable<z.infer<typeof TABLES.staged.shape.status>>;
 
 export type Stage = "waiting" | "live" | "closed";
