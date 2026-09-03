@@ -128,7 +128,6 @@ export function useRun() {
     erase: () => {
       if (run) void forget({ erase: run });
     },
-    wipe: () => void forget({ wipe: true }),
   };
 }
 

@@ -207,10 +207,6 @@ export function erase(id: string) {
   fs.rmSync(file(id), { force: true });
 }
 
-export function wipe() {
-  for (const one of listing()) if (!live().has(one.id)) fs.rmSync(file(one.id), { force: true });
-}
-
 export function halt(id: string) {
   const one = live().get(id);
   if (!one) return;

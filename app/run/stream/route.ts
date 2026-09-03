@@ -1,4 +1,4 @@
-import { begin, erase, halt, watch, wipe } from "@/lib/web/runs";
+import { begin, erase, halt, watch } from "@/lib/web/runs";
 
 export const dynamic = "force-dynamic";
 
@@ -6,10 +6,7 @@ const failed = (error: unknown) => new Response((error as Error).message, { stat
 
 export async function POST(request: Request) {
   const asked = (await request.json()) as
-    | { stop: string }
-    | { erase: string }
-    | { wipe: true }
-    | { action: string; argument?: string; note?: string; run?: string | null };
+    { stop: string } | { erase: string } | { action: string; argument?: string; note?: string; run?: string | null };
 
   try {
     if ("stop" in asked) {
@@ -19,10 +16,6 @@ export async function POST(request: Request) {
     if ("erase" in asked) {
       erase(asked.erase);
       return Response.json({ run: asked.erase });
-    }
-    if ("wipe" in asked) {
-      wipe();
-      return Response.json({ run: null });
     }
     return Response.json({ run: begin(asked) });
   } catch (error) {

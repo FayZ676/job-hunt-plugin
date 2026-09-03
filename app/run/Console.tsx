@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ListX, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
 import { Output, useRun, type Asking } from "@/components/run";
@@ -13,7 +13,6 @@ import type { Run } from "@/lib/web/runs";
 export type Opening = { action: string; argument: string };
 
 const WATCH = 4000;
-const WIPE = "Clear every finished conversation? They are gone for good.";
 const ERASE = "Delete this conversation? It is gone for good.";
 
 const clock = (started: string) =>
@@ -29,7 +28,7 @@ export default function Console({
   opening: Opening | null;
 }) {
   const router = useRouter();
-  const { lines, run, working, open, start, reply, detach, stop, erase, wipe } = useRun();
+  const { lines, run, working, open, start, reply, detach, stop, erase } = useRun();
   const [about, setAbout] = useState("");
   const input = useRef<HTMLTextAreaElement>(null);
   const opened = useRef(false);
@@ -109,7 +108,16 @@ export default function Console({
             </Stack>
           </Section>
 
-          <Section title="Conversations">
+          <Section
+            title="Conversations"
+            aside={
+              talks && (
+                <Button onClick={() => pick(talks)} icon={<Glyph icon={Plus} size={12} />}>
+                  New
+                </Button>
+              )
+            }
+          >
             <Stack>
               {runs.length === 0 ? (
                 <div className="px-3 py-6">
@@ -139,22 +147,11 @@ export default function Console({
           <Section
             title="Conversation"
             aside={
-              <span className="flex shrink-0 items-center gap-2">
-                {runs.length > 0 && (
-                  <Button onClick={() => confirm(WIPE) && wipe()} icon={<Glyph icon={ListX} size={12} />}>
-                    Clear
-                  </Button>
-                )}
-                {run && (
-                  <Button
-                    onClick={() => confirm(ERASE) && erase()}
-                    tone="grave"
-                    icon={<Glyph icon={Trash2} size={12} />}
-                  >
-                    Delete
-                  </Button>
-                )}
-              </span>
+              run && (
+                <Button onClick={() => confirm(ERASE) && erase()} tone="grave" icon={<Glyph icon={Trash2} size={12} />}>
+                  Delete
+                </Button>
+              )
             }
           >
             <Stack>
