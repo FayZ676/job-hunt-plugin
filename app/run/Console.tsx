@@ -6,7 +6,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
 import { Output, useRun, type Asking } from "@/components/run";
-import { Button, Empty, Section, Stack, Stamp } from "@/components/ui";
+import { Button, Empty, Section, Split, Stack, Stamp } from "@/components/ui";
 import type { Action } from "@/lib/core/actions";
 import type { Run } from "@/lib/web/runs";
 
@@ -76,97 +76,92 @@ export default function Console({
       }
     : null;
 
-  return (
-    <div className="@container">
-      <div
-        className="grid items-start gap-x-6 gap-y-8 @5xl:grid-cols-[26rem_minmax(0,1fr)]
-        [&>div>section]:mb-0"
-      >
-        <div className="flex flex-col gap-8">
-          <Section title="Actions">
-            <Stack>
-              {actions.map((action) => {
-                const { id, does } = action;
+  const rail = (
+    <>
+      <Section title="Actions">
+        <Stack>
+          {actions.map((action) => {
+            const { id, does } = action;
 
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => pick(action)}
-                    className="grid w-full grid-cols-[minmax(0,1fr)] items-center gap-x-2.5 gap-y-1
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => pick(action)}
+                className="grid w-full grid-cols-[minmax(0,1fr)] items-center gap-x-2.5 gap-y-1
                       border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-0
                       hover:bg-base-200"
-                  >
-                    <span className="min-w-0 truncate font-mono text-sm">
-                      <span className="text-soft">/job</span>
-                      {id !== "all" && ` ${id}`}
-                    </span>
-                    <span className="col-start-1 text-xs text-soft">{does}</span>
-                  </button>
-                );
-              })}
-            </Stack>
-          </Section>
+              >
+                <span className="min-w-0 truncate font-mono text-sm">
+                  <span className="text-soft">/job</span>
+                  {id !== "all" && ` ${id}`}
+                </span>
+                <span className="col-start-1 text-xs text-soft">{does}</span>
+              </button>
+            );
+          })}
+        </Stack>
+      </Section>
 
-          <Section
-            title="Conversations"
-            aside={
-              talks && (
-                <Button onClick={() => pick(talks)} icon={<Glyph icon={Plus} size={12} />}>
-                  New
-                </Button>
-              )
-            }
-          >
-            <Stack>
-              {runs.length === 0 ? (
-                <div className="px-3 py-6">
-                  <Empty>Nothing has run yet.</Empty>
-                </div>
-              ) : (
-                runs.map((held) => (
-                  <button
-                    key={held.id}
-                    type="button"
-                    onClick={() => open(held.id)}
-                    className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5
+      <Section
+        title="Conversations"
+        aside={
+          talks && (
+            <Button onClick={() => pick(talks)} icon={<Glyph icon={Plus} size={12} />}>
+              New
+            </Button>
+          )
+        }
+      >
+        <Stack>
+          {runs.length === 0 ? (
+            <div className="px-3 py-6">
+              <Empty>Nothing has run yet.</Empty>
+            </div>
+          ) : (
+            runs.map((held) => (
+              <button
+                key={held.id}
+                type="button"
+                onClick={() => open(held.id)}
+                className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5
                       gap-y-1 border-b border-base-200 px-3 py-2.5 text-left transition-colors
                       last:border-0 hover:bg-base-200 ${run === held.id ? "bg-base-200" : ""}`}
-                  >
-                    <span className="min-w-0 truncate font-mono text-sm">{held.title}</span>
-                    <Stamp>{held.standing}</Stamp>
-                    <span className="col-start-1 text-xs text-soft">{clock(held.started)}</span>
-                  </button>
-                ))
-              )}
-            </Stack>
-          </Section>
-        </div>
+              >
+                <span className="min-w-0 truncate font-mono text-sm">{held.title}</span>
+                <Stamp>{held.standing}</Stamp>
+                <span className="col-start-1 text-xs text-soft">{clock(held.started)}</span>
+              </button>
+            ))
+          )}
+        </Stack>
+      </Section>
+    </>
+  );
 
-        <div className="flex min-w-0 flex-col gap-8">
-          <Section
-            title="Conversation"
-            aside={
-              run && (
-                <Button onClick={() => confirm(ERASE) && erase()} tone="grave" icon={<Glyph icon={Trash2} size={12} />}>
-                  Delete
-                </Button>
-              )
-            }
-          >
-            <Stack>
-              <Output
-                className="pane"
-                lines={lines}
-                working={working}
-                asking={asking}
-                onStop={stop}
-                empty="Pick an action, or write a message."
-              />
-            </Stack>
-          </Section>
-        </div>
-      </div>
-    </div>
+  return (
+    <Split rail={rail}>
+      <Section
+        title="Conversation"
+        aside={
+          run && (
+            <Button onClick={() => confirm(ERASE) && erase()} tone="grave" icon={<Glyph icon={Trash2} size={12} />}>
+              Delete
+            </Button>
+          )
+        }
+      >
+        <Stack>
+          <Output
+            className="pane"
+            lines={lines}
+            working={working}
+            asking={asking}
+            onStop={stop}
+            empty="Pick an action, or write a message."
+          />
+        </Stack>
+      </Section>
+    </Split>
   );
 }

@@ -245,6 +245,23 @@ function Composer({
   );
 }
 
+function span(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  return minutes ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
+}
+
+function Elapsed() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const since = Date.now();
+    const tick = setInterval(() => setSeconds(Math.floor((Date.now() - since) / 1000)), 250);
+    return () => clearInterval(tick);
+  }, []);
+
+  return <span className="tabular-nums">({span(seconds)})</span>;
+}
+
 // TODO: Rename this component.
 export function Output({
   lines,
@@ -284,6 +301,7 @@ export function Output({
             {working && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm text-soft">
                 Working
+                <Elapsed />
                 <span aria-hidden className="flex items-center gap-1">
                   {[0, 200, 400].map((delay) => (
                     <span
