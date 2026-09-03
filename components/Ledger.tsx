@@ -32,7 +32,6 @@ export default function Ledger({
   foot,
   grip,
   action,
-  dense,
   headless,
 }: {
   head: LedgerColumn[];
@@ -41,11 +40,9 @@ export default function Ledger({
   foot?: ReactNode;
   grip?: boolean;
   action?: boolean;
-  dense?: boolean;
   headless?: boolean;
 }) {
   const router = useRouter();
-  const pad = dense ? "py-1" : "py-2.5";
   const span = 2 + head.length + (grip ? 1 : 0) + (action ? 1 : 0);
 
   const follow = (href: string) => (event: MouseEvent<HTMLTableRowElement>) => {
@@ -113,14 +110,14 @@ export default function Ledger({
               className={`ledgerrow group/row border-b border-base-200 last:border-0
                   ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}
             >
-              <td className={`${pad} pl-3 pr-0 align-top`}>
+              <td className="py-2.5 pl-3 pr-0 align-top">
                 <span className="flex h-5 items-center">
                   <Mark on={row.mark} />
                 </span>
               </td>
 
               {grip && (
-                <td className={`${pad} px-1 align-top`}>
+                <td className="py-2.5 px-1 align-top">
                   <span className="flex h-5 items-center">{row.handle}</span>
                 </td>
               )}
@@ -128,7 +125,7 @@ export default function Ledger({
               {row.cells.map((cell, index) => (
                 <td
                   key={head[index].label}
-                  className={`${pad} px-3 align-top
+                  className={`py-2.5 px-3 align-top
                       ${head[index].numeric ? "tnum" : ""}
                       ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}
                 >
@@ -143,7 +140,7 @@ export default function Ledger({
               ))}
 
               {action && (
-                <td className={`${pad} px-3 align-top`}>
+                <td className="py-2.5 px-3 align-top">
                   <span
                     className="flex h-5 items-center justify-end opacity-0 transition-opacity
                     group-hover/row:opacity-100 group-focus-within/row:opacity-100"

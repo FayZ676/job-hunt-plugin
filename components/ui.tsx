@@ -185,10 +185,10 @@ export type Band = { label?: string; note?: string; notes: (Note | false | null 
 
 const kept = (notes: Band["notes"]) => notes.filter((note): note is Note => Boolean(note));
 
-const BandHead = ({ label, note }: { label: string; note?: string }) => (
+const BandHead = ({ label, note, lead }: { label: string; note?: string; lead?: boolean }) => (
   <div
-    className="flex flex-wrap items-baseline justify-between gap-x-4 border-y border-base-200
-    bg-base-200 px-3 py-2 first:border-t-0"
+    className={`flex flex-wrap items-baseline justify-between gap-x-4 border-y border-base-300
+    px-3 py-2 ${lead ? "border-t-0" : ""}`}
   >
     <h3 className="eyebrow">{label}</h3>
     {note && <p className="text-xs text-soft">{note}</p>}
@@ -220,7 +220,7 @@ export const Sheet = ({
       .filter((band): band is Band => Boolean(band))
       .map((band, place) => (
         <section key={band.label ?? place}>
-          {band.label && <BandHead label={band.label} note={band.note} />}
+          {band.label && <BandHead label={band.label} note={band.note} lead={place === 0} />}
           <dl className="divide-y divide-base-200">
             {kept(band.notes).map((note, index) => (
               <div
@@ -246,8 +246,9 @@ export const Sheet = ({
   </div>
 );
 
-export const Stack = ({ children, foot }: { children: ReactNode; foot?: ReactNode }) => (
+export const Stack = ({ head, children, foot }: { head?: string; children: ReactNode; foot?: ReactNode }) => (
   <div className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+    {head && <BandHead label={head} lead />}
     {children}
     {foot && <div className="border-t border-base-300">{foot}</div>}
   </div>

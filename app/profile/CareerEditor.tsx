@@ -7,11 +7,9 @@ import DeleteButton from "@/components/edit/DeleteButton";
 import Field from "@/components/edit/Field";
 import RecordList from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
-import { Disclosure, Empty, Sheet, Stack, Stamp, type Note } from "@/components/ui";
+import { Disclosure, Empty, Sheet, Stack, Stamp } from "@/components/ui";
 import { lengthLabel, monthsBetween, spanLabel, today, when, type When } from "@/components/format";
 import type { Employer, Project } from "@/lib/web/queries";
-
-type Experience = { clock_starts: string | null; years: number | null; relevant_years: number | null };
 
 const editing = (table: string, rowid: number, values: Record<string, unknown>) => (column: Column) => (
   <Field table={table} rowid={rowid} column={column} value={(values[column.name] ?? null) as string | number | null} />
@@ -212,8 +210,8 @@ function EmployerPanel({ employer }: { employer: Employer }) {
         />
 
         <section>
-          <h5 className="eyebrow mb-2">Projects</h5>
           <Stack
+            head="Project"
             foot={
               <Adder
                 table="projects"
@@ -256,7 +254,7 @@ function covering(employers: Employer[], mark: When): When | null {
 
 const GAP_MONTHS = 4;
 
-export default function CareerEditor({ employers, experience }: { employers: Employer[]; experience: Experience }) {
+export default function CareerEditor({ employers }: { employers: Employer[] }) {
   const ordered = employers.slice().sort((left, right) => {
     const one = opened(left);
     const other = opened(right);
@@ -264,54 +262,9 @@ export default function CareerEditor({ employers, experience }: { employers: Emp
     return one ? -1 : other ? 1 : 0;
   });
 
-  const projects = employers.reduce((sum, employer) => sum + employer.projects.length, 0);
-  const bullets = employers.reduce(
-    (sum, employer) => sum + employer.projects.reduce((count, project) => count + project.bullets.length, 0),
-    0,
-  );
-  const thin = employers
-    .flatMap((employer) => employer.projects)
-    .filter((project) => project.bullets.length === 0).length;
-
-  const summary: Note[] = [
-    {
-      label: "Years of experience",
-      mark: experience.years === null,
-      value:
-        experience.years === null ? (
-          <span className="text-soft">—</span>
-        ) : (
-          <span className="tnum">
-            <span className="font-medium">{experience.years} years</span>
-            <span className="text-soft">
-              {" · "}
-              {experience.relevant_years} relevant · since {experience.clock_starts}
-            </span>
-          </span>
-        ),
-    },
-    {
-      label: "What a resume can draw on",
-      mark: thin > 0,
-      value: (
-        <span className="tnum">
-          {employers.length} employers · {projects} projects · {bullets} bullets
-          {thin > 0 && (
-            <span className="text-signal">
-              {" · "}
-              {thin} project{thin === 1 ? "" : "s"} with no bullet
-            </span>
-          )}
-        </span>
-      ),
-    },
-  ];
-
   return (
     <div className="space-y-4">
-      <Sheet readout bands={[{ notes: summary }]} />
-
-      <Stack foot={<Adder table="employers" columns={COLUMNS.employers} label="Add an employer" />}>
+      <Stack head="Employer" foot={<Adder table="employers" columns={COLUMNS.employers} label="Add an employer" />}>
         {ordered.length === 0 && <Empty>No employers yet.</Empty>}
         {ordered.map((employer) => {
           const start = opened(employer);

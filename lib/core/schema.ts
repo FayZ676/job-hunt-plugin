@@ -270,9 +270,10 @@ export const TABLES = {
     .meta({
       singleRow: true,
       groups: [
-        { label: "How to reach you", from: "full_name" },
+        { label: "Contact", from: "full_name" },
         { label: "Work authorization", from: "authorized_in_country_of_residence" },
-        { label: "When you could start, and what you would take", from: "earliest_daily_start" },
+        { label: "Availability", from: "earliest_daily_start" },
+        { label: "Preferences", from: "employment_type" },
         { label: "Demographics", from: "gender", fold: true },
       ],
       note:

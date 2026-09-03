@@ -36,7 +36,6 @@ export default function RecordList({
 
   return (
     <Ledger
-      dense
       headless={headless}
       grip={ordered}
       action

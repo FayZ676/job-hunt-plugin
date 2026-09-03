@@ -22,7 +22,6 @@ const singleton = <T extends Table>(table: T) =>
 
 export const identity = () => singleton("identity");
 export const instructions = () => singleton("instructions");
-export const experience = () => one(VIEWS.experience, "SELECT clock_starts, years, relevant_years FROM experience")!;
 
 export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
