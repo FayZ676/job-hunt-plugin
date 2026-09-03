@@ -2,15 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ListX, Trash2 } from "lucide-react";
 
+import Glyph from "@/components/Glyph";
 import { Output, useRun, type Asking } from "@/components/run";
-import { Empty, Section, Stack, Stamp } from "@/components/ui";
+import { Button, Empty, Section, Stack, Stamp } from "@/components/ui";
 import type { Action } from "@/lib/core/actions";
 import type { Run } from "@/lib/web/runs";
 
 export type Opening = { action: string; argument: string };
 
 const WATCH = 4000;
+const WIPE = "Clear every finished conversation? They are gone for good.";
+const ERASE = "Delete this conversation? It is gone for good.";
 
 const clock = (started: string) =>
   new Date(started).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -25,7 +29,7 @@ export default function Console({
   opening: Opening | null;
 }) {
   const router = useRouter();
-  const { lines, run, working, open, start, reply, clear, stop } = useRun();
+  const { lines, run, working, open, start, reply, detach, stop, erase, wipe } = useRun();
   const [about, setAbout] = useState("");
   const input = useRef<HTMLTextAreaElement>(null);
   const opened = useRef(false);
@@ -43,12 +47,12 @@ export default function Console({
     (action: Action, held = "") => {
       if (action.asks) {
         setAbout(held);
-        clear(action.id);
+        detach();
         return input.current?.focus();
       }
       start(action.id, held);
     },
-    [clear, start],
+    [detach, start],
   );
 
   useEffect(() => {
@@ -132,7 +136,27 @@ export default function Console({
         </div>
 
         <div className="flex min-w-0 flex-col gap-8">
-          <Section title="Conversation">
+          <Section
+            title="Conversation"
+            aside={
+              <span className="flex shrink-0 items-center gap-2">
+                {runs.length > 0 && (
+                  <Button onClick={() => confirm(WIPE) && wipe()} icon={<Glyph icon={ListX} size={12} />}>
+                    Clear
+                  </Button>
+                )}
+                {run && (
+                  <Button
+                    onClick={() => confirm(ERASE) && erase()}
+                    tone="grave"
+                    icon={<Glyph icon={Trash2} size={12} />}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </span>
+            }
+          >
             <Stack>
               <Output
                 className="pane"

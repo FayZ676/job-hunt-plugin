@@ -100,7 +100,12 @@ export function listing(): Run[] {
     .filter((name) => name.endsWith(".jsonl"))
     .map((name) => {
       const id = name.slice(0, -".jsonl".length);
-      const kept = held(id);
+      let kept: Kept[];
+      try {
+        kept = held(id);
+      } catch {
+        return null;
+      }
       const opened = kept.find((one) => one.kind === "opened");
       if (!opened) return null;
       return { id, action: opened.action, title: opened.title, started: opened.started, standing: standing(id, kept) };
@@ -194,6 +199,16 @@ export function begin({
   });
 
   return id;
+}
+
+export function erase(id: string) {
+  if (!ID.test(id)) throw new Error("not a conversation id");
+  if (live().has(id)) throw new Error("that conversation is still working");
+  fs.rmSync(file(id), { force: true });
+}
+
+export function wipe() {
+  for (const one of listing()) if (!live().has(one.id)) fs.rmSync(file(one.id), { force: true });
 }
 
 export function halt(id: string) {

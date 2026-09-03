@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
-import { Square } from "lucide-react";
+import { SendHorizontal, Square } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
@@ -17,14 +17,18 @@ const parse = (line: string): Line | null => {
   }
 };
 
-async function told(body: unknown): Promise<string> {
+async function ask(body: unknown): Promise<Response> {
   const answered = await fetch("/run/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!answered.ok) throw new Error(await answered.text());
-  const { run } = (await answered.json()) as { run: string };
+  return answered;
+}
+
+async function told(body: unknown): Promise<string> {
+  const { run } = (await (await ask(body)).json()) as { run: string };
   return run;
 }
 
@@ -34,7 +38,6 @@ export function useRun() {
   const [lines, setLines] = useState<Line[]>([]);
   const [streaming, setStreaming] = useState(false);
   const control = useRef<AbortController | null>(null);
-  const thread = useRef("");
 
   const open = useCallback(
     async (id: string) => {
@@ -90,27 +93,42 @@ export function useRun() {
     [open, router],
   );
 
+  const detach = useCallback(() => {
+    control.current?.abort();
+    control.current = null;
+    setRun(null);
+    setStreaming(false);
+    setLines([]);
+  }, []);
+
+  const forget = useCallback(
+    async (body: unknown) => {
+      try {
+        await ask(body);
+      } catch (error) {
+        return setLines((standing) => [...standing, { kind: "wrong", body: (error as Error).message }]);
+      }
+      detach();
+      router.refresh();
+    },
+    [detach, router],
+  );
+
   return {
     lines,
     run,
     working: streaming && lines.at(-1)?.kind !== "end",
     open,
-    start: (action: string, argument = "", note?: string) => {
-      thread.current = action;
-      return send({ action, argument, note });
-    },
+    start: (action: string, argument = "", note?: string) => send({ action, argument, note }),
     reply: (words: string) => send({ run, argument: words }),
-    clear: (action: string) => {
-      thread.current = action;
-      control.current?.abort();
-      control.current = null;
-      setRun(null);
-      setStreaming(false);
-      setLines([]);
-    },
+    detach,
     stop: () => {
       if (run) void told({ stop: run });
     },
+    erase: () => {
+      if (run) void forget({ erase: run });
+    },
+    wipe: () => void forget({ wipe: true }),
   };
 }
 
@@ -215,12 +233,11 @@ function Composer({
       <div className="mt-2 flex items-center justify-between gap-4">
         <p className="text-xs text-soft">Shift + Enter for a new line</p>
         {working ? (
-          <Button onClick={onStop} className="inline-flex items-center gap-1.5">
-            <Glyph icon={Square} size={11} className="fill-current" />
+          <Button onClick={onStop} icon={<Glyph icon={Square} size={11} className="fill-current" />}>
             Stop
           </Button>
         ) : (
-          <Button type="submit" tone="firm" disabled={!ready}>
+          <Button type="submit" tone="firm" disabled={!ready} icon={<Glyph icon={SendHorizontal} size={12} />}>
             Send
           </Button>
         )}
