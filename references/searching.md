@@ -12,6 +12,9 @@ own posting, with the description already attached.
 
 ## The bill is the filter
 
+**`--max` is the user's number.** It is the bill, and nothing in the profile sets it — ask what to
+spend before the call, on every run.
+
 **Billing is per job returned, so a filter the API can apply is money, and a filter applied after the
 call is money already spent.** Every filter that can be pushed into the request already is:
 
@@ -20,7 +23,7 @@ call is money already spent.** Every filter that can be pushed into the request 
 | what you searched for | `titleSearch` | |
 | `title_exclude`, `title_noise` | `titleExclusionSearch` | the regex alternations are flattened into literal terms; a pattern with no closing `\b` becomes a `:*` prefix match |
 | `agency_blocklist` | `organizationExclusionSearch` | alongside the API's own `removeAgency` |
-| `max_age_days` | `--since` | |
+| `max_age_days` | `--since` — the widest window it allows, unless you name one | |
 
 A pattern too complex to flatten safely — a character class, a quantifier, a bare alternation — is
 left to the local rules rather than guessed at.
@@ -42,8 +45,6 @@ literal; the prose around them is for the scorer, not for the API.
 
 **A misspelled or abbreviated `--location` returns nothing rather than failing** — spell it out:
 `"New York, New York, United States"`, `"London, England, United Kingdom"`, or `"United States"`.
-
-**Pass `--remote` or most of what comes back is on-site**, because that is mostly what exists.
 
 ## Every row keeps its verdict
 

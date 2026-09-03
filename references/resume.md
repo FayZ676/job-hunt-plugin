@@ -28,8 +28,7 @@ Education section, verbatim. Bullets come only from `project_bullets`, numbers o
 
 ## Process
 
-1. Get the JD: a `prospects.description`, pasted text, a file path, or a URL. Given only a company
-   and title, ask for the posting text.
+1. Get the JD: a `prospects.description`, pasted text, a file path, or a URL.
 2. Extract its hard requirements, day-to-day responsibilities, and implied signals.
 3. Read the profile tables and score each project on overlap. Write the mapping down before
    drafting; it decides ordering and cuts.

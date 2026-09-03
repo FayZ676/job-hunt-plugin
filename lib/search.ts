@@ -57,11 +57,14 @@ type Config = {
   agency_blocklist: Set<string>;
 } & Record<(typeof PATTERN_KINDS)[number], RegExp[]>;
 
-function loadConfig(options: Options): Config {
-  const settings = Object.fromEntries(
-    query(TABLES.settings, "SELECT key, value FROM settings").map((row) => [row.key, row.value]),
-  );
+const MAX_AGE_DAYS = 30;
 
+const maxAgeDays = () => {
+  const held = one(TABLES.settings.pick({ value: true }), "SELECT value FROM settings WHERE key='max_age_days'");
+  return Number(held?.value ?? MAX_AGE_DAYS);
+};
+
+function loadConfig(options: Options): Config {
   const floor = one(TABLES.identity.pick({ compensation_floor: true }), "SELECT compensation_floor FROM identity");
 
   return {
@@ -69,7 +72,7 @@ function loadConfig(options: Options): Config {
     location_filter: options.location_filter !== false,
     ...Object.fromEntries(PATTERN_KINDS.map((kind) => [kind, compilePatterns(patterns(kind))])),
     agency_blocklist: new Set(patterns("agency_blocklist").map(normCompany)),
-    max_age_days: options.max_age_days ?? Number(settings.max_age_days ?? 30),
+    max_age_days: options.max_age_days ?? maxAgeDays(),
     comp_floor: options.comp_floor ?? Number(floor?.compensation_floor ?? 0),
   } as Config;
 }
@@ -212,19 +215,20 @@ export function rule(options: Options = {}): Ruled {
   };
 }
 
-export const DEFAULTS = {
-  locations: ["United States"],
-  remote: false,
-  since: "7d" as sources.Since,
-  max: 200,
+const SINCE_DAYS: Record<sources.Since, number> = { "1h": 1 / 24, "24h": 1, "7d": 7, "6m": 182 };
+
+const window = () => {
+  const limit = maxAgeDays();
+  const fits = sources.SINCE.filter((since) => SINCE_DAYS[since] <= limit);
+  return fits.length ? fits[fits.length - 1] : sources.SINCE[0];
 };
 
 export type Aim = {
   terms: string[];
-  locations?: string[];
-  remote?: boolean;
+  locations: string[];
+  remote: boolean;
   since?: sources.Since;
-  max?: number;
+  max: number;
 };
 
 export type Found = Ruled & {
@@ -270,12 +274,13 @@ const unwanted = () => ({
 
 export async function search(aim: Aim): Promise<Found> {
   if (!aim.terms.length) throw new Error("name what to search for, short and literal");
+  if (!aim.max) throw new Error("say how many jobs to buy: --max <n>");
   const held = await sources.search({
     terms: aim.terms,
-    locations: aim.locations?.length ? aim.locations : DEFAULTS.locations,
-    remote: aim.remote ?? DEFAULTS.remote,
-    since: aim.since ?? DEFAULTS.since,
-    max: aim.max ?? DEFAULTS.max,
+    locations: aim.locations,
+    remote: aim.remote,
+    since: aim.since ?? window(),
+    max: aim.max,
     ...unwanted(),
   });
   return found(held, unkeepable(aim.terms));

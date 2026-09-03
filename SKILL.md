@@ -59,6 +59,10 @@ Two files are not an action and are read when they apply:
 defaults to, and what it gives back. Read it before invoking rather than reading the source, and
 never carry a flag from a file here that `--help` does not list.
 
+**What a command needs and the profile does not hold, ask for.** Read the profile first; if the
+answer is not there and the user did not say it, ask them — never infer it, and never let a value
+they would have chosen come from a fallback.
+
 ```bash
 $Q --schema                      # every table, view, CHECK and trigger; $Q is job-q
 job-search dispositions          # every verdict the chain can rule, in order

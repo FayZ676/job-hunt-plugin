@@ -1,6 +1,6 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import fs from "node:fs";
-import { DEFAULTS, DISPOSITIONS, type Found, type Ruled, replay, rule, search } from "../lib/search.ts";
+import { DISPOSITIONS, type Found, type Ruled, replay, rule, search } from "../lib/search.ts";
 import * as sources from "../lib/core/sources.ts";
 import { collect, fail, action } from "./kit.ts";
 
@@ -33,9 +33,9 @@ const { program, runs } = action(
   "job-search",
   `Find the openings. One paid call, then every rule the filters carry.
 
-  job-search "AI Engineer"                  across every career site
-  job-search "AI Engineer" --location "Oregon, United States"
-  job-search "AI Engineer" --remote --since 24h
+  job-search "AI Engineer" --max 200         across every career site
+  job-search "AI Engineer" --max 200 --location "Oregon, United States"
+  job-search "AI Engineer" --max 200 --remote --since 24h
   job-search rule --redo --no-location-filter   rule stored postings again, no network
   job-search dispositions                   every verdict, in the order ruled`,
 );
@@ -50,8 +50,8 @@ program
   .argument("[role...]", "what to search for, short and literal")
   .option("--location <where>", "repeatable; 'City, State, Country', spelled out", collect, [])
   .option("--remote", "only jobs a remote worker can hold")
-  .option("--since <window>", `one of ${sources.SINCE.join(", ")}`, DEFAULTS.since)
-  .option("--max <n>", "jobs returned -- this is the bill", Number, DEFAULTS.max)
+  .option("--since <window>", `one of ${sources.SINCE.join(", ")}; defaults to what max_age_days allows`)
+  .option("--max <n>", "jobs returned -- this is the bill", Number)
   .option("--file <path>", "replay a saved dataset instead of spending credit")
   .action(
     runs(async (terms: string[], options) => {
@@ -63,7 +63,7 @@ program
           terms,
           locations: options.location,
           remote: Boolean(options.remote),
-          since: since(options.since),
+          since: options.since ? since(options.since) : undefined,
           max: options.max,
         }),
       );
