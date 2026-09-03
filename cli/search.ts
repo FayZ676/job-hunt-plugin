@@ -18,25 +18,19 @@ function ruled(held: Ruled) {
 }
 
 function report(found: Found) {
-  if (found.unkeepable.length) {
-    console.log(
-      "these cannot survive title_include, so every job they return is " +
-        `paid for and then dropped: ${found.unkeepable.join(", ")}`,
-    );
-    console.log("  drop them, or widen title_include\n");
-  }
   console.log(`FETCHED ${found.fetched} postings (${found.fresh} new)`);
   ruled(found);
 }
 
 const { program, runs } = action(
   "job-search",
-  `Find the openings. One paid call, then every rule the filters carry.
+  `Find the openings. One paid call, then every rule the profile and settings carry.
 
   job-search "AI Engineer" --max 200         across every career site
   job-search "AI Engineer" --max 200 --location "Oregon, United States"
   job-search "AI Engineer" --max 200 --remote --since 24h
-  job-search rule --redo --no-location-filter   rule stored postings again, no network
+  job-search "AI Engineer" --max 200 --not-title intern --not-company Insight
+  job-search rule --redo                    rule stored postings again, no network
   job-search dispositions                   every verdict, in the order ruled`,
 );
 
@@ -49,6 +43,8 @@ const since = (held: string) => {
 program
   .argument("[role...]", "what to search for, short and literal")
   .option("--location <where>", "repeatable; 'City, State, Country', spelled out", collect, [])
+  .option("--not-title <word>", "repeatable; a title word the search must not return", collect, [])
+  .option("--not-company <name>", "repeatable; an employer the search must not return", collect, [])
   .option("--remote", "only jobs a remote worker can hold")
   .option("--since <window>", `one of ${sources.SINCE.join(", ")}; defaults to what max_age_days allows`)
   .option("--max <n>", "jobs returned -- this is the bill", Number)
@@ -61,6 +57,8 @@ program
       report(
         await search({
           terms,
+          notTitles: options.notTitle,
+          notOrganizations: options.notCompany,
           locations: options.location,
           remote: Boolean(options.remote),
           since: options.since ? since(options.since) : undefined,
@@ -78,8 +76,8 @@ program
     const width = Math.max(...Object.keys(DISPOSITIONS).map((name) => name.length));
     for (const [name, note] of Object.entries(DISPOSITIONS)) console.log(`  ${name.padEnd(width)}  ${note}`);
     console.log(`\n  kept${" ".repeat(width - 4)}  NOT A DROP: promoted to prospects`);
-    console.log("\nEvery posting keeps its ruling in `postings.disposition`, so what a filter cost");
-    console.log("stays queryable after the run. Patterns live in the `filters` table.");
+    console.log("\nEvery posting keeps its ruling in `postings.disposition`, so what a rule cost");
+    console.log("stays queryable after the run.");
   });
 
 program
@@ -87,7 +85,6 @@ program
   .description("rule stored postings again; fetches nothing")
   .option("--redo", "rule again on postings already dispositioned")
   .option("--include-seen", "ignore what is already in prospects")
-  .option("--no-location-filter", "see what the location rule is costing")
   .option("--max-age-days <n>", "override the stored age limit for one run", Number)
   .option("--comp-floor <n>", "override identity.compensation_floor for one run", Number)
   .action(
@@ -95,7 +92,6 @@ program
       const held = rule({
         redo: Boolean(options.redo),
         include_seen: Boolean(options.includeSeen),
-        location_filter: options.locationFilter !== false,
         max_age_days: options.maxAgeDays ?? null,
         comp_floor: options.compFloor ?? null,
       });

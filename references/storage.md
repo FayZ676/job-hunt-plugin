@@ -1,7 +1,7 @@
 # Storage
 
-One convention: `$CAREER/job.db` — postings, prospects, filters, staged applications, history, and
-the user's whole profile are rows in it. The filesystem holds only built PDFs: `$CAREER/resumes/`,
+One convention: `$CAREER/job.db` — postings, prospects, staged applications, history, and the
+user's whole profile are rows in it. The filesystem holds only built PDFs: `$CAREER/resumes/`,
 moved to `submitted/` when an application goes out.
 
 **`$CAREER` is a fixed absolute directory, so `/job` runs identically from anywhere.** Ask the skill
@@ -19,9 +19,9 @@ started somewhere else.
 
 `postings` holds every job ever fetched. The fetch owns the columns the source filled, the search
 owns `disposition`, and the later actions own `status` and what follows it — disjoint columns on one
-row, so the raw record and the role being pursued cannot drift. `disposition` names the filter that
-ruled on each row, so "what did that filter cost me" is a query, and a changed filter re-rules what
-is stored instead of going back to the network. `prospects` is the view over the rows the search kept
+row, so the raw record and the role being pursued cannot drift. `disposition` names the rule that
+ruled on each row, so "what did that rule cost me" is a query, and `job-search rule --redo` re-rules
+what is stored instead of going back to the network. `prospects` is the view over the rows the search kept
 (`disposition='kept'`); it is what the later actions read.
 
 ```bash

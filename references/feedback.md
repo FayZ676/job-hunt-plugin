@@ -25,10 +25,9 @@ In this order. The first that fits is right, because each is cheaper than the ne
 
 | The complaint says | Change |
 | ------------------ | ------ |
-| A pattern that should never have been fetched — a title they never take, a country, an agency | A `filters` row. Cheapest: spent before the search bills for it |
 | A fact a form asks for as a field — the floor, remote, relocation, employment type | The `identity` column, with `job-profile set` |
 | A number, date, title or qualifier on their own history is wrong | The `employers` / `projects` / `project_metrics` row it belongs to |
-| What counts, what is a mark against, what is a hard stop, and how those trade | `instructions.text` |
+| What counts, what is a mark against, what is a hard stop, and how those trade — including a title or an employer that should never have been fetched, which the next search excludes off this prose | `instructions.text` |
 | The resume said it badly, and the facts behind it were right | `references/resume.md` |
 | Any other action produced the wrong thing by following this skill | That action's reference file |
 
@@ -62,7 +61,6 @@ other way to clear a row they have ruled out — unless they said otherwise.
 
 ## After a change of criteria
 
-Changing `instructions.text` or a `filters` row leaves every score on the board built on criteria
-that no longer apply. **Re-scoring** in `references/scoring.md` says what to clear, and
-`job-search rule --redo` re-rules what is stored without spending again. **Report it and leave it to
-them**: one correction is a thin reason to throw away a morning's shortlist.
+Changing `instructions.text` leaves every score on the board built on criteria that no longer apply.
+**Re-scoring** in `references/scoring.md` says what to clear. **Report it and leave it to them**: one
+correction is a thin reason to throw away a morning's shortlist.

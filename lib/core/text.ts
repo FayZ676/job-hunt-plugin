@@ -2,47 +2,6 @@ import { decodeHTML } from "entities";
 
 export const MAX_DESCRIPTION_CHARS = 20000;
 
-const INLINE_FLAGS = /\(\?([imsx]+)\)/g;
-
-export function compile(pattern: string) {
-  let flags = "";
-  const source = pattern.replace(INLINE_FLAGS, (_, held: string) => {
-    for (const flag of held) if ("ims".includes(flag) && !flags.includes(flag)) flags += flag;
-    return "";
-  });
-  return new RegExp(source, flags);
-}
-
-export const compilePatterns = (patterns: string[] | null | undefined) => (patterns ?? []).map(compile);
-
-const SAYABLE = /^[a-z0-9][a-z0-9 .&'/-]*$/i;
-
-export function literals(pattern: string): string[] {
-  const source = pattern.replace(INLINE_FLAGS, "");
-  const prefix = !source.endsWith("\\b");
-  let rest = source.replace(/^\\b/, "").replace(/\\b$/, "");
-  let built = [""];
-  while (rest.length) {
-    const open = rest.indexOf("(");
-    if (open === -1) {
-      built = built.map((held) => held + rest);
-      break;
-    }
-    const close = rest.indexOf(")", open);
-    if (close === -1) return [];
-    const lead = rest.slice(0, open);
-    const options = rest.slice(open + 1, close).split("|");
-    built = built.flatMap((held) => options.map((option) => held + lead + option));
-    rest = rest.slice(close + 1);
-  }
-  const said = built.map((held) => held.trim()).filter(Boolean);
-  if (!said.length || said.some((held) => !SAYABLE.test(held))) return [];
-  return prefix ? said.map((held) => `${held}:*`) : said;
-}
-
-export const matchesAny = (patterns: RegExp[], text: string | null | undefined) =>
-  patterns.some((pattern) => pattern.test(text ?? ""));
-
 export const norm = (text: string | null | undefined) =>
   (text ?? "")
     .toLowerCase()

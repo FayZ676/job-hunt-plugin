@@ -41,23 +41,6 @@ export const TABLES = {
     value: z.string().nullable(),
   }),
 
-  filters: z
-    .object({
-      kind: z.enum([
-        "title_include",
-        "title_exclude",
-        "location_include",
-        "location_exclude",
-        "us_tokens",
-        "title_noise",
-        "agency_name_patterns",
-        "agency_blocklist",
-      ]),
-      pattern: z.string(),
-      note: z.string().nullable(),
-    })
-    .meta({ constraints: ["PRIMARY KEY (kind, pattern)"] } satisfies Shape),
-
   postings: z
     .object({
       key: col(z.string(), { sql: "PRIMARY KEY" }),
@@ -105,9 +88,7 @@ export const TABLES = {
         sql: "CHECK (ingested_on IS date(ingested_on))",
         takes: "a date, as YYYY-MM-DD",
       }),
-      disposition: z
-        .enum(["kept", "title", "location", "stale", "seen", "duplicate", "expired", "agency", "noise", "lowball"])
-        .nullable(),
+      disposition: z.enum(["kept", "stale", "seen", "duplicate", "expired", "lowball"]).nullable(),
       canonical_key: col(z.string().nullable(), {
         sql: "REFERENCES postings(key) ON DELETE SET NULL",
       }),
@@ -403,7 +384,6 @@ export const STATUSES = TABLES.postings.shape.status.unwrap().options as Status[
 
 export const ORDER: Table[] = [
   "settings",
-  "filters",
   "postings",
   "events",
   "staged",

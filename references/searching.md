@@ -2,7 +2,7 @@
 
 Finding the openings. `job-search` does the whole action — one paid Apify call, everything
 that came back stored as it arrived, then every stored row ruled and the survivors promoted to
-prospects. Storing is not a step you run; the raw layer is kept so a filter's cost stays queryable,
+prospects. Storing is not a step you run; the raw layer is kept so a rule's cost stays queryable,
 not so you can re-fetch it.
 
 The actor indexes 175k company career sites across 54 ATSes — Greenhouse, Lever and Ashby, and also
@@ -10,61 +10,59 @@ Workday, iCIMS, SuccessFactors, Oracle Cloud, BambooHR, Rippling, SmartRecruiter
 is no ATS left to check by hand, and no aggregator in the path: every row's `url` is the employer's
 own posting, with the description already attached.
 
-## The bill is the filter
+## What the search is told
 
 **`--max` is the user's number.** It is the bill, and nothing in the profile sets it — ask what to
 spend before the call, on every run.
 
-**Billing is per job returned, so a filter the API can apply is money, and a filter applied after the
-call is money already spent.** Every filter that can be pushed into the request already is:
+**Nothing about what to search for is baked into this skill.** Every argument comes off the profile
+or off `job-score instructions` — read both, then fill the call. If something belongs in the search
+and is in neither, that is the gap: decide whether it is a profile fact or a line the user should add
+to their instructions, and ask.
 
-| Local filter | Rides along as | Note |
-| ------------ | -------------- | ---- |
-| what you searched for | `titleSearch` | |
-| `title_exclude`, `title_noise` | `titleExclusionSearch` | the regex alternations are flattened into literal terms; a pattern with no closing `\b` becomes a `:*` prefix match |
-| `agency_blocklist` | `organizationExclusionSearch` | alongside the API's own `removeAgency` |
-| `max_age_days` | `--since` — the widest window it allows, unless you name one | |
+| Argument | Comes from |
+| -------- | ---------- |
+| the terms | the titles named in `instructions` — the same words the scorer reads |
+| `--not-title` | titles the instructions rule out |
+| `--not-company` | employers the instructions rule out — reposters, body shops, a former employer |
+| `--location` | `identity.location`, and what the instructions say about where they will work |
+| `--remote` | `identity.remote_preference` |
+| `--since` | the widest window `max_age_days` allows, unless the user names one |
 
-A pattern too complex to flatten safely — a character class, a quantifier, a bare alternation — is
-left to the local rules rather than guessed at.
+**Billing is per job returned, so an exclusion pushed into the request is money, and one applied
+after the call is money already spent.** `--not-title` and `--not-company` become
+`titleExclusionSearch` and `organizationExclusionSearch`, alongside the API's own `removeAgency` —
+so a title or an employer the instructions rule out never bills. Pass them; do not rely on the
+scorer to swallow the cost.
 
-**`location_exclude` is deliberately NOT pushed.** A posting open in both London and New York is one
-the local rule keeps on its US anchor, and an API-side exclusion would drop it before anyone saw it.
-Paying for a few foreign rows is cheaper than never seeing a US job.
-
-The chain still rules on everything that comes back — the request narrows, the local rules decide. The one
-thing the request cannot know is `title_include`, so **the run warns when a searched title could
-not survive it**: those jobs are bought and then dropped. Fix the disagreement in one direction or
-the other; do not pay for it twice a week.
-
-**What you search for comes off `job-score instructions`** — the same words the scorer reads, so
-discovery and scoring cannot drift apart. Say them the way a search box wants them, short and
-literal; the prose around them is for the scorer, not for the API.
+Say the terms and exclusions the way a search box wants them, short and literal; the prose around
+them in the instructions is for the scorer, not for the API.
 
 `--since 6m` is the backfill worth running once, on the first run, and rarely again.
 
 **A misspelled or abbreviated `--location` returns nothing rather than failing** — spell it out:
 `"New York, New York, United States"`, `"London, England, United Kingdom"`, or `"United States"`.
 
+**Do not narrow location past what the user actually said.** A posting open in both London and New
+York is one a US-based user still wants to see; paying for a few foreign rows is cheaper than never
+seeing a job. The description read at scoring is the backstop.
+
 ## Every row keeps its verdict
 
-**One chain serves every source.** No filter names a source: each normalizes into the same columns,
-and one that cannot state a fact leaves the default, so the filter reading it never trips. A new
-mechanism inherits every filter for free.
+**One chain serves every source.** No rule names a source: each normalizes into the same columns,
+and one that cannot state a fact leaves the default, so the rule reading it never trips. A new
+mechanism inherits every rule for free.
 
-Because the title and agency filters ride along in the search request, **a drop count near zero
-means the pushdown worked, not that the filter is dead.**
+`DISPOSITIONS` in `lib/search.ts` names the verdicts, and `job-search dispositions` prints them in
+the order the chain rules them — read it there rather than from a copy.
 
-## The filters
-
-Two things share the word. `DISPOSITIONS` in `lib/search.ts` names the **verdicts** — one per branch of
-the chain, and the same values `postings.disposition` stores. The `filters` **table** holds the
-**patterns** those branches match on, keyed by `kind`. Only four verdicts read the table; the rest
-rule on columns, dates and prior state, so neither describes the other.
-
-`job-search dispositions` prints the verdicts in the order the chain rules them, straight off the
-code that applies it — read it there rather than from a copy. The patterns live in
-`SELECT kind, pattern, note FROM filters`, so tuning is SQL, not a code change.
+**What the chain rules on is deliberately small: expiry, the profile's compensation floor, age, and
+what has already been seen.** There is no pattern table and no stored filter vocabulary. Anything
+that takes judgment about whether a role fits — the title, the seniority, the field, the location,
+whether the employer is a reposter — is the scorer's call, made against the instructions with the
+full description in hand. Do not reintroduce a local pattern rule to pre-empt it; push the exclusion
+into the request instead, where it saves money, or say it in the instructions, where it is read once
+and applied everywhere.
 
 ## Dedupe
 
@@ -83,29 +81,27 @@ A run prints its drop counts, and because the verdicts are stored they stay quer
 
 ```bash
 $Q "SELECT disposition, COUNT(*) n FROM postings WHERE ingested_on=date('now') GROUP BY disposition"
-$Q "SELECT company,title,location FROM postings WHERE disposition='location' LIMIT 20"
+$Q "SELECT company,title,location FROM postings WHERE disposition='stale' LIMIT 20"
 ```
 
-The second query is the one that matters: **read what a filter actually dropped** rather than
-guessing from a count. Then change the rule and re-rule the same postings, with no network:
+The second query is the one that matters: **read what a rule actually dropped** rather than guessing
+from a count. Re-ruling the same postings costs no network:
 
 ```bash
-$Q "SELECT kind, pattern, note FROM filters"
-$Q "INSERT INTO filters(kind,pattern,note) VALUES('title_exclude','(?i)contract','no contract roles')"
 job-search rule --redo
 ```
 
 | Symptom | Fix |
 | ------- | --- |
-| Obvious junk in prospects | add to `title_exclude`, then `--redo` |
-| A real role got filtered out | find it with a `disposition` query, then loosen that rule |
-| Prospects fine, scores wrong | `instructions`, not filters |
-| Too few prospects | check the `location` and `stale` counts first; it is usually location |
-| Shortlist fills with staffing firms | `agency_blocklist` is stale — add the names; they repeat daily |
+| Obvious junk in prospects | name it in `instructions`, then pass it as `--not-title` next run |
+| A real role never arrived | the terms or `--not-title` were too narrow, or `--since` too short |
+| Prospects fine, scores wrong | `instructions` |
+| Too few prospects | check the `stale` count, then widen `--since` or `--location` |
+| Shortlist fills with staffing firms | add the names to `instructions`, and pass `--not-company` |
 
-**Tune the blocklist as you go.** When a run surfaces a reposter, add it — the list is the main thing
-between an aggregator and a shortlist full of staffing firms. An entry judges the listings, not the
-employer; a company that starts posting directly comes off it.
+**Reposters repeat daily.** When a run surfaces one, it belongs in the instructions the same day —
+that is the main thing between an aggregator and a shortlist full of staffing firms. It judges the
+listings, not the employer; a company that starts posting directly comes back out.
 
 ## Traps
 
@@ -113,4 +109,4 @@ employer; a company that starts posting directly comes off it.
 | ------- | ----- | --- |
 | A search returns far less than `--max` | Nothing else matched; `--max` is a ceiling, not a target | Widen `--since`, or drop `--remote` |
 | A role appears twice | Precedence dedupe missed | The index spells the company differently on each row — reconcile the spelling |
-| A foreign role survives the location filter | The location says only "Remote" | Not catchable mechanically; the description read at scoring is the backstop |
+| A foreign role arrives despite `--location` | The location says only "Remote" | Not catchable mechanically; the description read at scoring is the backstop |

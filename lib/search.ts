@@ -4,40 +4,19 @@ import { db, one, rows as query } from "./core/db.ts";
 import { POSTING_COLUMNS, Posting } from "./core/posting.ts";
 import { TABLES, options as allowed } from "./core/schema.ts";
 import * as sources from "./core/sources.ts";
-import { ageDays, compilePatterns, literals, matchesAny, norm, normCompany } from "./core/text.ts";
+import { ageDays, norm, normCompany } from "./core/text.ts";
 
 export const DISPOSITIONS: Record<string, string> = {
   expired: "a listing whose `date_valid_through` has passed",
-  agency: "reposters and body shops, by `agency_blocklist` name or `agency_name_patterns`",
-  noise: "`title_noise` -- AI Trainer, annotation, tutoring, freelance-gig phrasing",
   lowball: "a STATED YEARLY band topping out below `comp_floor`; per-hour or unstated is not judged",
-  title: "fails `title_include`, or matches `title_exclude`",
-  location:
-    "fails `location_include`, or matches `location_exclude` with no US anchor; " + "remote skips the include test",
   stale: "older than `max_age_days`",
   seen: "already kept, or already collapsed into a kept row, by key or company + title",
   duplicate: "one role listed in several places, collapsed into the row that was kept",
 };
 
-const PATTERN_KINDS = [
-  "title_include",
-  "title_exclude",
-  "location_include",
-  "location_exclude",
-  "us_tokens",
-  "title_noise",
-  "agency_name_patterns",
-] as const;
-
-export const patterns = (kind: string) =>
-  query(TABLES.filters.pick({ pattern: true }), "SELECT pattern FROM filters WHERE kind=?", [kind]).map(
-    (row) => row.pattern,
-  );
-
 export type Options = {
   redo?: boolean;
   include_seen?: boolean;
-  location_filter?: boolean;
   max_age_days?: number | null;
   comp_floor?: number | null;
 };
@@ -51,11 +30,9 @@ export type Ruled = {
 
 type Config = {
   include_seen: boolean;
-  location_filter: boolean;
   max_age_days: number;
   comp_floor: number;
-  agency_blocklist: Set<string>;
-} & Record<(typeof PATTERN_KINDS)[number], RegExp[]>;
+};
 
 const MAX_AGE_DAYS = 30;
 
@@ -69,12 +46,9 @@ function loadConfig(options: Options): Config {
 
   return {
     include_seen: Boolean(options.include_seen),
-    location_filter: options.location_filter !== false,
-    ...Object.fromEntries(PATTERN_KINDS.map((kind) => [kind, compilePatterns(patterns(kind))])),
-    agency_blocklist: new Set(patterns("agency_blocklist").map(normCompany)),
     max_age_days: options.max_age_days ?? maxAgeDays(),
     comp_floor: options.comp_floor ?? Number(floor?.compensation_floor ?? 0),
-  } as Config;
+  };
 }
 
 const belowCompFloor = (row: Posting, floor: number) => {
@@ -91,32 +65,15 @@ function verdict(
   seenKeys: Set<string>,
   held: Map<string, string>,
 ): [string | null, string | null] {
-  const { title, company } = row;
-  const location = row.location || "";
-
   if (row.expired) return ["expired", null];
-  if (config.agency_blocklist.has(normCompany(company)) || matchesAny(config.agency_name_patterns, company))
-    return ["agency", null];
-  if (matchesAny(config.title_noise, title)) return ["noise", null];
   if (belowCompFloor(row, config.comp_floor)) return ["lowball", null];
-
-  if (config.title_include.length && !matchesAny(config.title_include, title)) return ["title", null];
-  if (matchesAny(config.title_exclude, title)) return ["title", null];
-
-  if (config.location_filter) {
-    const anchored = matchesAny(config.us_tokens, location) || location.trim().toLowerCase() === "remote";
-    if (config.location_exclude.length && !anchored && matchesAny(config.location_exclude, location))
-      return ["location", null];
-    if (config.location_include.length && !row.remote && !matchesAny(config.location_include, location))
-      return ["location", null];
-  }
 
   const days = ageDays(row.posted_at);
   if (config.max_age_days && days !== null && days > config.max_age_days) return ["stale", null];
 
   if (!config.include_seen) {
     if (seenKeys.has(row.key)) return ["seen", null];
-    const holder = held.get(paired(company, title));
+    const holder = held.get(paired(row.company, row.title));
     if (holder) return ["seen", holder];
   }
   return [null, null];
@@ -225,6 +182,8 @@ const window = () => {
 
 export type Aim = {
   terms: string[];
+  notTitles: string[];
+  notOrganizations: string[];
   locations: string[];
   remote: boolean;
   since?: sources.Since;
@@ -234,7 +193,6 @@ export type Aim = {
 export type Found = Ruled & {
   fetched: number;
   fresh: number;
-  unkeepable: string[];
 };
 
 export function store(postings: Posting[]) {
@@ -261,37 +219,27 @@ export function store(postings: Posting[]) {
   return fresh;
 }
 
-export function unkeepable(terms: string[]) {
-  const include = compilePatterns(patterns("title_include"));
-  if (!include.length) return [];
-  return terms.filter((term) => !matchesAny(include, term));
-}
-
-const unwanted = () => ({
-  notTitles: [...new Set(["title_exclude", "title_noise"].flatMap((kind) => patterns(kind).flatMap(literals)))],
-  notOrganizations: patterns("agency_blocklist"),
-});
-
 export async function search(aim: Aim): Promise<Found> {
   if (!aim.terms.length) throw new Error("name what to search for, short and literal");
   if (!aim.max) throw new Error("say how many jobs to buy: --max <n>");
   const held = await sources.search({
     terms: aim.terms,
+    notTitles: aim.notTitles,
+    notOrganizations: aim.notOrganizations,
     locations: aim.locations,
     remote: aim.remote,
     since: aim.since ?? window(),
     max: aim.max,
-    ...unwanted(),
   });
-  return found(held, unkeepable(aim.terms));
+  return found(held);
 }
 
 export function replay(payload: unknown): Found {
   const items = Array.isArray(payload) ? payload : ((payload as { items?: unknown[] })?.items ?? []);
-  return found(sources.fromApify(items), []);
+  return found(sources.fromApify(items));
 }
 
-function found(held: Posting[], unkeepable: string[]): Found {
+function found(held: Posting[]): Found {
   const fresh = store(held);
-  return { fetched: held.length, fresh, unkeepable, ...rule() };
+  return { fetched: held.length, fresh, ...rule() };
 }

@@ -17,7 +17,7 @@ export const ACTIONS: Action[] = [
   },
   {
     id: "setup",
-    does: "first-run setup: create $CAREER, build the profile, set the filters",
+    does: "first-run setup: create $CAREER, build the profile, write the instructions",
     argument: "",
     accepts: [],
   },

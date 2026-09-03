@@ -40,7 +40,7 @@ Nothing below overrides these.
 | `/job resume [JD, URL, or key]` | Build a resume for every `shortlisted` posting, or the one named | `references/resume.md` |
 | `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
 | `/job submit [key]` | Submit what is staged, or the one named | `references/submitting.md` |
-| `/job feedback <what is wrong>` | Change what produced it — instructions, profile, filters, or this skill | `references/feedback.md` |
+| `/job feedback <what is wrong>` | Change what produced it — instructions, profile, or this skill | `references/feedback.md` |
 | `/job ui` | Serve the dashboard — `npm run dev` in the skill directory, on `127.0.0.1:8765`; the profile is edited there | `references/storage.md` |
 | `/job help` | `job-help` and nothing else — no run, no queries, no commentary | |
 

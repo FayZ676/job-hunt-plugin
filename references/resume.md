@@ -142,7 +142,7 @@ Resume-builder sites cite invented statistics — never tune a resume against th
 
 ## What the market asks for
 
-Measured across the 112 job descriptions the filters kept in the first scanning fortnight — better
+Measured across the 112 job descriptions the search kept in the first scanning fortnight — better
 evidence than any listicle, and reproducible against `prospects` at any time.
 
 - **Lead with ship/shipped (84%), RAG (80%), agent (70%), eval (68%), LLM and production (62%).**
