@@ -22,9 +22,9 @@ const { program, runs } = action(
   job-stage add KEY --url URL --screenshot shot.png
       --field 'Legal right to work without sponsorship?|Yes|policy'
       --field 'Tell us about an AI product you built|…|judgment|needs-review'
-  job-stage show KEY                     every field staged for one application
-  job-stage list                         everything staged, and what each is blocked on
-  job-stage drop KEY                     unstage, back to shortlisted
+  job-stage show KEY              every field staged for one application
+  job-stage list                  everything staged, and what blocks each
+  job-stage drop KEY              unstage, back to shortlisted
 
 \`ready\` and \`blocked\` are derived, never asserted: a field staged with no value
 blocks the application and names itself in blocked_on.`,

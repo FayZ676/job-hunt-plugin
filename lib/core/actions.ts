@@ -25,7 +25,7 @@ export const ACTIONS: Action[] = [
   {
     id: "search",
     does: "search and rule only",
-    argument: "[terms] --since <1h|24h|7d|6m> --max <n>",
+    argument: "[terms] --since --max",
     seed: "--since 7d --max 20",
     accepts: [],
   },

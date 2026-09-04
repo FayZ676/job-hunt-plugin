@@ -7,7 +7,7 @@ const { program, runs } = action(
   "job-submit",
   `Present what is staged, submit only what the user names, record it.
 
-  job-submit review                      the approval table: one row per staged application
+  job-submit review              one row per staged application, for approval
   job-submit record KEY --confirmation "Application received — #A12"
   job-submit rejected KEY --note "3 days, no interview — resume screen"
 

@@ -30,9 +30,9 @@ const { program } = action(
   "job-resume",
   `Build the tailored one-page PDF, and record it on the prospect.
 
-  job-resume spec                            the spec contract, and every section type
-  job-resume build spec.json                 render to spec.pdf
-  job-resume build spec.json --key KEY       render, then record the absolute path
+  job-resume spec                        the spec contract, and every section
+  job-resume build spec.json             render to spec.pdf
+  job-resume build spec.json --key KEY   render, then record the path
   job-resume build spec.json out.pdf --density tight --keep-typ
 
 Recording stores an absolute path, because a relative one breaks the next run

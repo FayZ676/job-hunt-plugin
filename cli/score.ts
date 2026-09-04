@@ -7,12 +7,12 @@ const { program, runs } = action(
   "job-score",
   `Score every prospect against the search profile.
 
-  job-score triage                        the cheap list: no descriptions, on purpose
+  job-score triage               the cheap list: no descriptions, on purpose
   job-score triage --status new
-  job-score instructions                  the profile facts and prose scoring reads
-  job-score show KEY [KEY ...]            full text, for survivors only
+  job-score instructions         the profile facts and prose scoring reads
+  job-score show KEY [KEY ...]   full text, for survivors only
   job-score set KEY --score 9 --reason "the JD language that drove it, quoted"
-  job-score pending                       what is still unscored and will come back tomorrow
+  job-score pending              still unscored, and back again tomorrow
 
 A score sets the status by the threshold in settings, so the two cannot disagree.`,
 );
