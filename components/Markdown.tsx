@@ -41,7 +41,7 @@ const ELEMENTS: Components = {
 
 export default function Markdown({ children, className = "" }: { children: string; className?: string }) {
   return (
-    <div className={`max-w-[72ch] break-words text-sm leading-relaxed ${className}`}>
+    <div className={`break-words text-sm leading-relaxed ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} components={ELEMENTS}>
         {children}
       </ReactMarkdown>

@@ -8,6 +8,7 @@ import Glyph from "@/components/Glyph";
 import { Output, useRun, type Asking } from "@/components/run";
 import { Button, Empty, Section, Split, Stack, Stamp } from "@/components/ui";
 import { commanded, type Action } from "@/lib/core/actions";
+import { WAITING, WORKING } from "@/lib/core/standing";
 import type { Run } from "@/lib/web/runs";
 
 export type Opening = { action: string; argument: string };
@@ -36,7 +37,7 @@ export default function Console({
   const opened = useRef(false);
 
   const talks = actions.find((action) => action.asks);
-  const busy = runs.some((held) => held.standing === "Working");
+  const busy = runs.some((held) => held.standing === WORKING);
 
   useEffect(() => {
     if (!busy && !working) return;
@@ -110,9 +111,17 @@ export default function Console({
                       gap-y-1 border-b border-base-200 px-3 py-2.5 text-left transition-colors
                       last:border-0 hover:bg-base-200 ${run === held.id ? "bg-base-200" : ""}`}
             >
-              <span className="min-w-0 truncate font-mono text-sm">{held.title}</span>
-              <Stamp>{held.standing}</Stamp>
-              <span className="col-start-1 text-xs text-soft">{clock(held.started)}</span>
+              <span className="col-span-2 min-w-0 truncate font-mono text-sm">{held.title}</span>
+              <span className="text-xs text-soft">{clock(held.started)}</span>
+              <span className="flex items-center gap-1.5">
+                {(held.standing === WORKING || held.standing === WAITING) && (
+                  <span
+                    aria-hidden
+                    className={`size-1.5 bg-mark ${held.standing === WORKING ? "animate-blink" : ""}`}
+                  />
+                )}
+                <Stamp>{held.standing}</Stamp>
+              </span>
             </button>
           ))
         )}

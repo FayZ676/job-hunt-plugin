@@ -128,7 +128,7 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
                       .filter((field) => field.tier === tier)
                       .map((answer) => ({
                         label: answer.label,
-                        value: <Prose>{answer.value}</Prose>,
+                        value: <Prose className="max-w-[72ch]">{answer.value}</Prose>,
                         flag: answer.flag,
                         mark: Boolean(answer.flag),
                       })),
@@ -142,7 +142,7 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
         {posting.description && (
           <Section title="Description">
             <Card readout className="pane-max">
-              <Prose>{posting.description}</Prose>
+              <Prose className="max-w-[72ch]">{posting.description}</Prose>
             </Card>
           </Section>
         )}

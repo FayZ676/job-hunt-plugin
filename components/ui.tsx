@@ -115,12 +115,7 @@ export const Empty = ({ children }: { children: ReactNode }) => (
 );
 
 export const Prose = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div
-    className={`max-w-[72ch] whitespace-pre-wrap break-words text-sm leading-relaxed
-    ${className}`}
-  >
-    {children}
-  </div>
+  <div className={`whitespace-pre-wrap break-words text-sm leading-relaxed ${className}`}>{children}</div>
 );
 
 export const Mark = ({ on }: { on?: boolean }) => (

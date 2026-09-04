@@ -6,6 +6,7 @@ import path from "node:path";
 import { runnable, seeded, shown, asked } from "@/lib/core/actions";
 import { CAREER } from "@/lib/core/db";
 import { ROOT } from "@/lib/core/root";
+import { CLOSING, DONE, WORKING, declared, type Standing } from "@/lib/core/standing";
 
 export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string; note?: string };
 
@@ -50,12 +51,12 @@ function held(id: string): Kept[] {
 }
 
 const standing = (id: string, kept: Kept[]) => {
+  if (live().has(id)) return WORKING;
   const ended = [...kept].reverse().find((one): one is Line => spoken(one) && one.kind === "end");
-  if (ended) return ended.body;
-  return live().has(id) ? "Working" : "Stopped";
+  return ended ? ended.body : "Stopped";
 };
 
-function heard(line: string): { lines: Line[]; session?: string } {
+function heard(line: string): { lines: Line[]; session?: string; standing?: Standing } {
   let said: any;
   try {
     said = JSON.parse(line);
@@ -64,16 +65,17 @@ function heard(line: string): { lines: Line[]; session?: string } {
   }
 
   const session = typeof said.session_id === "string" ? said.session_id : undefined;
-  const some = (lines: Line[]) => ({ lines, session });
+  const some = (lines: Line[], standing?: Standing) => ({ lines, session, standing });
 
   if (said.type === "assistant") {
     const blocks: any[] = said.message?.content ?? [];
-    const body = blocks
+    const spoke = blocks
       .filter((block) => block.type === "text")
       .map((block) => block.text)
       .join("")
       .trim();
-    return some(body ? [{ kind: "said", body }] : []);
+    const { body, standing } = declared(spoke);
+    return some(body ? [{ kind: "said", body }] : [], standing);
   }
 
   if (said.type === "result") {
@@ -169,6 +171,8 @@ export function begin({
       "-p",
       resume ? words : asked(named, words),
       ...(resume ? ["--resume", resume] : []),
+      "--append-system-prompt",
+      CLOSING,
       "--output-format",
       "stream-json",
       "--verbose",
@@ -178,7 +182,7 @@ export function begin({
     { cwd: ROOT, env: outermost(process.env), stdio: ["ignore", "pipe", "pipe"] },
   );
 
-  const one: Live = { child, ended: "Finished", hears: new Set() };
+  const one: Live = { child, ended: DONE, hears: new Set() };
   live().set(id, one);
 
   let rest = "";
@@ -189,7 +193,8 @@ export function begin({
     rest = parts.pop() ?? "";
     for (const part of parts) {
       if (!part.trim()) continue;
-      const { lines, session } = heard(part);
+      const { lines, session, standing } = heard(part);
+      if (standing && one.ended !== "Stopped") one.ended = standing;
       if (session && !seen) {
         seen = session;
         append(id, { kind: "session", id: session });

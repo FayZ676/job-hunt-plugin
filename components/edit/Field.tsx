@@ -136,7 +136,11 @@ export default function Field({
           }
         }}
       >
-        {held ? <Markdown>{held}</Markdown> : <span className="text-soft">{column.placeholder ?? title(column)}</span>}
+        {held ? (
+          <Markdown className="max-w-[72ch]">{held}</Markdown>
+        ) : (
+          <span className="text-soft">{column.placeholder ?? title(column)}</span>
+        )}
       </div>
     );
 
