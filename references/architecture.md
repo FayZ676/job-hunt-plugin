@@ -8,7 +8,7 @@ npm link --prefix "$HOME/.claude/skills/job"      # the job-* commands, on PATH
 ```
 
 That puts every action on `PATH` as `job-search`, `job-score`, `job-resume`, `job-stage`,
-`job-submit`, `job-q`, `job-profile`, `job-paths` and `job-help` — the names used throughout this
+`job-submit`, `job-cleanup`, `job-q`, `job-profile`, `job-paths` and `job-help` — the names used throughout this
 skill. The same install serves `/job ui`. Node 22.18 or newer runs the TypeScript directly, so there is nothing
 to build.
 

@@ -54,6 +54,12 @@ export const ACTIONS: Action[] = [
     accepts: ["staged"],
   },
   {
+    id: "cleanup",
+    does: "remove the postings you name from the database, and their resumes",
+    argument: "<what to remove>",
+    accepts: [],
+  },
+  {
     id: "feedback",
     does: "take what you say is wrong and change what produced it",
     argument: "<what is wrong>",

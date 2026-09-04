@@ -17,6 +17,7 @@
     "job-resume": "cli/resume.ts",
     "job-stage": "cli/stage.ts",
     "job-submit": "cli/submit.ts",
+    "job-cleanup": "cli/cleanup.ts",
     "job-help": "cli/help.ts"
   },
   "scripts": {

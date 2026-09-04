@@ -3,13 +3,8 @@ import path from "node:path";
 import { z } from "zod";
 
 import { requires } from "./core/actions.ts";
-import { SUBMITTED, absolute, db, one, rows } from "./core/db.ts";
+import { SUBMITTED, absolute, companions, db, one, rows } from "./core/db.ts";
 import { TABLES, VIEWS } from "./core/schema.ts";
-
-const companions = (pdf: string) => {
-  const stem = pdf.slice(0, pdf.length - path.extname(pdf).length);
-  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) => fs.existsSync(held));
-};
 
 const move = (from: string, to: string) => {
   try {

@@ -10,6 +10,11 @@ import { align } from "./schema.ts";
 
 export const absolute = (held: string) => path.resolve(held.replace(/^~(?=$|\/)/, os.homedir()));
 
+export const companions = (pdf: string) => {
+  const stem = pdf.slice(0, pdf.length - path.extname(pdf).length);
+  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) => fs.existsSync(held));
+};
+
 export const CAREER = absolute(process.env.JOB_CAREER_DIR || "~/data/job");
 export const DB = path.join(CAREER, "job.db");
 export const RESUMES = path.join(CAREER, "resumes");
