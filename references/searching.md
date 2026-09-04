@@ -27,7 +27,7 @@ to their instructions, and ask.
 | `--not-company` | employers the instructions rule out — reposters, body shops, a former employer |
 | `--location` | `identity.location`, and what the instructions say about where they will work |
 | `--remote` | `identity.remote_preference` |
-| `--since` | the widest window `max_age_days` allows, unless the user names one |
+| `--since` | the user, like `--max` — ask before the call |
 
 **Billing is per job returned, so an exclusion pushed into the request is money, and one applied
 after the call is money already spent.** `--not-title` and `--not-company` become

@@ -26,15 +26,16 @@ const { program, runs } = action(
   "job-search",
   `Find the openings. One paid call, then every rule the profile and settings carry.
 
-  job-search "AI Engineer" --max 200         across every career site
-  job-search "AI Engineer" --max 200 --location "Oregon, United States"
-  job-search "AI Engineer" --max 200 --remote --since 24h
-  job-search "AI Engineer" --max 200 --not-title intern --not-company Insight
-  job-search rule --redo                    rule stored postings again, no network
-  job-search dispositions                   every verdict, in the order ruled`,
+  job-search "AI Engineer" --since 7d --max 200    across every career site
+  job-search "AI Engineer" --since 7d --location "Oregon, United States"
+  job-search "AI Engineer" --since 24h --remote
+  job-search "AI Engineer" --since 7d --not-title intern --not-company Insight
+  job-search rule --redo          rule stored postings again, no network
+  job-search dispositions         every verdict, in the order ruled`,
 );
 
-const since = (held: string) => {
+const since = (held: string | undefined) => {
+  if (!held) fail(`say how far back this call reaches: --since ${sources.SINCE.join(" | ")}`);
   if (!(sources.SINCE as readonly string[]).includes(held))
     fail(`--since ${held} is not one of ${sources.SINCE.join(", ")}`);
   return held as sources.Since;
@@ -46,7 +47,7 @@ program
   .option("--not-title <word>", "repeatable; a title word the search must not return", collect, [])
   .option("--not-company <name>", "repeatable; an employer the search must not return", collect, [])
   .option("--remote", "only jobs a remote worker can hold")
-  .option("--since <window>", `one of ${sources.SINCE.join(", ")}; defaults to what max_age_days allows`)
+  .option("--since <window>", `how far back this call reaches: one of ${sources.SINCE.join(", ")}`)
   .option("--max <n>", "jobs returned -- this is the bill", Number)
   .option("--file <path>", "replay a saved dataset instead of spending credit")
   .action(
@@ -61,7 +62,7 @@ program
           notOrganizations: options.notCompany,
           locations: options.location,
           remote: Boolean(options.remote),
-          since: options.since ? since(options.since) : undefined,
+          since: since(options.since),
           max: options.max,
         }),
       );

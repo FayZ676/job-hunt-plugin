@@ -172,21 +172,13 @@ export function rule(options: Options = {}): Ruled {
   };
 }
 
-const SINCE_DAYS: Record<sources.Since, number> = { "1h": 1 / 24, "24h": 1, "7d": 7, "6m": 182 };
-
-const window = () => {
-  const limit = maxAgeDays();
-  const fits = sources.SINCE.filter((since) => SINCE_DAYS[since] <= limit);
-  return fits.length ? fits[fits.length - 1] : sources.SINCE[0];
-};
-
 export type Aim = {
   terms: string[];
   notTitles: string[];
   notOrganizations: string[];
   locations: string[];
   remote: boolean;
-  since?: sources.Since;
+  since: sources.Since;
   max: number;
 };
 
@@ -222,13 +214,14 @@ export function store(postings: Posting[]) {
 export async function search(aim: Aim): Promise<Found> {
   if (!aim.terms.length) throw new Error("name what to search for, short and literal");
   if (!aim.max) throw new Error("say how many jobs to buy: --max <n>");
+  if (!aim.since) throw new Error(`say how far back to search: --since ${sources.SINCE.join(" | ")}`);
   const held = await sources.search({
     terms: aim.terms,
     notTitles: aim.notTitles,
     notOrganizations: aim.notOrganizations,
     locations: aim.locations,
     remote: aim.remote,
-    since: aim.since ?? window(),
+    since: aim.since,
     max: aim.max,
   });
   return found(held);

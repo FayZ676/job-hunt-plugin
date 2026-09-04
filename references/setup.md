@@ -73,7 +73,7 @@ command -v pdftoppm || echo "brew install poppler"
 **The Apify token is required, not optional** — it is the only way postings arrive. Its
 `.env.local` is git-ignored, and read by both the commands and the dashboard.
 
-**5. Do a dry run.** `job-search "<a role they named>" --max 25`, then query `triage`. Keep the
+**5. Do a dry run.** `job-search "<a role they named>" --max 25 --since 7d`, then query `triage`. Keep the
 first run small: it is billed per job returned, and the point is to see whether the prose aims
 straight, not to fill the database. Sensible companies means it is tuned; nothing, or all noise,
 means another pass at what the instructions say and what you passed the search.
