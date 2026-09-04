@@ -1,6 +1,6 @@
 import FilterableTable from "@/components/FilterableTable";
 import { payAmount, shortDate, shortPay, shortPlace } from "@/components/format";
-import { ORDER, rankOf, reading } from "@/components/status";
+import { ORDER, label, rankOf, reading } from "@/components/status";
 import Glyph from "@/components/Glyph";
 import { Badge, Out, Score, Stamp } from "@/components/ui";
 import { jobs, stats } from "@/lib/web/queries";
@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 export default function JobsPage() {
   const tallies = stats().map((group) => ({ status: group.status ?? "", n: group.n }));
   const counts = Object.fromEntries(tallies.map((tally) => [tally.status, tally.n]));
-  const count = (status: string) => counts[status] ?? 0;
   const rows = jobs()
     .slice()
     .sort(
@@ -40,7 +39,7 @@ export default function JobsPage() {
           legend: "Filter openings by status",
           facets: ORDER.filter((status) => counts[status]).map((status) => ({
             key: status,
-            label: reading(status).label,
+            label: label(status),
             count: counts[status],
             quiet: reading(status).stage === "closed",
             icon: <Glyph icon={reading(status).icon} />,

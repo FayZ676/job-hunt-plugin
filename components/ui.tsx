@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import Glyph from "./Glyph";
-import { reading } from "./status";
+import { label, reading } from "./status";
 
 export const ScreenHead = ({
   kicker,
@@ -139,14 +139,14 @@ const STAGE_TEXT: Record<string, string> = {
 
 export const Badge = ({ children }: { children: string | null | undefined }) => {
   if (!children) return null;
-  const { label, stage, icon } = reading(children);
+  const { stage, icon } = reading(children);
   return (
     <span
       className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs
       ${STAGE_TEXT[stage]}`}
     >
       <Glyph icon={icon} className={stage === "waiting" ? "text-signal" : ""} />
-      {label}
+      {label(children)}
     </span>
   );
 };

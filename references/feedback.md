@@ -56,7 +56,7 @@ history knows why it stopped moving:
 INSERT INTO events(key,note) VALUES('<key>','<what they said, and what changed>');
 ```
 
-**A complaint that rejects the posting is a decision about it.** Set it `not_pursued` — they have no
+**A complaint that rejects the posting is a decision about it.** Set it `passed` — they have no
 other way to clear a row they have ruled out — unless they said otherwise.
 
 ## After a change of criteria
