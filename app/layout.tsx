@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
 import Nav from "@/components/Nav";
 import Toaster from "@/components/Toaster";
@@ -28,21 +29,18 @@ export const metadata: Metadata = {
   description: "Your profile, and every job it is being matched against.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const chosen = (await cookies()).get("theme")?.value;
+  const theme = chosen === "readout" || chosen === "night" ? chosen : undefined;
+
   return (
     <html
       lang="en"
+      data-theme={theme}
       suppressHydrationWarning
       className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}
             h-full antialiased`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("theme");if(t==="readout"||t==="night")document.documentElement.dataset.theme=t}catch(e){}`,
-          }}
-        />
-      </head>
       <body className="min-h-full bg-base-200 text-base-content">
         <a
           href="#content"

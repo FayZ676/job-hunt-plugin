@@ -16,14 +16,14 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(KEY);
-    setTheme(stored === "readout" || stored === "night" ? stored : systemTheme());
+    const held = document.documentElement.dataset.theme;
+    setTheme(held === "readout" || held === "night" ? held : systemTheme());
   }, []);
 
   useEffect(() => {
     if (!theme) return;
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem(KEY, theme);
+    document.cookie = `${KEY}=${theme}; path=/; max-age=31536000; samesite=lax`;
   }, [theme]);
 
   const next = theme === "night" ? "readout" : "night";
