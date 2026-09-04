@@ -1,5 +1,5 @@
 import FilterableTable from "@/components/FilterableTable";
-import { shortDate, shortPay, shortPlace } from "@/components/format";
+import { payAmount, shortDate, shortPay, shortPlace } from "@/components/format";
 import { ORDER, rankOf, reading } from "@/components/status";
 import Glyph from "@/components/Glyph";
 import { Badge, Out, Score, Stamp } from "@/components/ui";
@@ -25,13 +25,13 @@ export default function JobsPage() {
       placeholder="company, title or location"
       empty="Nothing scanned yet."
       head={[
-        { label: "Company", width: "16%" },
-        { label: "Title", width: "26%" },
-        { label: "Score", width: "6%", numeric: true },
-        { label: "Status", width: "12%" },
-        { label: "Location", width: "20%", hideNarrow: true },
-        { label: "Pay", width: "8%", hideNarrow: true, numeric: true },
-        { label: "Seen", width: "6%", hideNarrow: true },
+        { label: "Company", width: "16%", sortable: true },
+        { label: "Title", width: "26%", sortable: true },
+        { label: "Score", width: "6%", numeric: true, sortable: true },
+        { label: "Status", width: "12%", sortable: true },
+        { label: "Location", width: "20%", hideNarrow: true, sortable: true },
+        { label: "Pay", width: "8%", hideNarrow: true, numeric: true, sortable: true },
+        { label: "Seen", width: "6%", hideNarrow: true, numeric: true, sortable: true },
         { label: "Resume", width: "6%", hideNarrow: true },
       ]}
       groups={[
@@ -53,6 +53,15 @@ export default function JobsPage() {
         mark: reading(job.status).stage === "waiting",
         facets: job.status ? [job.status] : [],
         haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
+        sort: [
+          job.company,
+          job.title,
+          job.score,
+          rankOf(job.status),
+          shortPlace(job.location) || (job.remote ? "Remote" : null),
+          payAmount(job.compensation),
+          job.first_seen,
+        ],
         cells: [
           <span key="c" className="font-medium">
             {job.company}

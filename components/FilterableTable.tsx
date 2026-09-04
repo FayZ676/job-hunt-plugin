@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import Ledger, { type LedgerColumn } from "./Ledger";
+import Ledger, { type LedgerColumn, type Sorted } from "./Ledger";
 import { Button } from "./ui";
 
 export type Facet = {
@@ -19,9 +19,17 @@ export type FilterRow = {
   facets: string[];
   haystack: string;
   cells: ReactNode[];
+  sort?: (string | number | null | undefined)[];
 };
 
 const PAGE = 15;
+
+function compare(left: string | number | null | undefined, right: string | number | null | undefined) {
+  if (left == null) return right == null ? 0 : 1;
+  if (right == null) return -1;
+  if (typeof left === "number" && typeof right === "number") return left - right;
+  return String(left).localeCompare(String(right), undefined, { numeric: true });
+}
 
 export default function FilterableTable({
   head,
@@ -39,6 +47,7 @@ export default function FilterableTable({
   const [picked, setPicked] = useState<Record<string, string | null>>({});
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  const [sorted, setSorted] = useState<Sorted | null>(null);
 
   const needle = query.trim().toLowerCase();
   const shown = rows.filter(
@@ -46,6 +55,24 @@ export default function FilterableTable({
       groups.every(({ name }) => !picked[name] || row.facets.includes(picked[name]!)) &&
       (!needle || row.haystack.toLowerCase().includes(needle)),
   );
+
+  const column = sorted ? head.findIndex((one) => one.label === sorted.label) : -1;
+  if (column >= 0) {
+    const way = sorted!.dir === "asc" ? 1 : -1;
+    shown.sort((left, right) => way * compare(left.sort?.[column], right.sort?.[column]));
+  }
+
+  const sort = (label: string) => {
+    const numeric = head.find((one) => one.label === label)?.numeric;
+    setSorted((was) =>
+      was?.label !== label
+        ? { label, dir: numeric ? "desc" : "asc" }
+        : was.dir === (numeric ? "desc" : "asc")
+          ? { label, dir: numeric ? "asc" : "desc" }
+          : null,
+    );
+    setPage(0);
+  };
 
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
   const here = Math.min(page, pages - 1);
@@ -102,6 +129,8 @@ export default function FilterableTable({
 
       <Ledger
         head={head}
+        sorted={sorted}
+        onSort={sort}
         rows={shown.slice(here * PAGE, here * PAGE + PAGE)}
         empty={narrowed ? "Nothing matches that. Clear the search and filters to see the rest." : empty}
       />

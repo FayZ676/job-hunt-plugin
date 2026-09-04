@@ -65,3 +65,12 @@ export function spanLabel(start: When | null, finish: When | null, current: bool
   if (opened && closed) return `${opened} — ${closed}`;
   return opened ?? closed;
 }
+
+export function payAmount(raw: string | null | undefined) {
+  const match = AMOUNT.exec(raw ?? "");
+  if (!match) return null;
+  const [, low, , rest] = match;
+  const start = Number(low.replace(/,/g, ""));
+  if (!Number.isFinite(start) || start === 0) return null;
+  return /hour/i.test(rest) ? start * 2080 : start;
+}

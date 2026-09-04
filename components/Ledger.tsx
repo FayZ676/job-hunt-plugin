@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { Empty, Mark } from "./ui";
 
@@ -10,7 +11,10 @@ export type LedgerColumn = {
   width?: string;
   numeric?: boolean;
   hideNarrow?: boolean;
+  sortable?: boolean;
 };
+
+export type Sorted = { label: string; dir: "asc" | "desc" };
 
 export type LedgerRow = {
   key: string;
@@ -23,6 +27,7 @@ export type LedgerRow = {
 };
 
 const HEAD = "eyebrow whitespace-nowrap px-3 py-2 text-left font-medium";
+const HEAD_SORT = "eyebrow whitespace-nowrap p-0 text-left font-medium";
 const SLIM = "eyebrow whitespace-nowrap py-2 text-left font-medium";
 
 export default function Ledger({
@@ -33,6 +38,8 @@ export default function Ledger({
   grip,
   action,
   headless,
+  sorted,
+  onSort,
 }: {
   head: LedgerColumn[];
   rows: LedgerRow[];
@@ -41,6 +48,8 @@ export default function Ledger({
   grip?: boolean;
   action?: boolean;
   headless?: boolean;
+  sorted?: Sorted | null;
+  onSort?: (label: string) => void;
 }) {
   const router = useRouter();
   const span = 2 + head.length + (grip ? 1 : 0) + (action ? 1 : 0);
@@ -75,15 +84,40 @@ export default function Ledger({
                   <span className="sr-only">Order</span>
                 </th>
               )}
-              {head.map((column) => (
-                <th
-                  key={column.label}
-                  scope="col"
-                  className={`${HEAD} ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
-                >
-                  {column.label}
-                </th>
-              ))}
+              {head.map((column) => {
+                const on = sorted?.label === column.label;
+                return (
+                  <th
+                    key={column.label}
+                    scope="col"
+                    aria-sort={on ? (sorted!.dir === "asc" ? "ascending" : "descending") : undefined}
+                    className={`${column.sortable && onSort ? HEAD_SORT : HEAD}
+                      ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
+                  >
+                    {column.sortable && onSort ? (
+                      <button
+                        type="button"
+                        onClick={() => onSort(column.label)}
+                        className={`group/sort flex w-full items-center justify-between gap-1 px-3 py-2 uppercase
+                          transition-colors hover:text-base-content ${on ? "text-base-content" : ""}`}
+                      >
+                        {column.label}
+                        {on ? (
+                          sorted!.dir === "asc" ? (
+                            <ArrowUp className="size-3" />
+                          ) : (
+                            <ArrowDown className="size-3" />
+                          )
+                        ) : (
+                          <ChevronsUpDown className="size-3 opacity-0 transition-opacity group-hover/sort:opacity-60" />
+                        )}
+                      </button>
+                    ) : (
+                      column.label
+                    )}
+                  </th>
+                );
+              })}
               {action && (
                 <th scope="col" className={HEAD}>
                   <span className="sr-only">Remove</span>
