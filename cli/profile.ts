@@ -11,7 +11,7 @@ program
   .argument("<section>.<name>")
   .argument("<value>")
   .action(
-    runs((field: string, value: string, options) => {
+    runs((field: string, value: string) => {
       set(field, value);
       console.log(`${field} = ${value}`);
     }),
@@ -22,7 +22,7 @@ program
   .description("drop an answer — the field goes back to blocking")
   .argument("<section>.<name>")
   .action(
-    runs((field: string, options) => {
+    runs((field: string) => {
       clear(field);
       console.log(`${field} unanswered — it blocks any form that asks for it`);
     }),

@@ -33,7 +33,7 @@ program
   .command("instructions")
   .description("everything scoring reads: standing profile facts, then the instructions")
   .action(
-    runs((options) => {
+    runs(() => {
       const { standing, text } = instructions();
       if (standing.length) {
         console.log("From the profile, and not up for debate:");
@@ -49,7 +49,7 @@ program
   .description("full description for the prospects that survived triage")
   .argument("<key...>")
   .action(
-    runs((keys: string[], options) => {
+    runs((keys: string[]) => {
       for (const key of keys) {
         const row = prospect(key);
         if (!row) {

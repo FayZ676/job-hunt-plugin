@@ -84,7 +84,7 @@ program
   .description("unstage, back to shortlisted")
   .argument("<key>")
   .action(
-    runs((key: string, options) => {
+    runs((key: string) => {
       drop(key);
       console.log(`${key} unstaged`);
     }),

@@ -55,7 +55,6 @@ const STAGED = TABLES.staged.omit({ key: true });
 const ANSWER = TABLES.staged_fields.omit({ key: true });
 const EVENT = TABLES.events.pick({ at: true, status: true, note: true });
 
-export type Job = z.infer<typeof VIEWS.triage>;
 export type Posting = z.infer<typeof VIEWS.prospects>;
 export type Prospect = {
   posting: Posting;
