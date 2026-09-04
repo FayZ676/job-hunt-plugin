@@ -36,6 +36,7 @@ export default function JobsPage() {
       groups={[
         {
           name: "status",
+          column: "Status",
           legend: "Filter openings by status",
           facets: ORDER.filter((status) => counts[status]).map((status) => ({
             key: status,
@@ -66,7 +67,7 @@ export default function JobsPage() {
             {job.company}
           </span>,
           job.title,
-          <Score key="s" value={job.score} />,
+          <Score key="s" value={job.score} why={job.reason} />,
           <Badge key="b">{job.status}</Badge>,
           shortPlace(job.location) || (job.remote ? "Remote" : "—"),
           shortPay(job.compensation) ? (

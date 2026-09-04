@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
+import Menu from "./Menu";
 import { Empty, Mark } from "./ui";
 
 export type LedgerColumn = {
@@ -12,6 +13,7 @@ export type LedgerColumn = {
   numeric?: boolean;
   hideNarrow?: boolean;
   sortable?: boolean;
+  filter?: ReactNode;
 };
 
 export type Sorted = { label: string; dir: "asc" | "desc" };
@@ -26,9 +28,13 @@ export type LedgerRow = {
   zone?: Record<string, unknown>;
 };
 
-const HEAD = "eyebrow whitespace-nowrap px-3 py-2 text-left font-medium";
-const HEAD_SORT = "eyebrow whitespace-nowrap p-0 text-left font-medium";
+const HEAD = "eyebrow whitespace-nowrap py-2 pl-3 pr-1 text-left font-medium";
 const SLIM = "eyebrow whitespace-nowrap py-2 text-left font-medium";
+
+const WAYS: { key: Sorted["dir"]; label: string; icon: ReactNode }[] = [
+  { key: "asc", label: "Ascending", icon: <ArrowUp className="size-3" /> },
+  { key: "desc", label: "Descending", icon: <ArrowDown className="size-3" /> },
+];
 
 export default function Ledger({
   head,
@@ -49,7 +55,7 @@ export default function Ledger({
   action?: boolean;
   headless?: boolean;
   sorted?: Sorted | null;
-  onSort?: (label: string) => void;
+  onSort?: (label: string, dir: Sorted["dir"] | null) => void;
 }) {
   const router = useRouter();
   const span = 2 + head.length + (grip ? 1 : 0) + (action ? 1 : 0);
@@ -91,30 +97,35 @@ export default function Ledger({
                     key={column.label}
                     scope="col"
                     aria-sort={on ? (sorted!.dir === "asc" ? "ascending" : "descending") : undefined}
-                    className={`${column.sortable && onSort ? HEAD_SORT : HEAD}
-                      ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
+                    className={`group/head ${HEAD} ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
                   >
-                    {column.sortable && onSort ? (
-                      <button
-                        type="button"
-                        onClick={() => onSort(column.label)}
-                        className={`group/sort flex w-full items-center justify-between gap-1 px-3 py-2 uppercase
-                          transition-colors hover:text-base-content ${on ? "text-base-content" : ""}`}
+                    <div className="flex items-center gap-0.5">
+                      <span className={`flex-1 transition-colors group-hover/head:text-base-content
+                        ${on ? "text-base-content" : ""}`}
                       >
                         {column.label}
-                        {on ? (
-                          sorted!.dir === "asc" ? (
-                            <ArrowUp className="size-3" />
-                          ) : (
-                            <ArrowDown className="size-3" />
-                          )
-                        ) : (
-                          <ChevronsUpDown className="size-3 opacity-0 transition-opacity group-hover/sort:opacity-60" />
-                        )}
-                      </button>
-                    ) : (
-                      column.label
-                    )}
+                      </span>
+                      {column.sortable && onSort && (
+                        <Menu
+                          legend={`Sort by ${column.label}`}
+                          icon={
+                            on ? (
+                              sorted!.dir === "asc" ? (
+                                <ArrowUp className="size-3" />
+                              ) : (
+                                <ArrowDown className="size-3" />
+                              )
+                            ) : (
+                              <ChevronsUpDown className="size-3" />
+                            )
+                          }
+                          choices={WAYS}
+                          picked={on ? sorted!.dir : null}
+                          onPick={(dir) => onSort(column.label, dir as Sorted["dir"] | null)}
+                        />
+                      )}
+                      {column.filter}
+                    </div>
                   </th>
                 );
               })}

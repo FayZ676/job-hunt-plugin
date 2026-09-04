@@ -166,7 +166,7 @@ export const Score = ({ value, why }: { value: number | null; why?: string | nul
   if (!why) return mark;
 
   return (
-    <span data-tip={why} className="tooltip tooltip-bottom tooltip-start cursor-help [&:before]:text-left">
+    <span data-tip={why} className="tooltip tooltip-loose tooltip-bottom cursor-help [&:before]:text-left">
       {mark}
     </span>
   );

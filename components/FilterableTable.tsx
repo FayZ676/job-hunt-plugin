@@ -2,16 +2,11 @@
 
 import { useState, type ReactNode } from "react";
 import Ledger, { type LedgerColumn, type Sorted } from "./Ledger";
+import { Filter } from "lucide-react";
+import Menu, { type Choice } from "./Menu";
 import { Button } from "./ui";
 
-export type Facet = {
-  key: string;
-  label: string;
-  count: number;
-  quiet?: boolean;
-  icon?: ReactNode;
-};
-export type FacetGroup = { name: string; legend?: string; facets: Facet[] };
+export type FacetGroup = { name: string; column: string; legend?: string; facets: Choice[] };
 export type FilterRow = {
   key: string;
   href?: string;
@@ -62,17 +57,31 @@ export default function FilterableTable({
     shown.sort((left, right) => way * compare(left.sort?.[column], right.sort?.[column]));
   }
 
-  const sort = (label: string) => {
-    const numeric = head.find((one) => one.label === label)?.numeric;
-    setSorted((was) =>
-      was?.label !== label
-        ? { label, dir: numeric ? "desc" : "asc" }
-        : was.dir === (numeric ? "desc" : "asc")
-          ? { label, dir: numeric ? "asc" : "desc" }
-          : null,
-    );
+  const sort = (label: string, dir: Sorted["dir"] | null) => {
+    setSorted(dir && { label, dir });
     setPage(0);
   };
+
+  const columns = head.map((one) => {
+    const group = groups.find((each) => each.column === one.label);
+    return group
+      ? {
+          ...one,
+          filter: (
+            <Menu
+              legend={group.legend ?? `Filter by ${group.name}`}
+              icon={<Filter className={`size-3 ${picked[group.name] ? "fill-current" : ""}`} />}
+              choices={group.facets}
+              picked={picked[group.name] ?? null}
+              onPick={(key) => {
+                setPicked({ ...picked, [group.name]: key });
+                setPage(0);
+              }}
+            />
+          ),
+        }
+      : one;
+  });
 
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
   const here = Math.min(page, pages - 1);
@@ -80,55 +89,21 @@ export default function FilterableTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <input
-          type="search"
-          aria-label={`Search ${placeholder}`}
-          className="w-full rounded-field border border-base-300 bg-base-100 px-3 py-1.5 text-sm
-            placeholder:text-soft md:w-72"
-          placeholder={placeholder}
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setPage(0);
-          }}
-        />
-
-        {groups.map((group) => (
-          <fieldset key={group.name} className="flex flex-wrap items-center gap-1.5">
-            <legend className="sr-only">{group.legend ?? `Filter by ${group.name}`}</legend>
-            {group.facets.map((facet) => {
-              const on = picked[group.name] === facet.key;
-              return (
-                <button
-                  key={facet.key}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => {
-                    setPicked({ ...picked, [group.name]: on ? null : facet.key });
-                    setPage(0);
-                  }}
-                  className={`inline-flex items-center gap-1.5 rounded-field border px-2 py-1
-                    text-xs transition-colors ${
-                      on
-                        ? "border-base-content bg-base-content text-base-100"
-                        : facet.quiet
-                          ? "border-base-300 text-soft hover:border-base-content hover:text-base-content"
-                          : "border-base-300 text-base-content hover:border-base-content"
-                    }`}
-                >
-                  {facet.icon}
-                  {facet.label}
-                  <span className={`tnum font-mono ${on ? "opacity-70" : "text-soft"}`}>{facet.count}</span>
-                </button>
-              );
-            })}
-          </fieldset>
-        ))}
-      </div>
+      <input
+        type="search"
+        aria-label={`Search ${placeholder}`}
+        className="w-full rounded-field border border-base-300 bg-base-100 px-3 py-1.5 text-sm
+          placeholder:text-soft md:w-72"
+        placeholder={placeholder}
+        value={query}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setPage(0);
+        }}
+      />
 
       <Ledger
-        head={head}
+        head={columns}
         sorted={sorted}
         onSort={sort}
         rows={shown.slice(here * PAGE, here * PAGE + PAGE)}

@@ -26,7 +26,9 @@ export const instructions = () => singleton("instructions");
 export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
 
-export const jobs = () => rows(VIEWS.triage, "SELECT * FROM triage");
+const TRIAGE = VIEWS.triage.extend({ reason: TABLES.postings.shape.reason });
+
+export const jobs = () => rows(TRIAGE, "SELECT triage.*, postings.reason FROM triage JOIN postings USING (key)");
 export const stats = () => rows(VIEWS.stats, "SELECT status, n FROM stats");
 
 export function career(): Employer[] {
