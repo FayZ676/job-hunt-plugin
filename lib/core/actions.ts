@@ -6,6 +6,7 @@ export type Action = {
   argument: string;
   accepts: Status[];
   asks?: string;
+  seed?: string;
 };
 
 export const ACTIONS: Action[] = [
@@ -21,7 +22,13 @@ export const ACTIONS: Action[] = [
     argument: "",
     accepts: [],
   },
-  { id: "search", does: "search and rule only", argument: "", accepts: [] },
+  {
+    id: "search",
+    does: "search and rule only",
+    argument: "[terms] --since <1h|24h|7d|6m> --max <n>",
+    seed: "--since 7d --max 20",
+    accepts: [],
+  },
   {
     id: "score",
     does: "score the prospects already found",
@@ -77,6 +84,8 @@ export function commanded(said: string): { action: string; argument: string } | 
 }
 
 export const shown = (id: string, argument: string) => (BY_ID.get(id)?.asks ? argument : asked(id, argument));
+
+export const seeded = (id: string) => BY_ID.get(id)?.seed;
 
 export const offered = (status: string | null | undefined) =>
   ACTIONS.filter((action) => action.accepts.some((allowed) => allowed === status));

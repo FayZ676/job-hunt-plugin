@@ -21,10 +21,12 @@ const clock = (started: string) =>
 export default function Console({
   actions,
   runs,
+  seeds,
   opening,
 }: {
   actions: Action[];
   runs: Run[];
+  seeds: Record<string, string>;
   opening: Opening | null;
 }) {
   const router = useRouter();
@@ -66,6 +68,7 @@ export default function Console({
     ? {
         asks: talks.asks!,
         about: about || undefined,
+        seeds,
         onDetach: () => setAbout(""),
         input,
         onSay: (words) => {

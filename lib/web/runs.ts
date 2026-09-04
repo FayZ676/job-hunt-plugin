@@ -3,15 +3,18 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { runnable, shown, asked } from "@/lib/core/actions";
+import { runnable, seeded, shown, asked } from "@/lib/core/actions";
 import { CAREER } from "@/lib/core/db";
 import { ROOT } from "@/lib/core/root";
 
 export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string; note?: string };
 
-export type Run = { id: string; action: string; title: string; started: string; standing: string };
+export type Run = { id: string; action: string; title: string; argument: string; started: string; standing: string };
 
-type Kept = { kind: "opened"; action: string; title: string; started: string } | { kind: "session"; id: string } | Line;
+type Kept =
+  | { kind: "opened"; action: string; title: string; started: string; argument?: string }
+  | { kind: "session"; id: string }
+  | Line;
 
 const LONGEST = 8000;
 const RUNS = path.join(CAREER, "runs");
@@ -108,11 +111,27 @@ export function listing(): Run[] {
       }
       const opened = kept.find((one) => one.kind === "opened");
       if (!opened) return null;
-      return { id, action: opened.action, title: opened.title, started: opened.started, standing: standing(id, kept) };
+      return {
+        id,
+        action: opened.action,
+        title: opened.title,
+        argument: opened.argument ?? "",
+        started: opened.started,
+        standing: standing(id, kept),
+      };
     })
     .filter(Boolean) as Run[];
 
   return runs.sort((one, two) => two.started.localeCompare(one.started));
+}
+
+export function remembered(runs: Run[]): Record<string, string> {
+  const held: Record<string, string> = {};
+  for (const run of runs.slice().reverse()) {
+    if (!seeded(run.action)) continue;
+    if (run.argument) held[run.action] = run.argument;
+  }
+  return held;
 }
 
 export function begin({
@@ -141,7 +160,7 @@ export function begin({
   if (run && !resume) throw new Error("that conversation cannot be continued");
 
   const started = new Date().toISOString();
-  if (!run) append(id, { kind: "opened", action: named, title: shown(named, words), started });
+  if (!run) append(id, { kind: "opened", action: named, title: shown(named, words), started, argument: words });
   append(id, { kind: "asked", body: resume ? words : shown(named, words), note });
 
   const child = spawn(

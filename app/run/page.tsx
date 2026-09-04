@@ -1,6 +1,6 @@
 import Console from "./Console";
 import { ACTIONS, runnable } from "@/lib/core/actions";
-import { listing } from "@/lib/web/runs";
+import { listing, remembered } from "@/lib/web/runs";
 
 export const dynamic = "force-dynamic";
 
@@ -9,11 +9,13 @@ const first = (held: string | string[] | undefined) => (Array.isArray(held) ? he
 export default async function RunPage({ searchParams }: PageProps<"/run">) {
   const asked = await searchParams;
   const action = first(asked.run);
+  const runs = listing();
 
   return (
     <Console
       actions={ACTIONS}
-      runs={listing()}
+      runs={runs}
+      seeds={remembered(runs)}
       opening={action && runnable(action) ? { action, argument: first(asked.key) ?? "" } : null}
     />
   );

@@ -167,6 +167,7 @@ function Turn({ line, lead }: { line: Line; lead: boolean }) {
 export type Asking = {
   asks: string;
   about?: string;
+  seeds?: Record<string, string>;
   onDetach?: () => void;
   onSay: (said: string) => void;
   input?: RefObject<HTMLTextAreaElement | null>;
@@ -207,7 +208,7 @@ function Menu({
           className={`grid w-full grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-base-200
             px-3 py-2 text-left last:border-0 ${index === at ? "bg-base-200" : ""}`}
         >
-          <span className="min-w-0 truncate font-mono text-sm">{asked(action.id, "")}</span>
+          <span className="min-w-0 truncate font-mono text-sm">{asked(action.id, action.argument)}</span>
           <span className="text-xs text-soft">{action.does}</span>
         </button>
       ))}
@@ -218,6 +219,7 @@ function Menu({
 function Composer({
   asks,
   about,
+  seeds,
   onDetach,
   onSay,
   input,
@@ -240,7 +242,7 @@ function Composer({
 
   const complete = (action: Action) => {
     setShut(true);
-    onSaid(`${asked(action.id, "")} `);
+    onSaid(`${asked(action.id, seeds?.[action.id] ?? action.seed ?? "")} `);
     input?.current?.focus();
   };
 
