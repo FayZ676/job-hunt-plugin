@@ -9,7 +9,7 @@ the way is a build input, kept next to the PDF so a later tweak is an edit and a
 
 ## Sources and restrictions
 
-**The profile tables are the only source.** `profile` supplies the header block and `education` the
+**The profile tables are the only source.** `identity` supplies the header block and `education` the
 Education section, verbatim. Bullets come only from `project_bullets`, numbers only from
 `project_metrics`.
 
@@ -196,7 +196,7 @@ Emit sections in this order, omitting any the JD makes irrelevant except Experie
 | Education | `entries` | From the `education` table, verbatim: `{"primary": "BS Computer Science", "secondary": "State University, May 2022"}` |
 | Skills | `labeled` | Labels: Languages, Frameworks, AI/ML, Cloud & Data, Delivery. Drop a label rather than pad it. Drawn from the selected bullets plus the JD's named technologies that appear in `project_technologies` — no aspirational entries, no soft skills. Order each label by depth of professional use, and never place a technology under an employer whose projects do not carry it |
 
-**Keep the contact line identical to the `profile` table** — it is the canonical header.
+**Keep the contact line identical to the `identity` table** — it is the canonical header.
 
 **The summary opens with the total years** — the largest honest number goes first, because a reader
 filtering on experience may discard the candidate before reaching the end of the sentence. Then the

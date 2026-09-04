@@ -28,9 +28,9 @@ and the score is wrong** — do not quietly compensate for prose you would have 
 
 ## The scale
 
-`settings.shortlist_threshold` — 7 by default — is the only number the app owns. So the live
-question between a 6 and a 7 is not how good the posting is but **whether they should spend an hour
-of their morning applying to it.**
+The `shortlist_threshold` row in `settings` — 7 by default — is the only number the app owns. So
+the live question between a 6 and a 7 is not how good the posting is but **whether they should
+spend an hour of their morning applying to it.**
 
 Every other gradation comes off their prose, which already ranks what costs nothing, what is a mark
 against, and what is a hard stop. Read the ranking there rather than inventing a rubric here.
@@ -67,6 +67,6 @@ Rows already past triage — staged, applied, interviewing — are history, not 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
 | Everything lands 7 or 8 | Scoring how good the posting is, not how well it fits them | The profile is the yardstick, not the market |
-| The shortlist is too big or too small | The threshold, not the scores | `settings.shortlist_threshold` |
+| The shortlist is too big or too small | The threshold, not the scores | The `shortlist_threshold` row in `settings` |
 | A hard stop scored well on content | Hard stops were applied last | They are a gate, not a term in a sum |
 | Yesterday's shortlist disagrees with today's prose | Old scores survived the edit | Clear score, reason **and** status, then re-score |
