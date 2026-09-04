@@ -51,7 +51,7 @@ export const ACTIONS: Action[] = [
     does: "take what you say is wrong and change what produced it",
     argument: "<what is wrong>",
     accepts: STATUSES,
-    asks: "Write a message ...",
+    asks: "Write a message, or type / for an action",
   },
 ];
 
@@ -61,6 +61,20 @@ export const asked = (id: string, argument: string) =>
   `/job${id === "all" ? "" : ` ${id}`}${argument ? ` ${argument}` : ""}`;
 
 export const runnable = (id: string) => BY_ID.has(id);
+
+export const suggested = (said: string): Action[] => {
+  if (!said.startsWith("/") || said.includes("\n")) return [];
+  const seek = said.trim().toLowerCase();
+  return ACTIONS.filter((action) => asked(action.id, "").startsWith(seek));
+};
+
+export function commanded(said: string): { action: string; argument: string } | null {
+  const parts = said.match(/^\/job(?:\s+(\S+)\s*([\s\S]*?))?\s*$/);
+  if (!parts) return null;
+  const [, id, argument = ""] = parts;
+  if (!id) return { action: "all", argument: "" };
+  return runnable(id) ? { action: id, argument } : null;
+}
 
 export const shown = (id: string, argument: string) => (BY_ID.get(id)?.asks ? argument : asked(id, argument));
 

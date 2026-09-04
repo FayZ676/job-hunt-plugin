@@ -7,7 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import { Output, useRun, type Asking } from "@/components/run";
 import { Button, Empty, Section, Split, Stack, Stamp } from "@/components/ui";
-import type { Action } from "@/lib/core/actions";
+import { commanded, type Action } from "@/lib/core/actions";
 import type { Run } from "@/lib/web/runs";
 
 export type Opening = { action: string; argument: string };
@@ -69,6 +69,11 @@ export default function Console({
         onDetach: () => setAbout(""),
         input,
         onSay: (words) => {
+          const command = commanded(words);
+          if (command) {
+            setAbout("");
+            return start(command.action, command.argument);
+          }
           if (run) return reply(words);
           setAbout("");
           start(talks.id, about ? `About ${about}:\n\n${words}` : words, about || undefined);
@@ -77,66 +82,39 @@ export default function Console({
     : null;
 
   const rail = (
-    <>
-      <Section title="Actions">
-        <Stack>
-          {actions.map((action) => {
-            const { id, does } = action;
-
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => pick(action)}
-                className="grid w-full grid-cols-[minmax(0,1fr)] items-center gap-x-2.5 gap-y-1
-                      border-b border-base-200 px-3 py-2.5 text-left transition-colors last:border-0
-                      hover:bg-base-200"
-              >
-                <span className="min-w-0 truncate font-mono text-sm">
-                  <span className="text-soft">/job</span>
-                  {id !== "all" && ` ${id}`}
-                </span>
-                <span className="col-start-1 text-xs text-soft">{does}</span>
-              </button>
-            );
-          })}
-        </Stack>
-      </Section>
-
-      <Section
-        title="Conversations"
-        aside={
-          talks && (
-            <Button onClick={() => pick(talks)} icon={<Glyph icon={Plus} size={12} />}>
-              New
-            </Button>
-          )
-        }
-      >
-        <Stack>
-          {runs.length === 0 ? (
-            <div className="px-3 py-6">
-              <Empty>Nothing has run yet.</Empty>
-            </div>
-          ) : (
-            runs.map((held) => (
-              <button
-                key={held.id}
-                type="button"
-                onClick={() => open(held.id)}
-                className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5
+    <Section
+      title="Conversations"
+      aside={
+        talks && (
+          <Button onClick={() => pick(talks)} icon={<Glyph icon={Plus} size={12} />}>
+            New
+          </Button>
+        )
+      }
+    >
+      <Stack>
+        {runs.length === 0 ? (
+          <div className="px-3 py-6">
+            <Empty>Nothing has run yet.</Empty>
+          </div>
+        ) : (
+          runs.map((held) => (
+            <button
+              key={held.id}
+              type="button"
+              onClick={() => open(held.id)}
+              className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5
                       gap-y-1 border-b border-base-200 px-3 py-2.5 text-left transition-colors
                       last:border-0 hover:bg-base-200 ${run === held.id ? "bg-base-200" : ""}`}
-              >
-                <span className="min-w-0 truncate font-mono text-sm">{held.title}</span>
-                <Stamp>{held.standing}</Stamp>
-                <span className="col-start-1 text-xs text-soft">{clock(held.started)}</span>
-              </button>
-            ))
-          )}
-        </Stack>
-      </Section>
-    </>
+            >
+              <span className="min-w-0 truncate font-mono text-sm">{held.title}</span>
+              <Stamp>{held.standing}</Stamp>
+              <span className="col-start-1 text-xs text-soft">{clock(held.started)}</span>
+            </button>
+          ))
+        )}
+      </Stack>
+    </Section>
   );
 
   return (
@@ -158,7 +136,7 @@ export default function Console({
             working={working}
             asking={asking}
             onStop={stop}
-            empty="Pick an action, or write a message."
+            empty="Nothing said yet."
           />
         </Stack>
       </Section>

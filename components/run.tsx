@@ -7,6 +7,7 @@ import { SendHorizontal, Square } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
 import { Button, Empty, Prose, Stamp } from "@/components/ui";
+import { asked, suggested, type Action } from "@/lib/core/actions";
 import type { Line } from "@/lib/web/runs";
 
 const parse = (line: string): Line | null => {
@@ -171,6 +172,49 @@ export type Asking = {
   input?: RefObject<HTMLTextAreaElement | null>;
 };
 
+function Menu({
+  actions,
+  at,
+  onHover,
+  onPick,
+}: {
+  actions: Action[];
+  at: number;
+  onHover: (at: number) => void;
+  onPick: (action: Action) => void;
+}) {
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    (box.current?.children[at] as HTMLElement | undefined)?.scrollIntoView({ block: "nearest" });
+  }, [at, actions]);
+
+  return (
+    <div
+      ref={box}
+      role="listbox"
+      aria-label="Actions"
+      className="mb-2 max-h-64 overflow-auto rounded-field border border-base-300 bg-base-100"
+    >
+      {actions.map((action, index) => (
+        <button
+          key={action.id}
+          type="button"
+          role="option"
+          aria-selected={index === at}
+          onMouseMove={() => onHover(index)}
+          onClick={() => onPick(action)}
+          className={`grid w-full grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-base-200
+            px-3 py-2 text-left last:border-0 ${index === at ? "bg-base-200" : ""}`}
+        >
+          <span className="min-w-0 truncate font-mono text-sm">{asked(action.id, "")}</span>
+          <span className="text-xs text-soft">{action.does}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Composer({
   asks,
   about,
@@ -182,7 +226,23 @@ function Composer({
   working,
   onStop,
 }: Asking & { said: string; onSaid: (said: string) => void; working?: boolean; onStop?: () => void }) {
+  const [at, setAt] = useState(0);
+  const [shut, setShut] = useState(false);
   const ready = said.trim().length > 0 && !working;
+  const menu = shut ? [] : suggested(said);
+  const chosen = menu[Math.min(at, menu.length - 1)];
+
+  const write = (words: string) => {
+    setAt(0);
+    setShut(false);
+    onSaid(words);
+  };
+
+  const complete = (action: Action) => {
+    setShut(true);
+    onSaid(`${asked(action.id, "")} `);
+    input?.current?.focus();
+  };
 
   return (
     <form
@@ -191,9 +251,11 @@ function Composer({
         event.preventDefault();
         if (!ready) return;
         onSay(said.trim());
-        onSaid("");
+        write("");
       }}
     >
+      {chosen && <Menu actions={menu} at={menu.indexOf(chosen)} onHover={setAt} onPick={complete} />}
+
       {about && (
         <span
           className="mb-2 flex w-fit items-center gap-1 rounded-field border border-base-300
@@ -221,11 +283,19 @@ function Composer({
           placeholder:text-soft focus:outline-none"
         style={{ fieldSizing: "content" } as React.CSSProperties}
         value={said}
-        onChange={(event) => onSaid(event.target.value)}
+        onChange={(event) => write(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key !== "Enter" || event.shiftKey) return;
+          if (chosen && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+            event.preventDefault();
+            const step = event.key === "ArrowDown" ? 1 : menu.length - 1;
+            return setAt((menu.indexOf(chosen) + step) % menu.length);
+          }
+          if (chosen && event.key === "Escape") return setShut(true);
+          if (event.key !== "Enter" && event.key !== "Tab") return;
+          if (event.shiftKey) return;
           event.preventDefault();
-          event.currentTarget.form?.requestSubmit();
+          if (chosen) return complete(chosen);
+          if (event.key === "Enter") event.currentTarget.form?.requestSubmit();
         }}
       />
 
