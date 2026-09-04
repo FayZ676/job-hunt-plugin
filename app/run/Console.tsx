@@ -73,12 +73,12 @@ export default function Console({
         onDetach: () => setAbout(""),
         input,
         onSay: (words) => {
+          if (run) return reply(words);
           const command = commanded(words);
           if (command) {
             setAbout("");
             return start(command.action, command.argument);
           }
-          if (run) return reply(words);
           setAbout("");
           start(talks.id, about ? `About ${about}:\n\n${words}` : words, about || undefined);
         },
