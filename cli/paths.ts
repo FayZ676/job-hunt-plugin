@@ -1,7 +1,15 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { PATHS } from "../lib/core/db.ts";
 
-const requested = process.argv.slice(2).length ? process.argv.slice(2) : ["career"];
+const asked = process.argv.slice(2);
+if (asked.includes("--help")) {
+  console.log(`Usage: job-paths [${Object.keys(PATHS).join("|")}]
+
+Print an absolute path the skill owns. Defaults to career.`);
+  process.exit(0);
+}
+
+const requested = asked.length ? asked : ["career"];
 const unknown = requested.find((name) => !(name in PATHS));
 if (unknown) {
   console.error(`unknown path '${unknown}'; choose from ${Object.keys(PATHS).join(", ")}`);

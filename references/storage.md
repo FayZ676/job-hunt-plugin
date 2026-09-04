@@ -11,9 +11,8 @@ where it is rather than resolving against the working directory:
 CAREER=$(job-paths career)
 ```
 
-`job-paths` also answers `db`, `resumes` and `submitted`. Default `~/data/job`; `JOB_CAREER_DIR`
-overrides it. **Paths stored in the database are absolute** — a relative one breaks the next run
-started somewhere else.
+Default `~/data/job`; `JOB_CAREER_DIR` overrides it. **Paths stored in the database are absolute** —
+a relative one breaks the next run started somewhere else.
 
 ## One table, three writers
 
@@ -42,11 +41,11 @@ row impossible to write. Two things it does not say:
 
 ## The profile
 
-**Every column says what it holds**, and `$Q --schema` is where it says it. **The profile answers out
-of one single-row table** — `identity`, one column per question a form can ask, so
-`<section>.<name>` is a table and a column. `experience` answers the same way but is a view:
-the totals count themselves off `employers`, so a stored number cannot go stale or disagree with the
-resume. The dashboard's controls and the CLI's errors are both read off `lib/core/schema.ts`, so
+**Every column says what it holds, and the profile answers out of one single-row table** —
+`identity`, one column per question a form can ask, so `<section>.<name>` is a table and a column.
+`experience` answers the same way but is a view: the totals count themselves off `employers`, so a
+stored number cannot go stale or disagree with the resume. The dashboard's controls and the CLI's
+errors are both read off `lib/core/schema.ts`, so
 there is one copy and not two: a column added there arrives in both on the next connect, and the
 Profile page groups it by where it was declared.
 

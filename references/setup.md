@@ -27,8 +27,7 @@ and whether an employer is still `current` are what a start date gets computed f
 
 Never hand them a file to edit, and never make the first pass a form — the interview is a
 conversation. Afterwards they revise themselves in the dashboard, whose Profile page writes every
-one of these tables, so tell them where it is once the profile stands up. `$Q --schema` documents
-every table. Cover:
+one of these tables, so tell them where it is once the profile stands up. Cover:
 
 - **Identity** (`identity.*`) — contact details, work authorization, when they could start, and
   the EEO questions forms ask last, and the compensation floor. The
