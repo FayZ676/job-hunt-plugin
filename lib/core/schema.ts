@@ -106,18 +106,7 @@ export const TABLES = {
       reason: z.string().nullable(),
       resume: z.string().nullable(),
       status: z
-        .enum([
-          "new",
-          "scored",
-          "shortlisted",
-          "skipped",
-          "staged",
-          "applied",
-          "interviewing",
-          "rejected",
-          "not_pursued",
-          "closed",
-        ])
+        .enum(["new", "shortlisted", "skipped", "staged", "applied", "interviewing", "rejected", "not_pursued"])
         .nullable(),
     })
     .meta({

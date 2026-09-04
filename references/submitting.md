@@ -27,7 +27,14 @@ you have seen in a snapshot.
 **On a Lever posting, the user clicks.** hCaptcha gates the submit button, and the challenge is
 never attempted — a captcha is an explicit request for a person. Hand the open tab over.
 
-## Recording a rejection
+## Recording what comes back
 
-Only a reported rejection. Do nothing for a role that is merely quiet. `job-submit rejected` takes
-the shape in `--note` — days from submission, and whether any interview stage happened.
+Only what the user reports. Do nothing for a role that is merely quiet.
+
+`job-submit rejected` takes the shape in `--note` — days from submission, and whether any interview
+stage happened. **When they report an interview instead, move the row on** — nothing else writes
+this status, and a row left at `applied` reads as unanswered:
+
+```sql
+UPDATE postings SET status='interviewing' WHERE key='<key>';
+```

@@ -5,8 +5,6 @@ import {
   CircleAlert,
   CircleDashed,
   CircleDot,
-  Gauge,
-  Lock,
   MessagesSquare,
   Minus,
   Send,
@@ -28,12 +26,10 @@ const READINGS: Record<Status, Reading> = {
   staged: { label: "ready to send", stage: "waiting", rank: 1, icon: Send },
   interviewing: { label: "interviewing", stage: "live", rank: 2, icon: MessagesSquare },
   applied: { label: "applied", stage: "live", rank: 3, icon: Check },
-  scored: { label: "scored", stage: "live", rank: 4, icon: Gauge },
-  new: { label: "new", stage: "live", rank: 5, icon: Circle },
-  rejected: { label: "rejected", stage: "closed", rank: 6, icon: X },
-  not_pursued: { label: "passed", stage: "closed", rank: 7, icon: Minus },
-  skipped: { label: "skipped", stage: "closed", rank: 8, icon: SkipForward },
-  closed: { label: "closed", stage: "closed", rank: 9, icon: Lock },
+  new: { label: "new", stage: "live", rank: 4, icon: Circle },
+  rejected: { label: "rejected", stage: "closed", rank: 5, icon: X },
+  not_pursued: { label: "passed", stage: "closed", rank: 6, icon: Minus },
+  skipped: { label: "skipped", stage: "closed", rank: 7, icon: SkipForward },
 };
 
 const FORM_READINGS: Record<FormStatus, Reading> = {

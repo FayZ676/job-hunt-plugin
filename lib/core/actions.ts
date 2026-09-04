@@ -26,7 +26,7 @@ export const ACTIONS: Action[] = [
     id: "score",
     does: "score the prospects already found",
     argument: "[key]",
-    accepts: ["new", "scored", "shortlisted", "skipped"],
+    accepts: ["new", "shortlisted", "skipped"],
   },
   {
     id: "resume",
