@@ -2,42 +2,47 @@ export const DENSITY = {
   tight: {
     body: 9.5,
     name: 17.0,
+    name_gap: 4.0,
     section: 10.5,
     leading: 0.58,
     para_gap: 4.0,
-    sec_above: 7.0,
+    sec_above: 10.0,
     sec_below: 3.0,
     rule_gap: 1.5,
-    role_gap: 4.0,
+    role_gap: 5.0,
     bullet_gap: 0.3,
   },
   normal: {
     body: 10.0,
     name: 18.0,
+    name_gap: 6.0,
     section: 11.0,
     leading: 0.65,
     para_gap: 5.5,
-    sec_above: 9.5,
+    sec_above: 13.0,
     sec_below: 4.0,
     rule_gap: 2.0,
-    role_gap: 5.5,
+    role_gap: 6.5,
     bullet_gap: 0.4,
   },
   roomy: {
     body: 10.5,
     name: 19.0,
+    name_gap: 8.0,
     section: 11.5,
     leading: 0.72,
     para_gap: 7.0,
-    sec_above: 12.0,
+    sec_above: 16.5,
     sec_below: 5.0,
     rule_gap: 2.5,
-    role_gap: 7.0,
+    role_gap: 8.0,
     bullet_gap: 0.5,
   },
 };
 
 export type Density = keyof typeof DENSITY;
+
+export const FONTS = { body: "Carlito" };
 
 export const DEFAULT_MARGINS = { top: 0.5, bottom: 0.5, left: 0.7, right: 0.7 };
 
@@ -90,12 +95,12 @@ export function rich(value: unknown): string {
 
 export function build(spec: Record<string, any>, density: Density) {
   const d = DENSITY[density];
-  const font = spec.font ?? "Calibri";
+  const font = spec.font ?? FONTS.body;
   const m = { ...DEFAULT_MARGINS, ...(spec.margins ?? {}) };
   const L = [
     `#set page(paper: "us-letter", margin: (top: ${m.top}in, bottom: ${m.bottom}in, ` +
       `left: ${m.left}in, right: ${m.right}in))`,
-    `#set text(font: (${s(font)}, "Carlito", "Helvetica Neue", "Arial"), size: ${d.body}pt)`,
+    `#set text(font: ${s(font)}, size: ${d.body}pt)`,
     `#set par(leading: ${d.leading}em, spacing: ${d.para_gap}pt, justify: false)`,
     "#set smartquote(enabled: false)",
     '#show link: set text(fill: rgb("#0563c1"))',
@@ -107,7 +112,7 @@ export function build(spec: Record<string, any>, density: Density) {
     "  #line(length: 100%, stroke: 0.5pt)",
     "]",
     "",
-    `#block(below: 2pt, width: 100%)[#align(center)[#text(size: ${d.name}pt, weight: "bold")` +
+    `#block(below: ${d.name_gap}pt, width: 100%)[#align(center)[#text(size: ${d.name}pt, weight: "bold")` +
       `[#text(${s(spec.name ?? "")})]]]`,
   ];
 
@@ -127,7 +132,7 @@ export function build(spec: Record<string, any>, density: Density) {
       case "labeled":
         L.push(
           (section.items ?? [])
-            .map((item: any) => `#strong(text(${s(item.label ?? "")}))#text(": ")${inline(item.text ?? "")}`)
+            .map((item: any) => `#strong(text(${s(`${item.label ?? ""}:`)}))#text(" ")${inline(item.text ?? "")}`)
             .join(" \\\n"),
         );
         break;

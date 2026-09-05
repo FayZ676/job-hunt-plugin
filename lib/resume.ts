@@ -4,8 +4,16 @@ import os from "node:os";
 import path from "node:path";
 
 import { db, one } from "./core/db.ts";
+import { ROOT } from "./core/root.ts";
 import { VIEWS } from "./core/schema.ts";
-import { DENSITY, build as markup, type Density } from "./core/typst.ts";
+import { DENSITY, FONTS, build as markup, type Density } from "./core/typst.ts";
+
+const FONT_DIR = path.join(ROOT, "assets", "fonts");
+
+function resolved(family: string) {
+  const listed = spawnSync("typst", ["fonts", "--font-path", FONT_DIR], { encoding: "utf8" });
+  return listed.stdout.split("\n").includes(family);
+}
 
 export type Built = { out: string; density: Density; recorded: string | null };
 
@@ -24,6 +32,12 @@ export function build(
     throw new Error(`--density must be one of ${Object.keys(DENSITY).join(", ")}, got '${density}'`);
 
   const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
+  const font = spec.font ?? FONTS.body;
+  if (!resolved(font))
+    throw new Error(
+      `font '${font}' is not installed, and typst would silently substitute one with different ` +
+        `metrics — the page would reflow. Install it, or drop "font" from the spec to use ${FONTS.body}.`,
+    );
   const out = path.resolve(outPath || `${stem(specPath)}.pdf`);
   const source = options.keepTyp
     ? `${stem(out)}.typ`
@@ -31,7 +45,7 @@ export function build(
   fs.writeFileSync(source, markup(spec, density), "utf8");
 
   try {
-    const ran = spawnSync("typst", ["compile", source, out], {
+    const ran = spawnSync("typst", ["compile", "--font-path", FONT_DIR, source, out], {
       encoding: "utf8",
     });
     if (ran.status) throw new Error(`typst failed:\n${ran.stderr}`);

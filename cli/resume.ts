@@ -1,6 +1,6 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { open } from "../lib/core/db.ts";
-import { DEFAULT_MARGINS, DENSITY, SECTION_TYPES } from "../lib/core/typst.ts";
+import { DEFAULT_MARGINS, DENSITY, FONTS, SECTION_TYPES } from "../lib/core/typst.ts";
 import { build } from "../lib/resume.ts";
 import { guard, action } from "./kit.ts";
 
@@ -14,7 +14,7 @@ const SPEC_HELP = (types: string) =>
   "sections": [{"heading": "Summary", "type": "paragraph", "text": "…"}]
 }
 
-Optional top-level keys: "font" (default Calibri), "margins" (${JSON.stringify(DEFAULT_MARGINS)}, inches).
+Optional top-level keys: "font" (default ${FONTS.body}), "margins" (${JSON.stringify(DEFAULT_MARGINS)}, inches).
 Contact entries are joined with " | "; a plain string renders as text, {text, link}
 as a hyperlink. Every section is {heading, type, …}; the heading renders uppercase,
 bold, with a full-width rule.
