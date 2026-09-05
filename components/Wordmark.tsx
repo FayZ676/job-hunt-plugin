@@ -1,4 +1,12 @@
-export default function Wordmark({ size = 17, className = "" }: { size?: number; className?: string }) {
+export default function Wordmark({
+  size = 17,
+  working = false,
+  className = "",
+}: {
+  size?: number;
+  working?: boolean;
+  className?: string;
+}) {
   return (
     <span
       style={{ fontSize: size }}
@@ -7,7 +15,10 @@ export default function Wordmark({ size = 17, className = "" }: { size?: number;
     >
       <span className="text-soft">/</span>
       <span className="font-semibold text-base-content">job</span>
-      <span aria-hidden className="ml-[0.14em] inline-block h-[0.95em] w-[0.5em] bg-mark" />
+      <span
+        aria-hidden
+        className={`ml-[0.14em] inline-block h-[0.95em] w-[0.5em] bg-mark ${working ? "animate-blink" : ""}`}
+      />
     </span>
   );
 }

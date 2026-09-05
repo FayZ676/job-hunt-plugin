@@ -19,7 +19,12 @@ const KEPT = "deck";
 const clock = (started: string) =>
   new Date(started).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
-type Deck = { shown: boolean; toggle: () => void; run: (action: string, argument?: string) => void };
+type Deck = {
+  shown: boolean;
+  working: boolean;
+  toggle: () => void;
+  run: (action: string, argument?: string) => void;
+};
 
 const DeckContext = createContext<Deck | null>(null);
 
@@ -141,7 +146,7 @@ export default function Deck({
   const title = here?.title ?? "New chat";
 
   return (
-    <DeckContext.Provider value={{ shown, toggle, run: fire }}>
+    <DeckContext.Provider value={{ shown, working: busy || working, toggle, run: fire }}>
       {nav}
       <div className={`transition-[padding] duration-200 ${shown ? "xl:pl-[30rem]" : ""}`}>{children}</div>
 
