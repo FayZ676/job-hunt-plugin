@@ -18,6 +18,7 @@ export default function JobsPage() {
         (right.score ?? -1) - (left.score ?? -1) ||
         (right.first_seen ?? "").localeCompare(left.first_seen ?? ""),
     );
+  const tailored = rows.filter((job) => job.resume).length;
 
   return (
     <FilterableTable
@@ -45,12 +46,21 @@ export default function JobsPage() {
             icon: <Glyph icon={reading(status).icon} />,
           })),
         },
+        {
+          name: "resume",
+          column: "Resume",
+          legend: "Filter openings by résumé",
+          facets: [
+            { key: "resume", label: "Résumé", count: tailored },
+            { key: "no-resume", label: "None", count: rows.length - tailored, quiet: true },
+          ].filter((facet) => facet.count),
+        },
       ]}
       rows={rows.map((job) => ({
         key: job.key,
         href: `/jobs/${encodeURIComponent(job.key)}`,
         mark: reading(job.status).stage === "waiting",
-        facets: job.status ? [job.status] : [],
+        facets: [...(job.status ? [job.status] : []), job.resume ? "resume" : "no-resume"],
         sort: [
           job.company,
           job.title,
