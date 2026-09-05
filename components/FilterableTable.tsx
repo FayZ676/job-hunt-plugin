@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Ledger, { type LedgerColumn, type Sorted } from "./Ledger";
 import { Filter } from "lucide-react";
+import Find from "./Find";
 import Menu, { type Choice } from "./Menu";
 import { Button } from "./ui";
 
@@ -12,7 +13,6 @@ export type FilterRow = {
   href?: string;
   mark?: boolean;
   facets: string[];
-  haystack: string;
   cells: ReactNode[];
   sort?: (string | number | null | undefined)[];
 };
@@ -30,25 +30,30 @@ export default function FilterableTable({
   head,
   rows,
   groups = [],
-  placeholder,
   empty,
 }: {
   head: LedgerColumn[];
   rows: FilterRow[];
   groups?: FacetGroup[];
-  placeholder: string;
   empty?: string;
 }) {
   const [picked, setPicked] = useState<Record<string, string | null>>({});
-  const [query, setQuery] = useState("");
+  const [hunted, setHunted] = useState<Record<string, string>>({});
   const [page, setPage] = useState(0);
   const [sorted, setSorted] = useState<Sorted | null>(null);
 
-  const needle = query.trim().toLowerCase();
+  const needles = head
+    .map((one, index) => ({ index, needle: (hunted[one.label] ?? "").trim().toLowerCase() }))
+    .filter(({ needle }) => needle !== "");
+
   const shown = rows.filter(
     (row) =>
       groups.every(({ name }) => !picked[name] || row.facets.includes(picked[name]!)) &&
-      (!needle || row.haystack.toLowerCase().includes(needle)),
+      needles.every(({ index, needle }) =>
+        String(row.sort?.[index] ?? "")
+          .toLowerCase()
+          .includes(needle),
+      ),
   );
 
   const column = sorted ? head.findIndex((one) => one.label === sorted.label) : -1;
@@ -64,6 +69,20 @@ export default function FilterableTable({
 
   const columns = head.map((one) => {
     const group = groups.find((each) => each.column === one.label);
+    if (one.searchable)
+      return {
+        ...one,
+        filter: (
+          <Find
+            legend={`Search ${one.label.toLowerCase()}`}
+            value={hunted[one.label] ?? ""}
+            onChange={(value) => {
+              setHunted({ ...hunted, [one.label]: value });
+              setPage(0);
+            }}
+          />
+        ),
+      };
     return group
       ? {
           ...one,
@@ -85,29 +104,16 @@ export default function FilterableTable({
 
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
   const here = Math.min(page, pages - 1);
-  const narrowed = needle !== "" || groups.some(({ name }) => picked[name]);
+  const narrowed = needles.length > 0 || groups.some(({ name }) => picked[name]);
 
   return (
     <div className="space-y-4">
-      <input
-        type="search"
-        aria-label={`Search ${placeholder}`}
-        className="w-full rounded-field border border-base-300 bg-base-100 px-3 py-1.5 text-sm
-          placeholder:text-soft md:w-72"
-        placeholder={placeholder}
-        value={query}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          setPage(0);
-        }}
-      />
-
       <Ledger
         head={columns}
         sorted={sorted}
         onSort={sort}
         rows={shown.slice(here * PAGE, here * PAGE + PAGE)}
-        empty={narrowed ? "Nothing matches that. Clear the search and filters to see the rest." : empty}
+        empty={narrowed ? "Nothing matches that. Clear the column filters to see the rest." : empty}
       />
 
       {pages > 1 && (

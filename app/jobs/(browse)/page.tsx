@@ -21,14 +21,13 @@ export default function JobsPage() {
 
   return (
     <FilterableTable
-      placeholder="company, title or location"
       empty="Nothing scanned yet."
       head={[
-        { label: "Company", width: "16%", sortable: true },
-        { label: "Title", width: "26%", sortable: true },
+        { label: "Company", width: "16%", sortable: true, searchable: true },
+        { label: "Title", width: "26%", sortable: true, searchable: true },
         { label: "Score", width: "6%", numeric: true, sortable: true },
         { label: "Status", width: "12%", sortable: true },
-        { label: "Location", width: "20%", hideNarrow: true, sortable: true },
+        { label: "Location", width: "20%", hideNarrow: true, sortable: true, searchable: true },
         { label: "Pay", width: "8%", hideNarrow: true, numeric: true, sortable: true },
         { label: "Seen", width: "6%", hideNarrow: true, numeric: true, sortable: true },
         { label: "Resume", width: "6%", hideNarrow: true },
@@ -52,7 +51,6 @@ export default function JobsPage() {
         href: `/jobs/${encodeURIComponent(job.key)}`,
         mark: reading(job.status).stage === "waiting",
         facets: job.status ? [job.status] : [],
-        haystack: `${job.company} ${job.title} ${job.location ?? ""}`,
         sort: [
           job.company,
           job.title,
