@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
+import Deck from "@/components/Deck";
 import Nav from "@/components/Nav";
 import Toaster from "@/components/Toaster";
+import { ACTIONS } from "@/lib/core/actions";
 import { DB } from "@/lib/core/db";
+import { listing, remembered } from "@/lib/web/runs";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -24,6 +27,8 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "600"],
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Job",
   description: "Your profile, and every job it is being matched against.",
@@ -32,6 +37,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const chosen = (await cookies()).get("theme")?.value;
   const theme = chosen === "readout" || chosen === "night" ? chosen : undefined;
+  const runs = listing();
 
   return (
     <html
@@ -49,10 +55,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <Nav db={DB} />
-        <main id="content" className="mx-auto min-w-0 max-w-[104rem] px-4 py-7 pb-24 md:px-6">
-          {children}
-        </main>
+        <Deck actions={ACTIONS} runs={runs} seeds={remembered(runs)} nav={<Nav db={DB} />}>
+          <main id="content" className="mx-auto min-w-0 max-w-[104rem] px-4 py-7 pb-24 md:px-6">
+            {children}
+          </main>
+        </Deck>
         <Toaster />
       </body>
     </html>

@@ -1,6 +1,6 @@
 # Feedback
 
-The argument is what the user said was wrong, in their words. Sent from the run page about anything,
+The argument is what the user said was wrong, in their words. Sent from the sidebar about anything,
 or from a job's page — which prefixes the posting it was sent from, so the rest of the argument is
 only their complaint.
 

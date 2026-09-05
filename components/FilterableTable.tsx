@@ -17,7 +17,7 @@ export type FilterRow = {
   sort?: (string | number | null | undefined)[];
 };
 
-const PAGE = 15;
+const PAGE = 10;
 
 function compare(left: string | number | null | undefined, right: string | number | null | undefined) {
   if (left == null) return right == null ? 0 : 1;

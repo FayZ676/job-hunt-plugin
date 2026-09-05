@@ -91,10 +91,15 @@
   }
 }
 
+html {
+  overscroll-behavior-y: none;
+}
+
 :root {
   --soft: oklch(50% 0.018 258);
   --signal: oklch(54% 0.118 62);
   --label: 13rem;
+  --nav: 2.75rem;
 }
 
 [data-theme="night"] {
