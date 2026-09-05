@@ -103,13 +103,13 @@ export function useRun() {
   }, []);
 
   const forget = useCallback(
-    async (body: unknown) => {
+    async (id: string, open: boolean) => {
       try {
-        await ask(body);
+        await ask({ erase: id });
       } catch (error) {
         return setLines((standing) => [...standing, { kind: "wrong", body: (error as Error).message }]);
       }
-      detach();
+      if (open) detach();
       router.refresh();
     },
     [detach, router],
@@ -126,8 +126,9 @@ export function useRun() {
     stop: () => {
       if (run) void told({ stop: run });
     },
-    erase: () => {
-      if (run) void forget({ erase: run });
+    erase: (id?: string) => {
+      const held = id ?? run;
+      if (held) void forget(held, held === run);
     },
   };
 }

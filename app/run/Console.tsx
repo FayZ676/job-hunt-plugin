@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
+import Options from "@/components/Options";
 import { Output, useRun, type Asking } from "@/components/run";
-import { Button, Empty, Section, Split, Stack, Stamp } from "@/components/ui";
+import { Section, Split, Stack, Stamp } from "@/components/ui";
 import { commanded, type Action } from "@/lib/core/actions";
 import { WAITING, WORKING } from "@/lib/core/standing";
 import type { Run } from "@/lib/web/runs";
@@ -85,31 +86,30 @@ export default function Console({
       }
     : null;
 
-  const rail = (
-    <Section
-      title="Conversations"
-      aside={
-        talks && (
-          <Button onClick={() => pick(talks)} icon={<Glyph icon={Plus} size={12} />}>
-            New
-          </Button>
-        )
-      }
+  const fresh = talks && (
+    <button
+      type="button"
+      onClick={() => pick(talks)}
+      className="flex w-full items-center gap-1.5 px-3 py-2.5 text-left text-sm text-soft
+        transition-colors hover:bg-base-200 hover:text-base-content"
     >
-      <Stack>
-        {runs.length === 0 ? (
-          <div className="px-3 py-6">
-            <Empty>Nothing has run yet.</Empty>
-          </div>
-        ) : (
-          runs.map((held) => (
+      <Glyph icon={Plus} size={12} />
+      New chat
+    </button>
+  );
+
+  const rail = (
+    <Section title="Conversations">
+      <Stack foot={runs.length > 0 ? fresh : null}>
+        {runs.length === 0 && fresh}
+        {runs.map((held) => (
+          <div key={held.id} className="group/row relative border-b border-base-200 last:border-0">
             <button
-              key={held.id}
               type="button"
               onClick={() => open(held.id)}
-              className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5
-                      gap-y-1 border-b border-base-200 px-3 py-2.5 text-left transition-colors
-                      last:border-0 hover:bg-base-200 ${run === held.id ? "bg-base-200" : ""}`}
+              className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1
+                      px-3 py-2.5 text-left transition-colors
+                      hover:bg-base-200 ${run === held.id ? "bg-base-200" : ""}`}
             >
               <span className="col-span-2 min-w-0 truncate font-mono text-sm">{held.title}</span>
               <span className="text-xs text-soft">{clock(held.started)}</span>
@@ -123,24 +123,36 @@ export default function Console({
                 <Stamp>{held.standing}</Stamp>
               </span>
             </button>
-          ))
-        )}
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 flex border-l border-base-300
+                bg-base-200 opacity-0 transition-opacity group-hover/row:pointer-events-auto
+                group-hover/row:opacity-100 has-[[aria-expanded='true']]:pointer-events-auto
+                has-[[aria-expanded='true']]:opacity-100"
+            >
+              <Options
+                legend={`Options for ${held.title}`}
+                className="h-full px-2.5"
+                lit
+                options={[
+                  {
+                    key: "erase",
+                    label: "Delete chat",
+                    tone: "grave",
+                    icon: <Glyph icon={Trash2} size={13} />,
+                    onPick: () => confirm(ERASE) && erase(held.id),
+                  },
+                ]}
+              />
+            </div>
+          </div>
+        ))}
       </Stack>
     </Section>
   );
 
   return (
     <Split rail={rail}>
-      <Section
-        title="Conversation"
-        aside={
-          run && (
-            <Button onClick={() => confirm(ERASE) && erase()} tone="grave" icon={<Glyph icon={Trash2} size={12} />}>
-              Delete
-            </Button>
-          )
-        }
-      >
+      <Section title="Conversation">
         <Stack>
           <Output
             className="pane"
