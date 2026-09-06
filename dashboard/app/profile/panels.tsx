@@ -3,7 +3,7 @@ import { Identity, Instructions } from "./sections";
 import RecordList, { type Record_ } from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
 import { career, education } from "@/lib/web/queries";
-import type { Table } from "@/lib/core/schema";
+import type { Table } from "@/core/schema";
 import type { ReactNode } from "react";
 import { BriefcaseBusiness, GraduationCap, IdCard, NotebookPen, type LucideIcon } from "lucide-react";
 

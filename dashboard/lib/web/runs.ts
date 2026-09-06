@@ -3,10 +3,10 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { runnable, seeded, shown, asked } from "@/lib/core/actions";
-import { CAREER } from "@/lib/core/db";
-import { ROOT } from "@/lib/core/root";
-import { CLOSING, DONE, WORKING, declared, type Standing } from "@/lib/core/standing";
+import { runnable, seeded, shown, asked } from "@/core/actions";
+import { CAREER } from "@/core/db";
+import { ROOT } from "@/core/root";
+import { CLOSING, DONE, WORKING, declared, type Standing } from "@/core/standing";
 
 export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string; note?: string };
 

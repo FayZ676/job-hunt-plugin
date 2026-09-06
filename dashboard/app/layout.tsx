@@ -4,8 +4,8 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font
 import Deck from "@/components/Deck";
 import Nav from "@/components/Nav";
 import Toaster from "@/components/Toaster";
-import { ACTIONS } from "@/lib/core/actions";
-import { DB } from "@/lib/core/db";
+import { ACTIONS } from "@/core/actions";
+import { DB } from "@/core/db";
 import { listing, remembered } from "@/lib/web/runs";
 import "./globals.css";
 

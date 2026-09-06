@@ -7,7 +7,7 @@ import { SendHorizontal, Square } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
 import { Button, Empty, Prose, Stamp } from "@/components/ui";
-import { asked, suggested, type Action } from "@/lib/core/actions";
+import { asked, suggested, type Action } from "@/core/actions";
 import type { Line } from "@/lib/web/runs";
 
 const parse = (line: string): Line | null => {

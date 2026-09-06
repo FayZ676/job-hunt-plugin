@@ -2,8 +2,8 @@
 
 import { useDeck } from "@/components/Deck";
 import { Button, Section } from "@/components/ui";
-import { offered } from "@/lib/core/actions";
-import type { Status } from "@/lib/core/schema";
+import { offered } from "@/core/actions";
+import type { Status } from "@/core/schema";
 
 const CONFIRM: Record<string, string> = {
   submit: "Submit this application? It goes to the employer as it is staged.",

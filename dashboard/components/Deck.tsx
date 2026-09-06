@@ -8,8 +8,8 @@ import Glyph from "@/components/Glyph";
 import Options from "@/components/Options";
 import { Output, useRun, type Asking } from "@/components/run";
 import { Empty } from "@/components/ui";
-import { commanded, type Action } from "@/lib/core/actions";
-import { DONE, WAITING, WORKING } from "@/lib/core/standing";
+import { commanded, type Action } from "@/core/actions";
+import { DONE, WAITING, WORKING } from "@/core/standing";
 import type { Run } from "@/lib/web/runs";
 
 const WATCH = 4000;

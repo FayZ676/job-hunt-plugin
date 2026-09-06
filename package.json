@@ -21,10 +21,10 @@
     "job-help": "cli/help.ts"
   },
   "scripts": {
-    "dev": "next dev -p 8765",
-    "build": "next build",
-    "start": "next start -p 8765",
-    "typecheck": "tsc --noEmit",
+    "dev": "next dev dashboard -p 8765",
+    "build": "next build dashboard",
+    "start": "next start dashboard -p 8765",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p dashboard",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

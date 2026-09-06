@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { TABLES, type Status } from "@/lib/core/schema";
+import { TABLES, type Status } from "@/core/schema";
 
 type FormStatus = NonNullable<z.infer<typeof TABLES.staged.shape.status>>;
 

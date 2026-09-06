@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { one, rows } from "../core/db.ts";
-import { TABLES, VIEWS, ask, grouped, options, withRowid, type Rowed, type Table } from "../core/schema.ts";
+import { one, rows } from "@/core/db.ts";
+import { TABLES, VIEWS, ask, grouped, options, withRowid, type Rowed, type Table } from "@/core/schema.ts";
 
 export { ask, grouped, options };
 
