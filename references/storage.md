@@ -65,8 +65,8 @@ changed goal: they talk, you write rows. Read before writing — you are merging
 ask about anything genuinely ambiguous: dates, whether work was solo, whether a number was measured
 or estimated, since an invented number here becomes a lie on a resume. **Never invent experience**; a
 project belongs in `projects` only if the user said it happened. **A correction lands on the row it
-corrects** — a wrong number in `project_metrics`, a wrong title on `employers`, everything else in
-that project's `notes` — so there is one place to read and nothing to reconcile. A row that does not
+corrects** — a wrong number or anything else about a project in its `about`, a wrong title on
+`employers` — so there is one place to read and nothing to reconcile. A row that does not
 exist means "none", not "never asked". `$Q --export` hands them the whole thing as portable SQL.
 
 **Never write run notes or daily summaries to disk.** The database is the record, and a question

@@ -8,12 +8,8 @@ export { ask, grouped, options };
 const listing = <T extends Table>(table: T, order = "") =>
   rows(withRowid(table), `SELECT rowid AS rowid, * FROM ${table} ${order}`);
 
-type Bullet = Rowed<"project_bullets">;
 export type Project = Rowed<"projects"> & {
-  bullets: Bullet[];
   technologies: Rowed<"project_technologies">[];
-  metrics: Rowed<"project_metrics">[];
-  links: Rowed<"project_links">[];
 };
 export type Employer = Rowed<"employers"> & { projects: Project[] };
 
@@ -33,19 +29,13 @@ export type Job = z.infer<typeof TRIAGE>;
 export const jobs = () => rows(TRIAGE, "SELECT triage.*, postings.reason FROM triage JOIN postings USING (key)");
 
 export function career(): Employer[] {
-  const bullets = listing("project_bullets", "ORDER BY project_id, seq IS NULL, seq, rowid");
   const technologies = listing("project_technologies", "ORDER BY project_id, technology");
-  const metrics = listing("project_metrics", "ORDER BY project_id, rowid");
-  const links = listing("project_links", "ORDER BY project_id, rowid");
   const under = <T extends { project_id: number }>(all: T[], project: number) =>
     all.filter((row) => row.project_id === project);
 
   const projects = listing("projects", "ORDER BY seq IS NULL, seq, rowid").map((project) => ({
     ...project,
-    bullets: under(bullets, project.rowid),
     technologies: under(technologies, project.rowid),
-    metrics: under(metrics, project.rowid),
-    links: under(links, project.rowid),
   }));
 
   return listing("employers", "ORDER BY seq IS NULL, seq, rowid").map((employer) => ({
@@ -81,4 +71,3 @@ export function prospect(key: string): Prospect | null {
   };
 }
 
-export const vocabularies = () => ({ status: options("projects", "status") });

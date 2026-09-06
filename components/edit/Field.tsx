@@ -7,7 +7,6 @@ import { answered } from "./answered";
 import { title, type Column } from "./columns";
 import { say } from "@/components/Toaster";
 import Markdown from "@/components/Markdown";
-import { useVocabulary } from "./Vocabulary";
 
 type State = "" | "saving" | "saved" | "failed";
 
@@ -35,8 +34,7 @@ export function Control({
   state?: State;
   autoFocus?: boolean;
 }) {
-  const vocabulary = useVocabulary();
-  const options = column.options ?? (column.vocabulary && vocabulary[column.vocabulary]);
+  const options = column.options;
   const tone = TONE[state] || (column.blocking && !value ? "error" : "");
 
   const dressed = `quietbox ${tone === "error" ? "quiet-missing" : ""}

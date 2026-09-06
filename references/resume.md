@@ -10,18 +10,18 @@ the way is a build input, kept next to the PDF so a later tweak is an edit and a
 ## Sources and restrictions
 
 **The profile tables are the only source.** `identity` supplies the header block and `education` the
-Education section, verbatim. Bullets come only from `project_bullets`, numbers only from
-`project_metrics`.
+Every resume bullet, and every number in one, is written from `projects.about` — the project's
+whole record, framing and facts together.
 
 - **Never mine an existing resume for bullet text.** The copies in circulation carry exactly the
-  errors the profile has since corrected. `projects.notes` and `employers.context` hold those
+  errors the profile has since corrected. `projects.about` and `employers.about` hold those
   corrections; read them before writing and never contradict one.
-- **A number goes on the resume only if it is in `project_metrics`** — no estimating, no rounding up,
-  no "over N" where N was never measured. A duration implied by a date range is a number too.
-- **Shared work is described as shared.** `projects.shared_with` says which; "built with one other
-  engineer" costs nothing and is true. Work done alone stays unqualified.
-- **Discontinued and in-progress work is labeled**, per `projects.status`. A shipped project and an
-  abandoned one do not read the same way, and the difference is checkable.
+- **A number goes on the resume only if `projects.about` states it** — no estimating, no
+  rounding up, no "over N" where N was never measured. A duration implied by a date range is a number too.
+- **Shared work is described as shared.** A bullet that says so — "built with one other engineer" —
+  costs nothing and is true. Work done alone stays unqualified.
+- **Discontinued and in-progress work is labeled** wherever `about` says the work was not shipped. A
+  shipped project and an abandoned one do not read the same way.
 - **Singular evidence stays singular.** One package adopted by one team is not "other teams".
 - **Verify a tool claim against the repo, not against memory.** A build once named a library that had
   been removed from the project months earlier.
@@ -34,11 +34,7 @@ Education section, verbatim. Bullets come only from `project_bullets`, numbers o
    drafting; it decides ordering and cuts.
 
    ```sql
-   SELECT e.name AS employer, p.name AS project, b.text
-   FROM project_bullets b
-   JOIN projects p ON p.id = b.project_id
-   JOIN employers e ON e.id = p.employer_id
-   ORDER BY e.seq, p.seq, b.seq;
+   SELECT employer, project, about FROM career;
    ```
 
 4. Select: roles reverse-chronological, most relevant project first within each role. Cut irrelevant
@@ -53,19 +49,19 @@ Education section, verbatim. Bullets come only from `project_bullets`, numbers o
 Plain professional English. The first pass is 6–10 seconds: the reader passes over each line once, at
 speed, and takes a fact away.
 
-- **One idea per bullet, one sentence, ~25 words and never over 30.** The tables pack several ideas
-  into a row because they are a reference. Split them. Long bullets are this skill's standing habit —
+- **One idea per bullet, one sentence, ~25 words and never over 30.** `about` packs several ideas
+  into a paragraph because it is a reference. Split them. Long bullets are this skill's standing habit —
   a measured median of 37 words against a convention of 15–25.
 - **Outcome first.** The payload belongs in the first six words, the stack and technique after it.
 - **Name what was built and what it does.** Every noun phrase must be concrete enough to picture. A
   phrase that could describe ten different systems is unfinished.
-- **Real numbers only, from `project_metrics`.** A bullet with no number is fine — flag it in the gap
-  report.
+- **Real numbers only, as the profile states them.** A bullet with no number is fine — flag it in the
+  gap report.
 - **Mirror the JD's vocabulary where it is honest.** Their "evaluation harness" over the tables'
   "accuracy harness". Never blur scikit-learn into PyTorch.
 - **Match the verb to the work's real status.** "Shipped", "automated" and "replaced" assert that an
   outcome already happened; use "built" for work that exists and is not yet live. Check
-  `projects.status` first. A projected number is not a number — never print one.
+  `about` first. A projected number is not a number — never print one.
 - **One judgment call per role**, written as the decision and its consequence: "enforced through the
   boto3 event system, so every service inherits the protection automatically."
 - **One collaboration bullet per role** where the tables support one — cross-functional work,
@@ -116,8 +112,8 @@ Each of these is a defect that reached a built resume, two of them a submitted o
 1. **Every number in the summary traces to a row**, durations included. The summary is written last
    and freely, and is where the one fabricated figure — "three years" for a 14-month tenure — was
    generated.
-2. **Every shared project carries its qualifier**, per `projects.shared_with`. This is the defect
-   that drifts most: present in three specs of seven, absent in four already submitted.
+2. **Every shared project carries its qualifier**, wherever a bullet says the work was shared. This
+   is the defect that drifts most: present in three specs of seven, absent in four already submitted.
 3. **No plural where the evidence is singular.**
 4. **The page is full.** Fitting on one page is the constraint, not the target. More than ~0.75in of
    blank foot means content was left out — blank space is unused selection budget.
@@ -192,7 +188,7 @@ Emit sections in this order, omitting any the JD makes irrelevant except Experie
 | Summary | `paragraph` | Two or three lines of fact, never self-description. **Opens with the total years** — see below. Skip it when it would only restate the bullets; a weak summary costs two bullets' worth of space |
 | Experience | `experience` | Reverse-chronological. 3–8 bullets per role, ordered by relevance to the JD |
 | Projects | `bullets` | Only when an independent project maps to the JD better than the work project it would displace. Mark status honestly: discontinued / in progress |
-| Publications | `paragraph` | Only when the JD is research-adjacent. `project_links` records the paper by URL only — confirm the exact title and author list before printing a citation |
+| Publications | `paragraph` | Only when the JD is research-adjacent. Confirm the exact title and author list against the paper before printing a citation |
 | Education | `entries` | From the `education` table, verbatim: `{"primary": "BS Computer Science", "secondary": "State University, May 2022"}` |
 | Skills | `labeled` | Labels: Languages, Frameworks, AI/ML, Cloud & Data, Delivery. Drop a label rather than pad it. Drawn from the selected bullets plus the JD's named technologies that appear in `project_technologies` — no aspirational entries, no soft skills. Order each label by depth of professional use, and never place a technology under an employer whose projects do not carry it |
 

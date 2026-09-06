@@ -62,7 +62,7 @@ CREATE VIEW IF NOT EXISTS experience AS
   WITH span AS (
     SELECT MIN(CASE length(start) WHEN 4 THEN start || '-01-01'
                                   WHEN 7 THEN start || '-01' ELSE start END) AS opened,
-           MAX(current) AS ongoing,
+           MAX(finish IS NULL) AS ongoing,
            MAX(CASE length(finish) WHEN 4 THEN finish || '-12-31'
                                    WHEN 7 THEN finish || '-01' ELSE finish END) AS closed
       FROM employers
@@ -78,6 +78,6 @@ CREATE VIEW IF NOT EXISTS experience AS
 CREATE VIEW IF NOT EXISTS career AS
   SELECT e.name AS employer, e.title AS role, e.start AS employer_start,
          e.finish AS employer_end, p.id AS project_id, p.name AS project,
-         p.status, p.summary, p.shared_with, p.notes
+         p.about
   FROM employers e JOIN projects p ON p.employer_id = e.id
   ORDER BY e.seq, p.seq;

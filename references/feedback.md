@@ -26,7 +26,7 @@ In this order. The first that fits is right, because each is cheaper than the ne
 | The complaint says | Change |
 | ------------------ | ------ |
 | A fact a form asks for as a field — the floor, remote, relocation, employment type | The `identity` column, with `job-profile set` |
-| A number, date, title or qualifier on their own history is wrong | The `employers` / `projects` / `project_metrics` row it belongs to |
+| A number, date, title or qualifier on their own history is wrong | The `employers` / `projects` row it belongs to |
 | What counts, what is a mark against, what is a hard stop, and how those trade — including a title or an employer that should never have been fetched, which the next search excludes off this prose | `instructions.text` |
 | The resume said it badly, and the facts behind it were right | `references/resume.md` |
 | Any other action produced the wrong thing by following this skill | That action's reference file |

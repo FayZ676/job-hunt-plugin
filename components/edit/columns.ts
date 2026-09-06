@@ -7,7 +7,6 @@ export type Column = {
   min?: number;
   step?: number;
   options?: (string | [string, string])[];
-  vocabulary?: "status";
   required?: boolean;
   blocking?: boolean;
   width?: string;
@@ -25,7 +24,6 @@ export const YES_NO: [string, string][] = [
 ];
 
 const WHEN = { pattern: "\\d{4}(-\\d{2}){0,2}", placeholder: "2024, 2024-06 or 2024-06-01" };
-export const LINK = { type: "url", pattern: "https?://.+\\..+", placeholder: "https://" } as const;
 
 export const COLUMNS = {
   education: [
@@ -38,27 +36,10 @@ export const COLUMNS = {
     { name: "title", label: "your title" },
     { name: "start", ...WHEN },
     { name: "finish", ...WHEN },
-    { name: "current", label: "still there", options: YES_NO, required: true },
   ],
-  employerContext: [{ name: "context", label: "what the company does", kind: "area" }],
   projects: [
     { name: "name", label: "project", required: true },
-    { name: "status", vocabulary: "status" },
     { name: "start", ...WHEN },
     { name: "finish", ...WHEN },
-  ],
-  projectDetail: [
-    { name: "summary", kind: "area", label: "what it was" },
-    { name: "shared_with", label: "shared with" },
-    { name: "notes", kind: "area" },
-  ],
-  bullets: [
-    { name: "text", label: "bullet", kind: "area", required: true },
-    { name: "seq", label: "order", type: "number", min: 0, step: 1 },
-  ],
-  metrics: [{ name: "metric", kind: "area", required: true }],
-  links: [
-    { name: "label", required: true, width: "30%" },
-    { name: "url", ...LINK, required: true, width: "70%" },
   ],
 } satisfies Record<string, Column[]>;

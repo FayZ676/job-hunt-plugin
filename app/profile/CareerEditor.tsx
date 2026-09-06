@@ -5,7 +5,6 @@ import Adder from "@/components/edit/Adder";
 import Chips from "@/components/edit/Chips";
 import DeleteButton from "@/components/edit/DeleteButton";
 import Field from "@/components/edit/Field";
-import RecordList from "@/components/edit/RecordList";
 import { COLUMNS, type Column } from "@/components/edit/columns";
 import { Disclosure, Empty, Sheet, Stack, Stamp } from "@/components/ui";
 import { lengthLabel, monthsBetween, spanLabel, today, when, type When } from "@/components/format";
@@ -27,7 +26,7 @@ const Span = ({ table, rowid, values }: { table: string; rowid: number; values: 
         –
       </span>
       <span className="w-24">
-        {edit({ name: "finish", label: "finish", className: mono, placeholder: values.current ? "now" : "2025-03" })}
+        {edit({ name: "finish", label: "finish", className: mono, placeholder: "now" })}
       </span>
     </span>
   );
@@ -45,20 +44,12 @@ function ProjectPanel({ project }: { project: Project }) {
   const values = held(project);
   const edit = editing("projects", project.rowid, values);
   const dates = spanLabel(when(project.start), when(project.finish), false);
-  const bullets = project.bullets.length;
 
   return (
     <Disclosure
-      mark={bullets === 0}
+      mark={!project.about}
       summary={project.name}
-      aside={
-        <span className="flex shrink-0 items-baseline gap-4">
-          {dates && <Stamp>{dates}</Stamp>}
-          <span className={`tnum text-xs ${bullets === 0 ? "text-signal" : "text-soft"}`}>
-            {bullets} bullet{bullets === 1 ? "" : "s"}
-          </span>
-        </span>
-      }
+      aside={<span className="flex shrink-0 items-baseline gap-4">{dates && <Stamp>{dates}</Stamp>}</span>}
     >
       <div className="space-y-6">
         <Sheet
@@ -66,80 +57,24 @@ function ProjectPanel({ project }: { project: Project }) {
             {
               notes: [
                 { label: "Project", value: edit({ name: "name", required: true, className: "font-medium max-w-md" }) },
-                {
-                  label: "Status",
-                  value: <span className="block max-w-48">{edit({ name: "status", vocabulary: "status" })}</span>,
-                },
                 { label: "Ran", value: <Span table="projects" rowid={project.rowid} values={values} /> },
-                { label: "What it was", value: edit({ name: "summary", kind: "area", label: "what it was" }) },
+                { label: "About", value: edit({ name: "about", kind: "area" }) },
+                {
+                  label: "Technologies",
+                  value: (
+                    <Chips
+                      table="project_technologies"
+                      column="technology"
+                      rows={project.technologies}
+                      seed={seed}
+                      placeholder="add one, then enter"
+                    />
+                  ),
+                },
               ],
             },
           ]}
         />
-
-        <section>
-          <h5 className="eyebrow mb-2">Bullets</h5>
-          <RecordList
-            table="project_bullets"
-            columns={[COLUMNS.bullets[0]]}
-            rows={project.bullets}
-            seed={seed}
-            what="this bullet"
-            addLabel="Add bullet"
-            empty="No bullets yet."
-            ordered
-          />
-        </section>
-
-        <section>
-          <h5 className="eyebrow mb-2">Technologies</h5>
-          <Chips
-            table="project_technologies"
-            column="technology"
-            rows={project.technologies}
-            seed={seed}
-            placeholder="add one, then enter"
-          />
-        </section>
-
-        <section>
-          <h5 className="eyebrow mb-2">Metrics</h5>
-          <RecordList
-            table="project_metrics"
-            columns={COLUMNS.metrics}
-            rows={project.metrics}
-            seed={seed}
-            what="this metric"
-            addLabel="Add metric"
-            empty="No metrics yet."
-          />
-        </section>
-
-        <section>
-          <h5 className="eyebrow mb-2">Links</h5>
-          <RecordList
-            table="project_links"
-            columns={COLUMNS.links}
-            rows={project.links}
-            seed={seed}
-            what="this link"
-            addLabel="Add link"
-          />
-        </section>
-
-        <section>
-          <h5 className="eyebrow mb-2">Notes to yourself</h5>
-          <Sheet
-            bands={[
-              {
-                notes: [
-                  { label: "Shared with", value: edit({ name: "shared_with", label: "shared with" }) },
-                  { label: "Notes", value: edit({ name: "notes", kind: "area" }) },
-                ],
-              },
-            ]}
-          />
-        </section>
 
         <Trash
           table="projects"
@@ -156,10 +91,10 @@ function EmployerPanel({ employer }: { employer: Employer }) {
   const values = held(employer);
   const edit = editing("employers", employer.rowid, values);
   const start = when(employer.start);
-  const current = employer.current === 1;
+  const current = !employer.finish;
   const finish = when(employer.finish);
   const length = start ? lengthLabel(monthsBetween(start, current ? today() : (finish ?? start))) : null;
-  const thin = employer.projects.filter((project) => project.bullets.length === 0).length;
+  const thin = employer.projects.filter((project) => !project.about).length;
 
   return (
     <Disclosure
@@ -184,26 +119,7 @@ function EmployerPanel({ employer }: { employer: Employer }) {
                 },
                 { label: "Your title", value: edit({ name: "title", label: "your title", className: "max-w-md" }) },
                 { label: "There", value: <Span table="employers" rowid={employer.rowid} values={values} /> },
-                {
-                  label: "Still there",
-                  value: (
-                    <span className="block max-w-32">
-                      {edit({
-                        name: "current",
-                        label: "still there",
-                        options: [
-                          ["1", "still there"],
-                          ["0", "left"],
-                        ],
-                        required: true,
-                      })}
-                    </span>
-                  ),
-                },
-                {
-                  label: "What the company does",
-                  value: edit({ name: "context", kind: "area", label: "what the company does" }),
-                },
+                { label: "About", value: edit({ name: "about", kind: "area" }) },
               ],
             },
           ]}
@@ -232,7 +148,7 @@ function EmployerPanel({ employer }: { employer: Employer }) {
           table="employers"
           rowid={employer.rowid}
           what={employer.name}
-          says="Delete this employer, its projects and their bullets."
+          says="Delete this employer and its projects."
         />
       </div>
     </Disclosure>
@@ -246,7 +162,7 @@ function covering(employers: Employer[], mark: When): When | null {
   for (const employer of employers) {
     const start = opened(employer);
     if (!start || monthsBetween(start, mark) <= 0) continue;
-    const ends = employer.current === 1 ? today() : (when(employer.finish) ?? start);
+    const ends = when(employer.finish) ?? today();
     if (!latest || monthsBetween(latest, ends) > 0) latest = ends;
   }
   return latest;

@@ -116,7 +116,7 @@ Then record the application with `job-stage add`, one `--field` per answer.
 and which of them are still `NULL`. Keep the browser tab open; the staged rows survive a lost session
 and refilling from them is cheap.
 
-**A start date is computed, not stored.** No employer is `current` and they can start at once;
+**A start date is computed, not stored.** Every employer has a `finish` date and they can start at once;
 otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier
 application — the answer moves with the day the form is asked.
 

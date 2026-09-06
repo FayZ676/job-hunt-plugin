@@ -280,19 +280,12 @@ export const TABLES = {
         sql: since("finish"),
         takes: dated,
       }),
-      current: col(z.number(), {
-        sql: "DEFAULT 0 CHECK (current IN (0,1))",
-        takes: "0 or 1",
-      }),
-      context: z.string().nullable(),
+      about: z.string().nullable(),
       seq: col(z.number().nullable(), {
         sql: "CHECK (seq >= 0)",
         takes: "a whole number, 0 or more",
       }),
-    })
-    .meta({
-      constraints: ["CHECK (current = 0 OR finish IS NULL)"],
-    } satisfies Shape),
+    }),
 
   projects: z
     .object({
@@ -304,12 +297,7 @@ export const TABLES = {
         sql: since("finish"),
         takes: dated,
       }),
-      status: z.enum(["shipped", "in_progress", "discontinued"]).nullable(),
-      summary: z.string().nullable(),
-      shared_with: col(z.string().nullable(), {
-        note: "'one other engineer' — how shared work stays honest",
-      }),
-      notes: z.string().nullable(),
+      about: z.string().nullable(),
       seq: col(z.number().nullable(), {
         sql: "CHECK (seq >= 0)",
         takes: "a whole number, 0 or more",
@@ -318,18 +306,9 @@ export const TABLES = {
     .meta({
       note:
         "The only source a resume may draw from. A correction lives on the row it corrects --\n" +
-        "a wrong number in `project_metrics`, a wrong title on `employers`, everything else\n" +
-        "in `notes` -- so there is one place to read and nothing to reconcile.",
+        "a wrong number in `about`, a wrong title on `employers` -- so there is one place\n" +
+        "to read and nothing to reconcile.",
     } satisfies Shape),
-
-  project_bullets: z.object({
-    project_id: col(z.number(), { sql: owned("projects(id)") }),
-    seq: col(z.number().nullable(), {
-      sql: "CHECK (seq >= 0)",
-      takes: "a whole number, 0 or more",
-    }),
-    text: col(z.string(), { sql: filled("text") }),
-  }),
 
   project_technologies: z
     .object({
@@ -337,20 +316,9 @@ export const TABLES = {
       technology: z.string(),
     })
     .meta({
-      note: "What a JD is matched against when selecting bullets.",
+      note: "What a JD is matched against when selecting what to write about.",
       constraints: ["PRIMARY KEY (project_id, technology)"],
     } satisfies Shape),
-
-  project_metrics: z.object({
-    project_id: col(z.number(), { sql: owned("projects(id)") }),
-    metric: z.string(),
-  }),
-
-  project_links: z.object({
-    project_id: col(z.number(), { sql: owned("projects(id)") }),
-    label: col(z.string(), { sql: filled("label") }),
-    url: col(z.string(), { sql: url("url"), takes: "a URL, starting http" }),
-  }),
 
   instructions: z
     .object({
@@ -381,10 +349,7 @@ export const ORDER: Table[] = [
   "education",
   "employers",
   "projects",
-  "project_bullets",
   "project_technologies",
-  "project_metrics",
-  "project_links",
   "instructions",
 ];
 

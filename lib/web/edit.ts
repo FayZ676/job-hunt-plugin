@@ -12,10 +12,7 @@ const WRITABLE = new Set<Table>([
   "education",
   "employers",
   "projects",
-  "project_bullets",
   "project_technologies",
-  "project_metrics",
-  "project_links",
   "instructions",
 ]);
 

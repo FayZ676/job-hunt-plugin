@@ -23,7 +23,7 @@ page, inside whichever group it was declared in, on the next connect.
 
 **Translate the answer into the column's shape**, rather than filing the sentence they said: "two
 weeks after an offer" is `identity.notice_period 2_weeks`. There is no start-date column — notice
-and whether an employer is still `current` are what a start date gets computed from.
+and whether any employer has no `finish` date are what a start date gets computed from.
 
 Never hand them a file to edit, and never make the first pass a form — the interview is a
 conversation. Afterwards they revise themselves in the dashboard, whose Profile page writes every
