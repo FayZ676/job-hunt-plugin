@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import Glyph from "@/components/Glyph";
 import Popover from "@/components/Popover";
+import { Row } from "@/components/ui";
 
 export type Option = { key: string; label: string; tone?: "grave"; icon?: ReactNode; onPick: () => void };
 
@@ -32,21 +33,20 @@ export default function Options({
       {(close) => (
         <>
           {options.map((option) => (
-            <button
+            <Row
               key={option.key}
-              type="button"
               role="menuitem"
+              tone={option.tone === "grave" ? "grave" : "quiet"}
+              className="flex items-center gap-2"
               onClick={(event) => {
                 event.stopPropagation();
                 close();
                 option.onPick();
               }}
-              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors
-                ${option.tone === "grave" ? "text-error hover:bg-error hover:text-error-content" : "hover:bg-base-200"}`}
             >
               {option.icon}
               {option.label}
-            </button>
+            </Row>
           ))}
         </>
       )}

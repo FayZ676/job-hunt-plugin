@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { save } from "@/lib/web/edit";
-import { Button } from "@/components/ui";
+import { Button, Row } from "@/components/ui";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 import { Control } from "./Field";
@@ -48,17 +48,12 @@ export default function Adder({
 
   if (!open)
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-1.5 px-3 py-2.5 text-left text-sm text-soft
-                transition-colors hover:bg-base-200 hover:text-base-content"
-      >
+      <Row roomy onClick={() => setOpen(true)} className="flex items-center gap-1.5 text-soft hover:text-base-content">
         <span aria-hidden className="font-mono">
           +
         </span>
         {label}
-      </button>
+      </Row>
     );
 
   return (
@@ -90,14 +85,7 @@ export default function Adder({
         <Button tone="firm" disabled={busy} onClick={add}>
           {label}
         </Button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-xs text-soft underline decoration-base-300 underline-offset-2
-                  hover:decoration-current"
-        >
-          {onAdded ? "Cancel" : "Done"}
-        </button>
+        <Button onClick={() => setOpen(false)}>{onAdded ? "Cancel" : "Done"}</Button>
       </div>
     </div>
   );

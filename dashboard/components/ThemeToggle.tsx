@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import Glyph from "./Glyph";
+import { Ghost } from "@/components/ui";
 
 type Theme = "readout" | "night";
 
@@ -28,14 +29,8 @@ export default function ThemeToggle() {
 
   const next = theme === "night" ? "readout" : "night";
   return (
-    <button
-      type="button"
-      onClick={() => setTheme(next)}
-      className="flex shrink-0 items-center rounded-field p-1.5 text-soft transition-colors
-        hover:bg-base-200 hover:text-base-content"
-    >
+    <Ghost onClick={() => setTheme(next)} icon={<Glyph icon={theme === "night" ? Sun : Moon} size={16} />}>
       <span className="sr-only">{next === "night" ? "Switch to dark theme" : "Switch to light theme"}</span>
-      <Glyph icon={theme === "night" ? Sun : Moon} size={16} />
-    </button>
+    </Ghost>
   );
 }

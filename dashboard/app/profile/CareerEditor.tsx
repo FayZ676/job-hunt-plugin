@@ -6,7 +6,7 @@ import Chips from "@/components/edit/Chips";
 import DeleteButton from "@/components/edit/DeleteButton";
 import Field from "@/components/edit/Field";
 import { COLUMNS, type Column } from "@/components/edit/columns";
-import { Mark } from "@/components/ui";
+import { Mark, Row } from "@/components/ui";
 import { lengthLabel, monthsBetween, spanLabel, today, when, type When } from "@/components/format";
 import type { Employer, Project } from "@/lib/web/queries";
 
@@ -183,8 +183,6 @@ function covering(employers: Employer[], mark: When): When | null {
 
 const GAP_MONTHS = 4;
 
-const PICK = "w-full rounded-field px-3 py-2 text-left transition-colors hover:bg-base-200";
-
 function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held; onHold: (next: Held) => void }) {
   return (
     <nav aria-label="Career">
@@ -200,11 +198,12 @@ function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held;
         return (
           <Fragment key={employer.rowid}>
             <div className={`border-l-2 py-1 not-first:mt-1 ${open ? "border-base-content" : "border-base-300"}`}>
-              <button
-                type="button"
+              <Row
+                roomy
+                on={here}
+                className={here ? "font-medium" : ""}
                 aria-current={here}
                 onClick={() => onHold({ kind: "employer", rowid: employer.rowid })}
-                className={`${PICK} ${here ? "bg-base-200 font-medium" : ""}`}
               >
                 <span className="flex items-baseline gap-1.5">
                   <span className="self-center">
@@ -226,25 +225,25 @@ function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held;
                 <span className="tnum mt-0.5 block pl-3 font-mono text-micro text-soft">
                   {spanLabel(start, when(employer.finish), !employer.finish)}
                 </span>
-              </button>
+              </Row>
 
               {open && (
                 <>
                   <ul className="mt-1">
                     {employer.projects.map((project) => (
                       <li key={project.rowid}>
-                        <button
-                          type="button"
+                        <Row
+                          roomy
+                          on={inside(project)}
                           aria-current={inside(project)}
                           onClick={() => onHold({ kind: "project", rowid: project.rowid })}
-                          className={`${PICK} flex items-baseline gap-1.5 pl-7 text-sm
-                            ${inside(project) ? "bg-base-200 font-medium" : ""}`}
+                          className={`flex items-baseline gap-1.5 pl-7 ${inside(project) ? "font-medium" : ""}`}
                         >
                           <span className="self-center">
                             <Mark on={!project.about} />
                           </span>
                           <span className="min-w-0 flex-1 truncate">{project.name}</span>
-                        </button>
+                        </Row>
                       </li>
                     ))}
                   </ul>

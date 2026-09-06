@@ -87,7 +87,8 @@ export const Card = ({
 
 const TONES = {
   quiet: "border border-base-300 hover:border-base-content disabled:hover:border-base-300",
-  firm: "border border-base-content bg-base-content text-base-100",
+  firm: `border border-base-content bg-base-content text-base-100
+    hover:border-base-content/85 hover:bg-base-content/85`,
   grave: "border border-error/40 text-error hover:border-error hover:bg-error hover:text-error-content",
 };
 
@@ -109,6 +110,66 @@ export const Button = ({
     {children}
   </button>
 );
+
+const GHOST_TONES = {
+  quiet: "text-soft hover:text-base-content",
+  grave: "text-error hover:bg-error hover:text-error-content",
+};
+
+export const Ghost = ({
+  tone = "quiet",
+  icon,
+  tight,
+  children,
+  className = "",
+  ...rest
+}: {
+  tone?: "quiet" | "grave";
+  icon?: ReactNode;
+  tight?: boolean;
+} & ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    type="button"
+    {...rest}
+    className={`inline-flex shrink-0 items-center gap-1.5 rounded-field
+      transition-colors hover:bg-base-200 disabled:opacity-40
+      ${tight ? "px-1 leading-none" : children ? "px-2 py-1.5" : "p-1.5"}
+      ${GHOST_TONES[tone]} ${className}`}
+  >
+    {icon}
+    {children}
+  </button>
+);
+
+const ROW_TONES = {
+  quiet: "hover:bg-base-200",
+  grave: "text-error hover:bg-error hover:text-error-content",
+};
+
+export const Row = ({
+  tone = "quiet",
+  roomy,
+  on,
+  children,
+  className = "",
+  ...rest
+}: {
+  tone?: "quiet" | "grave";
+  roomy?: boolean;
+  on?: boolean;
+} & ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    type="button"
+    {...rest}
+    className={`w-full rounded-field text-left transition-colors disabled:opacity-40
+      ${roomy ? "px-3 py-2 text-sm" : "px-3 py-1.5 text-xs"}
+      ${ROW_TONES[tone]} ${on ? "bg-base-200" : ""} ${className}`}
+  >
+    {children}
+  </button>
+);
+
+export const confirmDelete = (what: string) => confirm(`Delete ${what}? This cannot be undone.`);
 
 export const Empty = ({ children }: { children: ReactNode }) => (
   <p className="px-3 py-2.5 text-sm text-soft">{children}</p>

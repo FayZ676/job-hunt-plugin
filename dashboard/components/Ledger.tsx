@@ -90,7 +90,8 @@ export default function Ledger({
                     className={`group/head ${HEAD} ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
                   >
                     <div className="flex items-center gap-0.5">
-                      <span className={`flex-1 transition-colors group-hover/head:text-base-content
+                      <span
+                        className={`flex-1 transition-colors group-hover/head:text-base-content
                         ${on ? "text-base-content" : ""}`}
                       >
                         {column.label}
@@ -121,7 +122,7 @@ export default function Ledger({
               })}
               {action && (
                 <th scope="col" className={HEAD}>
-                  <span className="sr-only">Remove</span>
+                  <span className="sr-only">Delete</span>
                 </th>
               )}
             </tr>

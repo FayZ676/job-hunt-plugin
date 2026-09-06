@@ -7,7 +7,7 @@ import { ChevronLeft, Plus, Trash2 } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import Options from "@/components/Options";
 import { Output, useRun, type Asking } from "@/components/run";
-import { Empty } from "@/components/ui";
+import { Empty, Ghost, Row, confirmDelete } from "@/components/ui";
 import { commanded, type Action } from "@/core/actions";
 import { DONE, WAITING, WORKING } from "@/core/standing";
 import type { Run } from "@/lib/web/runs";
@@ -169,15 +169,13 @@ export default function Deck({
         <div className="flex h-[var(--nav)] shrink-0 items-center gap-2 border-b border-base-300 px-3.5">
           {reading ? (
             <>
-              <button
-                type="button"
+              <Ghost
                 onClick={() => setReading(false)}
-                className="flex shrink-0 items-center gap-1 -ml-1.5 rounded-field py-1 pl-1.5 pr-2 text-mini
-                  text-soft transition-colors hover:bg-base-200 hover:text-base-content"
+                className="-ml-2 gap-1 text-mini"
+                icon={<Glyph icon={ChevronLeft} size={15} />}
               >
-                <Glyph icon={ChevronLeft} size={15} />
                 All
-              </button>
+              </Ghost>
               <h2 className="min-w-0 flex-1 truncate font-mono text-mini">{title}</h2>
               {here && (
                 <span className="shrink-0 text-xs">
@@ -189,15 +187,9 @@ export default function Deck({
             <>
               <h2 className="eyebrow flex-1">Conversations</h2>
               {talks && (
-                <button
-                  type="button"
-                  onClick={() => pick(talks)}
-                  className="flex shrink-0 items-center gap-1.5 -mr-2 rounded-field px-2 py-1 text-mini
-                    text-soft transition-colors hover:bg-base-200 hover:text-base-content"
-                >
-                  <Glyph icon={Plus} size={12} />
+                <Ghost onClick={() => pick(talks)} className="-mr-2 text-mini" icon={<Glyph icon={Plus} size={12} />}>
                   New chat
-                </button>
+                </Ghost>
               )}
             </>
           )}
@@ -213,17 +205,13 @@ export default function Deck({
               {runs.map((held) => (
                 <div key={held.id} className="group/row relative border-b border-base-200 last:border-0">
                   {loud(held.standing) && <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 bg-mark" />}
-                  <button
-                    type="button"
-                    onClick={() => enter(held.id)}
-                    className="grid w-full gap-y-1 px-3.5 py-3 text-left transition-colors hover:bg-base-200"
-                  >
+                  <Row roomy onClick={() => enter(held.id)} className="grid gap-y-1">
                     <span className="min-w-0 truncate font-mono text-mini">{held.title}</span>
                     <span className="flex items-center gap-2 text-xs text-soft">
                       {clock(held.started)}
                       <Standing standing={held.standing} />
                     </span>
-                  </button>
+                  </Row>
                   <div
                     className="pointer-events-none absolute inset-y-0 right-0 flex border-l border-base-300
                       bg-base-200 opacity-0 transition-opacity group-hover/row:pointer-events-auto
@@ -240,7 +228,7 @@ export default function Deck({
                           label: "Delete chat",
                           tone: "grave",
                           icon: <Glyph icon={Trash2} size={13} />,
-                          onPick: () => erase(held.id),
+                          onPick: () => confirmDelete(held.title) && erase(held.id),
                         },
                       ]}
                     />

@@ -6,7 +6,7 @@ import { SendHorizontal, Square } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
-import { Button, Empty, Prose, Stamp } from "@/components/ui";
+import { Button, Empty, Ghost, Prose, Row, Stamp } from "@/components/ui";
 import { asked, suggested, type Action } from "@/core/actions";
 import type { Line } from "@/lib/web/runs";
 
@@ -199,19 +199,19 @@ function Menu({
       className="mb-2 max-h-64 overflow-auto rounded-field border border-base-300 bg-base-100"
     >
       {actions.map((action, index) => (
-        <button
+        <Row
           key={action.id}
-          type="button"
           role="option"
+          roomy
+          on={index === at}
           aria-selected={index === at}
           onMouseMove={() => onHover(index)}
           onClick={() => onPick(action)}
-          className={`grid w-full grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-base-200
-            px-3 py-2 text-left last:border-0 ${index === at ? "bg-base-200" : ""}`}
+          className="grid grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-base-200 last:border-0"
         >
           <span className="min-w-0 truncate font-mono text-sm">{asked(action.id, action.argument)}</span>
           <span className="text-xs text-soft">{action.does}</span>
-        </button>
+        </Row>
       ))}
     </div>
   );
@@ -265,15 +265,9 @@ function Composer({
             bg-base-100 py-0.5 pl-2 pr-1"
         >
           <Stamp>{about}</Stamp>
-          <button
-            type="button"
-            aria-label={`Send without ${about}`}
-            onClick={onDetach}
-            className="rounded-field px-1 text-xs leading-none text-soft transition-colors
-              hover:bg-base-200 hover:text-base-content"
-          >
+          <Ghost tight aria-label={`Send without ${about}`} onClick={onDetach} className="text-xs">
             ×
-          </button>
+          </Ghost>
         </span>
       )}
 

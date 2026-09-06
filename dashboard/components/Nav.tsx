@@ -7,6 +7,7 @@ import { useDeck } from "./Deck";
 import Glyph from "./Glyph";
 import ThemeToggle from "./ThemeToggle";
 import Wordmark from "./Wordmark";
+import { Ghost } from "@/components/ui";
 
 type Item = { href: string; label: string; icon: LucideIcon };
 
@@ -21,16 +22,13 @@ export default function Nav({ db }: { db: string }) {
   return (
     <nav aria-label="Sections" className="sticky top-0 z-40 border-b border-base-300 bg-base-100">
       <div className="mx-auto flex h-[var(--nav)] max-w-[104rem] items-center gap-4 px-4 md:px-6">
-        <button
-          type="button"
+        <Ghost
           onClick={toggle}
           aria-expanded={shown}
           aria-label="Conversations"
-          className={`flex shrink-0 items-center rounded-field px-1.5 py-1 transition-colors
-            hover:bg-base-200 ${shown ? "bg-base-200" : ""}`}
-        >
-          <Wordmark size={17} working={working} />
-        </button>
+          className={shown ? "bg-base-200" : ""}
+          icon={<Wordmark size={17} working={working} />}
+        />
 
         <span aria-hidden className="h-4 w-px shrink-0 bg-base-300" />
 

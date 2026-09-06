@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { remove } from "@/lib/web/edit";
-import { Button } from "@/components/ui";
+import { Button, Ghost, confirmDelete } from "@/components/ui";
+import Glyph from "@/components/Glyph";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 
@@ -22,7 +24,7 @@ export default function DeleteButton({
   const router = useRouter();
 
   const drop = async () => {
-    if (!confirm(`Delete ${what}? This cannot be undone.`)) return;
+    if (!confirmDelete(what)) return;
     const result = await answered(remove(table, rowid));
     if ("error" in result) return say(result.error, true);
     say("deleted");
@@ -32,21 +34,18 @@ export default function DeleteButton({
 
   if (label)
     return (
-      <Button tone="grave" onClick={drop}>
+      <Button tone="grave" onClick={drop} icon={<Glyph icon={Trash2} size={13} />}>
         {label}
       </Button>
     );
 
   return (
-    <button
-      type="button"
-      aria-label={`delete ${what}`}
-      title={`delete ${what}`}
-      className="rounded-field px-1.5 leading-none text-soft transition-colors
-        hover:bg-base-200 hover:text-error"
+    <Ghost
+      tone="grave"
+      aria-label={`Delete ${what}`}
+      title={`Delete ${what}`}
       onClick={drop}
-    >
-      ×
-    </button>
+      icon={<Glyph icon={Trash2} size={13} />}
+    />
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { remove, save } from "@/lib/web/edit";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
+import { Ghost } from "@/components/ui";
 
 export default function Chips({
   table,
@@ -36,15 +37,13 @@ export default function Chips({
                 py-0.5 pl-2 pr-1 text-xs"
         >
           {String(row[column])}
-          <button
-            type="button"
-            aria-label={`remove ${String(row[column])}`}
-            className="rounded-selector px-1 leading-none text-soft transition-colors
-              hover:bg-base-200 hover:text-error"
+          <Ghost
+            tight
+            aria-label={`Remove ${String(row[column])}`}
             onClick={async () => act(await answered(remove(table, row.rowid)))}
           >
             ×
-          </button>
+          </Ghost>
         </span>
       ))}
       <input
