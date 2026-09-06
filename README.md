@@ -20,7 +20,10 @@ and never writes an answer your profile doesn't support.
   job returned (from $12/1,000); the free monthly credit covers a personal search.
 - [Typst](https://typst.app) and Poppler, for resumes: `brew install typst poppler`
 - A browser MCP server, for filling forms — such as
-  [Playwright MCP](https://github.com/microsoft/playwright-mcp)
+  [Playwright MCP](https://github.com/microsoft/playwright-mcp). It drives its own browser by
+  default; `--extension` plus the
+  [Playwright Extension](https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm)
+  points it at your own Chrome instead, so applications reuse accounts you're already signed into.
 
 Node alone is enough to start. Add the rest before your first resume.
 
