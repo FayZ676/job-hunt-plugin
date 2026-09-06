@@ -17,7 +17,7 @@ export const companions = (pdf: string) => {
 
 export const CAREER = absolute(process.env.JOB_CAREER_DIR || "~/data/job");
 export const DB = path.join(CAREER, "job.db");
-export const RESUMES = path.join(CAREER, "resumes");
+const RESUMES = path.join(CAREER, "resumes");
 export const SUBMITTED = path.join(RESUMES, "submitted");
 
 export const PATHS = {

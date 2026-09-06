@@ -39,7 +39,7 @@ export function when(raw: string | null | undefined): When | null {
   return { year: Number(match[1]), month: match[2] ? Number(match[2]) : null };
 }
 
-export const whenLabel = (moment: When) =>
+const whenLabel = (moment: When) =>
   moment.month ? `${MONTHS[moment.month - 1]} ${moment.year}` : String(moment.year);
 
 const index = (moment: When) => moment.year * 12 + ((moment.month ?? 1) - 1);

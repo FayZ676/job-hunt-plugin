@@ -425,7 +425,6 @@ export const VIEWS = {
     resume: true,
     url: true,
   }),
-  stats: z.object({ status: TABLES.postings.shape.status, n: int }),
   answers: z.object({
     section: text,
     field: text,

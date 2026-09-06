@@ -51,12 +51,6 @@ BEGIN
   WHERE key = new.key;
 END;
 
-DROP VIEW IF EXISTS stats;
-
-CREATE VIEW stats AS
-  SELECT status, COUNT(*) AS n FROM postings
-  WHERE disposition = 'kept' GROUP BY status ORDER BY n DESC;
-
 -- The totals a form asks for as a number rather than a story, counted off
 -- `employers` rather than stored: a written-down total is wrong by one every
 -- year and can disagree with the dates printed on the resume. The clock starts

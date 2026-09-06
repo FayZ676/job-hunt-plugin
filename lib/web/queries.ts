@@ -8,7 +8,7 @@ export { ask, grouped, options };
 const listing = <T extends Table>(table: T, order = "") =>
   rows(withRowid(table), `SELECT rowid AS rowid, * FROM ${table} ${order}`);
 
-export type Bullet = Rowed<"project_bullets">;
+type Bullet = Rowed<"project_bullets">;
 export type Project = Rowed<"projects"> & {
   bullets: Bullet[];
   technologies: Rowed<"project_technologies">[];
@@ -28,8 +28,9 @@ export const education = () => listing("education");
 
 const TRIAGE = VIEWS.triage.extend({ reason: TABLES.postings.shape.reason });
 
+export type Job = z.infer<typeof TRIAGE>;
+
 export const jobs = () => rows(TRIAGE, "SELECT triage.*, postings.reason FROM triage JOIN postings USING (key)");
-export const stats = () => rows(VIEWS.stats, "SELECT status, n FROM stats");
 
 export function career(): Employer[] {
   const bullets = listing("project_bullets", "ORDER BY project_id, seq IS NULL, seq, rowid");

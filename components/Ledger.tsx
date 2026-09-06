@@ -13,7 +13,6 @@ export type LedgerColumn = {
   numeric?: boolean;
   hideNarrow?: boolean;
   sortable?: boolean;
-  searchable?: boolean;
   filter?: ReactNode;
 };
 

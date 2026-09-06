@@ -29,6 +29,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@tanstack/react-table": "^9.2.4",
     "better-sqlite3": "^13.0.3",
     "commander": "^14.0.3",
     "entities": "^8.0.0",

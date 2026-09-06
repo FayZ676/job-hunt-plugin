@@ -2,7 +2,7 @@ export const WORKING = "Working";
 export const WAITING = "Needs input";
 export const DONE = "Finished";
 
-export const STANDINGS = [WORKING, WAITING, DONE] as const;
+const STANDINGS = [WORKING, WAITING, DONE] as const;
 
 export type Standing = (typeof STANDINGS)[number];
 

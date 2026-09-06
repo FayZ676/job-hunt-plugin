@@ -13,7 +13,6 @@ import { DONE, WAITING, WORKING } from "@/lib/core/standing";
 import type { Run } from "@/lib/web/runs";
 
 const WATCH = 4000;
-const ERASE = "Delete this conversation? It is gone for good.";
 const KEPT = "deck";
 
 const clock = (started: string) =>
@@ -241,7 +240,7 @@ export default function Deck({
                           label: "Delete chat",
                           tone: "grave",
                           icon: <Glyph icon={Trash2} size={13} />,
-                          onPick: () => confirm(ERASE) && erase(held.id),
+                          onPick: () => erase(held.id),
                         },
                       ]}
                     />

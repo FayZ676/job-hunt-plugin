@@ -80,7 +80,7 @@ export function inline(text: string | null | undefined) {
   return out.join("") || '#text("")';
 }
 
-export function rich(value: unknown): string {
+function rich(value: unknown): string {
   if (typeof value === "string") return inline(value);
   if (Array.isArray(value)) return value.map(rich).join("");
   if (value && typeof value === "object") {

@@ -24,7 +24,7 @@ export const YES_NO: [string, string][] = [
   ["0", "no"],
 ];
 
-export const WHEN = { pattern: "\\d{4}(-\\d{2}){0,2}", placeholder: "2024, 2024-06 or 2024-06-01" };
+const WHEN = { pattern: "\\d{4}(-\\d{2}){0,2}", placeholder: "2024, 2024-06 or 2024-06-01" };
 export const LINK = { type: "url", pattern: "https?://.+\\..+", placeholder: "https://" } as const;
 
 export const COLUMNS = {
