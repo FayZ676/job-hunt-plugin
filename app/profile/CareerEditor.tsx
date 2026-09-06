@@ -1,157 +1,170 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import Adder from "@/components/edit/Adder";
 import Chips from "@/components/edit/Chips";
 import DeleteButton from "@/components/edit/DeleteButton";
 import Field from "@/components/edit/Field";
 import { COLUMNS, type Column } from "@/components/edit/columns";
-import { Disclosure, Empty, Sheet, Stack, Stamp } from "@/components/ui";
+import { Mark } from "@/components/ui";
 import { lengthLabel, monthsBetween, spanLabel, today, when, type When } from "@/components/format";
 import type { Employer, Project } from "@/lib/web/queries";
+
+type Held = { kind: "employer" | "project"; rowid: number };
+
+const fields = (row: unknown) => row as unknown as Record<string, unknown>;
 
 const editing = (table: string, rowid: number, values: Record<string, unknown>) => (column: Column) => (
   <Field table={table} rowid={rowid} column={column} value={(values[column.name] ?? null) as string | number | null} />
 );
 
-const held = (row: unknown) => row as unknown as Record<string, unknown>;
+const thin = (employer: Employer) => employer.projects.filter((project) => !project.about).length;
 
 const Span = ({ table, rowid, values }: { table: string; rowid: number; values: Record<string, unknown> }) => {
   const edit = editing(table, rowid, values);
   const mono = "font-mono text-xs";
   return (
-    <span className="flex items-baseline gap-2">
-      <span className="w-24">{edit({ name: "start", label: "start", className: mono, placeholder: "2024-06" })}</span>
+    <span className="flex max-w-64 items-baseline gap-2">
+      <span className="w-28">{edit({ name: "start", label: "start", className: mono, placeholder: "2024-06" })}</span>
       <span aria-hidden className="text-soft">
         –
       </span>
-      <span className="w-24">
-        {edit({ name: "finish", label: "finish", className: mono, placeholder: "now" })}
-      </span>
+      <span className="w-28">{edit({ name: "finish", label: "finish", className: mono, placeholder: "now" })}</span>
     </span>
   );
 };
 
-const Trash = ({ table, rowid, what, says }: { table: string; rowid: number; what: string; says: string }) => (
-  <div className="mt-6 flex items-center gap-2 text-xs text-soft">
-    <DeleteButton table={table} rowid={rowid} what={what} />
-    {says}
-  </div>
+const Block = ({ label, children }: { label: string; children: ReactNode }) => (
+  <section>
+    <h3 className="eyebrow mb-1.5">{label}</h3>
+    {children}
+  </section>
 );
 
-function ProjectPanel({ project }: { project: Project }) {
-  const seed = { project_id: String(project.rowid) };
-  const values = held(project);
-  const edit = editing("projects", project.rowid, values);
-  const dates = spanLabel(when(project.start), when(project.finish), false);
+const Body = ({ children }: { children: ReactNode }) => (
+  <div className="grid gap-x-12 gap-y-7 xl:grid-cols-[minmax(0,72ch)_minmax(16rem,1fr)]">{children}</div>
+);
 
-  return (
-    <Disclosure
-      mark={!project.about}
-      summary={project.name}
-      aside={<span className="flex shrink-0 items-baseline gap-4">{dates && <Stamp>{dates}</Stamp>}</span>}
-    >
-      <div className="space-y-6">
-        <Sheet
-          bands={[
-            {
-              notes: [
-                { label: "Project", value: edit({ name: "name", required: true, className: "font-medium max-w-md" }) },
-                { label: "Ran", value: <Span table="projects" rowid={project.rowid} values={values} /> },
-                { label: "About", value: edit({ name: "about", kind: "area" }) },
-                {
-                  label: "Technologies",
-                  value: (
-                    <Chips
-                      table="project_technologies"
-                      column="technology"
-                      rows={project.technologies}
-                      seed={seed}
-                      placeholder="add one, then enter"
-                    />
-                  ),
-                },
-              ],
-            },
-          ]}
-        />
+const Head = ({ name, meta, remove }: { name: ReactNode; meta: (string | null)[]; remove: ReactNode }) => (
+  <header className="border-b border-base-300 pb-3">
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">{name}</div>
+      {remove}
+    </div>
+    <p className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 pl-1.5 text-xs text-soft">
+      {meta.filter(Boolean).map((part) => (
+        <span key={part} className="tnum whitespace-nowrap">
+          {part}
+        </span>
+      ))}
+    </p>
+  </header>
+);
 
-        <Trash
-          table="projects"
-          rowid={project.rowid}
-          what={project.name}
-          says="Delete this project and everything under it."
-        />
-      </div>
-    </Disclosure>
-  );
-}
+const NAME = "font-display text-2xl font-medium";
 
-function EmployerPanel({ employer }: { employer: Employer }) {
-  const values = held(employer);
+function EmployerDetail({ employer, onGone }: { employer: Employer; onGone: () => void }) {
+  const values = fields(employer);
   const edit = editing("employers", employer.rowid, values);
   const start = when(employer.start);
   const current = !employer.finish;
   const finish = when(employer.finish);
-  const length = start ? lengthLabel(monthsBetween(start, current ? today() : (finish ?? start))) : null;
-  const thin = employer.projects.filter((project) => !project.about).length;
 
   return (
-    <Disclosure
-      mark={thin > 0}
-      summary={employer.name}
-      aside={
-        <span className="hidden shrink-0 items-baseline gap-4 sm:flex">
-          <span className="text-xs text-soft">{employer.title}</span>
-          <Stamp>{spanLabel(start, finish, current)}</Stamp>
-          {length && <span className="text-xs text-soft">{length}</span>}
-        </span>
-      }
-    >
-      <div className="space-y-6">
-        <Sheet
-          bands={[
-            {
-              notes: [
-                {
-                  label: "Employer",
-                  value: edit({ name: "name", label: "employer", required: true, className: "font-medium max-w-md" }),
-                },
-                { label: "Your title", value: edit({ name: "title", label: "your title", className: "max-w-md" }) },
-                { label: "There", value: <Span table="employers" rowid={employer.rowid} values={values} /> },
-                { label: "About", value: edit({ name: "about", kind: "area" }) },
-              ],
-            },
-          ]}
-        />
+    <div className="space-y-7">
+      <Head
+        name={edit({
+          name: "name",
+          label: "employer",
+          required: true,
+          className: NAME,
+          placeholder: "Who employed you",
+        })}
+        meta={[
+          employer.title,
+          spanLabel(start, finish, current),
+          start ? lengthLabel(monthsBetween(start, current ? today() : (finish ?? start))) : null,
+        ]}
+        remove={
+          <DeleteButton
+            table="employers"
+            rowid={employer.rowid}
+            what={`${employer.name} and its ${employer.projects.length} projects`}
+            label="Delete"
+            onGone={onGone}
+          />
+        }
+      />
 
-        <section>
-          <Stack
-            head="Project"
-            foot={
-              <Adder
-                table="projects"
-                columns={COLUMNS.projects}
-                seed={{ employer_id: String(employer.rowid) }}
-                label="Add project"
-              />
-            }
-          >
-            {employer.projects.length === 0 && <Empty>No projects here yet.</Empty>}
-            {employer.projects.map((project) => (
-              <ProjectPanel key={project.rowid} project={project} />
-            ))}
-          </Stack>
-        </section>
+      <Body>
+        <Block label="About">
+          {edit({
+            name: "about",
+            kind: "area",
+            preview: true,
+            className: "max-w-[72ch]",
+            placeholder: "The company, your team, and what you owned there.",
+          })}
+        </Block>
 
-        <Trash
-          table="employers"
-          rowid={employer.rowid}
-          what={employer.name}
-          says="Delete this employer and its projects."
-        />
-      </div>
-    </Disclosure>
+        <aside className="space-y-6">
+          <Block label="Your title">{edit({ name: "title", label: "your title", className: "max-w-64" })}</Block>
+          <Block label="When">
+            <Span table="employers" rowid={employer.rowid} values={values} />
+          </Block>
+        </aside>
+      </Body>
+    </div>
+  );
+}
+
+function ProjectDetail({ project, employer, onGone }: { project: Project; employer: Employer; onGone: () => void }) {
+  const values = fields(project);
+  const edit = editing("projects", project.rowid, values);
+
+  return (
+    <div className="space-y-7">
+      <Head
+        name={edit({
+          name: "name",
+          label: "project",
+          required: true,
+          className: NAME,
+          placeholder: "Name this project",
+        })}
+        meta={[employer.name, spanLabel(when(project.start), when(project.finish), false)]}
+        remove={
+          <DeleteButton table="projects" rowid={project.rowid} what={project.name} label="Delete" onGone={onGone} />
+        }
+      />
+
+      <Body>
+        <Block label="About">
+          {edit({
+            name: "about",
+            kind: "area",
+            preview: true,
+            className: "max-w-[72ch]",
+            placeholder: "What you built, what changed because of it, and the numbers you can back up.",
+          })}
+        </Block>
+
+        <aside className="space-y-6">
+          <Block label="When">
+            <Span table="projects" rowid={project.rowid} values={values} />
+          </Block>
+          <Block label="Technologies">
+            <Chips
+              table="project_technologies"
+              column="technology"
+              rows={project.technologies}
+              seed={{ project_id: String(project.rowid) }}
+              placeholder="add one, press enter"
+            />
+          </Block>
+        </aside>
+      </Body>
+    </div>
   );
 }
 
@@ -170,7 +183,119 @@ function covering(employers: Employer[], mark: When): When | null {
 
 const GAP_MONTHS = 4;
 
+const PICK = "w-full rounded-field px-3 py-2 text-left transition-colors hover:bg-base-200";
+
+function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held; onHold: (next: Held) => void }) {
+  return (
+    <nav aria-label="Career">
+      {employers.map((employer, place) => {
+        const here = held.kind === "employer" && held.rowid === employer.rowid;
+        const inside = (project: Project) => held.kind === "project" && held.rowid === project.rowid;
+        const open = here || employer.projects.some(inside);
+        const start = opened(employer);
+        const covered = start ? covering(employers, start) : null;
+        const idle = start && covered ? monthsBetween(covered, start) : 0;
+        const short = thin(employer);
+
+        return (
+          <Fragment key={employer.rowid}>
+            <div className={`border-l-2 py-1 not-first:mt-1 ${open ? "border-base-content" : "border-base-300"}`}>
+              <button
+                type="button"
+                aria-current={here}
+                onClick={() => onHold({ kind: "employer", rowid: employer.rowid })}
+                className={`${PICK} ${here ? "bg-base-200 font-medium" : ""}`}
+              >
+                <span className="flex items-baseline gap-1.5">
+                  <span className="self-center">
+                    <Mark on={!employer.about} />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{employer.name}</span>
+                  {short > 0 && (
+                    <span
+                      className="tnum shrink-0 font-mono text-micro text-signal"
+                      title={`${short} without an About`}
+                    >
+                      {short}
+                    </span>
+                  )}
+                </span>
+                {employer.title && (
+                  <span className="mt-0.5 block truncate pl-3 text-xs text-soft">{employer.title}</span>
+                )}
+                <span className="tnum mt-0.5 block pl-3 font-mono text-micro text-soft">
+                  {spanLabel(start, when(employer.finish), !employer.finish)}
+                </span>
+              </button>
+
+              {open && (
+                <>
+                  <ul className="mt-1">
+                    {employer.projects.map((project) => (
+                      <li key={project.rowid}>
+                        <button
+                          type="button"
+                          aria-current={inside(project)}
+                          onClick={() => onHold({ kind: "project", rowid: project.rowid })}
+                          className={`${PICK} flex items-baseline gap-1.5 pl-7 text-sm
+                            ${inside(project) ? "bg-base-200 font-medium" : ""}`}
+                        >
+                          <span className="self-center">
+                            <Mark on={!project.about} />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">{project.name}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="pl-4">
+                    <Adder
+                      table="projects"
+                      columns={[COLUMNS.projects[0]]}
+                      seed={{ employer_id: String(employer.rowid) }}
+                      label="Add project"
+                      onAdded={(rowid) => onHold({ kind: "project", rowid })}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            {idle >= GAP_MONTHS && place > 0 && (
+              <p className="tnum border-l-2 border-dashed border-base-300 py-2 pl-3 text-micro text-soft">
+                {lengthLabel(idle)} with no role
+              </p>
+            )}
+          </Fragment>
+        );
+      })}
+
+      <Adder
+        table="employers"
+        columns={[COLUMNS.employers[0]]}
+        label="Add an employer"
+        onAdded={(rowid) => onHold({ kind: "employer", rowid })}
+      />
+    </nav>
+  );
+}
+
+function locate(employers: Employer[], held: Held | null) {
+  if (!held) return null;
+  for (const employer of employers) {
+    if (held.kind === "employer") {
+      if (employer.rowid === held.rowid) return { employer, project: null };
+      continue;
+    }
+    const project = employer.projects.find((one) => one.rowid === held.rowid);
+    if (project) return { employer, project };
+  }
+  return null;
+}
+
 export default function CareerEditor({ employers }: { employers: Employer[] }) {
+  const [wanted, setWanted] = useState<Held | null>(null);
+
   const ordered = employers.slice().sort((left, right) => {
     const one = opened(left);
     const other = opened(right);
@@ -178,26 +303,40 @@ export default function CareerEditor({ employers }: { employers: Employer[] }) {
     return one ? -1 : other ? 1 : 0;
   });
 
+  const found = locate(ordered, wanted);
+  const at = found ?? (ordered.length ? { employer: ordered[0], project: null } : null);
+  const held: Held = at?.project
+    ? { kind: "project", rowid: at.project.rowid }
+    : { kind: "employer", rowid: at?.employer.rowid ?? 0 };
+
   return (
-    <div className="space-y-4">
-      <Stack head="Employer" foot={<Adder table="employers" columns={COLUMNS.employers} label="Add an employer" />}>
-        {ordered.length === 0 && <Empty>No employers yet.</Empty>}
-        {ordered.map((employer) => {
-          const start = opened(employer);
-          const covered = start ? covering(ordered, start) : null;
-          const idle = start && covered ? monthsBetween(covered, start) : 0;
-          return (
-            <Fragment key={employer.rowid}>
-              <EmployerPanel employer={employer} />
-              {idle >= GAP_MONTHS && (
-                <p className="border-b border-base-200 px-3 py-2 text-xs text-soft last:border-0">
-                  {lengthLabel(idle)} with no role recorded
-                </p>
-              )}
-            </Fragment>
-          );
-        })}
-      </Stack>
+    <div className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+      <div className="grid lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
+        <div className="border-b border-base-300 p-2 lg:border-b-0 lg:border-r">
+          <div className="lg:sticky lg:top-4 lg:max-h-[calc(100dvh-9rem)] lg:overflow-y-auto">
+            <Spine employers={ordered} held={held} onHold={setWanted} />
+          </div>
+        </div>
+
+        <div className="min-w-0 p-5 md:p-7">
+          {!at && (
+            <p className="max-w-sm text-sm text-soft">
+              Start with an employer. Every project, and every résumé built from them, hangs off one.
+            </p>
+          )}
+          {at?.project && (
+            <ProjectDetail
+              key={at.project.rowid}
+              project={at.project}
+              employer={at.employer}
+              onGone={() => setWanted({ kind: "employer", rowid: at.employer.rowid })}
+            />
+          )}
+          {at && !at.project && (
+            <EmployerDetail key={at.employer.rowid} employer={at.employer} onGone={() => setWanted(null)} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

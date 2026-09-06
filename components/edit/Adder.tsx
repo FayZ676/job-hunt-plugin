@@ -14,11 +14,13 @@ export default function Adder({
   columns,
   seed = {},
   label,
+  onAdded,
 }: {
   table: string;
   columns: Column[];
   seed?: Record<string, string>;
   label: string;
+  onAdded?: (rowid: number) => void;
 }) {
   const blank = Object.fromEntries(columns.map((column) => [column.name, ""]));
   const [draft, setDraft] = useState<Record<string, string>>(blank);
@@ -37,6 +39,10 @@ export default function Adder({
     if ("error" in result) return say(result.error, true);
     setDraft(blank);
     say("added");
+    if (onAdded) {
+      setOpen(false);
+      onAdded(result.rowid);
+    }
     router.refresh();
   };
 
@@ -69,7 +75,7 @@ export default function Adder({
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
         {columns.map((column, index) => (
           <label key={column.name} className="min-w-40 flex-1">
-            <span className="eyebrow mb-0.5 block">{title(column)}</span>
+            {columns.length > 1 && <span className="eyebrow mb-0.5 block">{title(column)}</span>}
             <Control
               column={column}
               autoFocus={index === 0}
@@ -90,7 +96,7 @@ export default function Adder({
           className="text-xs text-soft underline decoration-base-300 underline-offset-2
                   hover:decoration-current"
         >
-          Done
+          {onAdded ? "Cancel" : "Done"}
         </button>
       </div>
     </div>
