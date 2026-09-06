@@ -36,6 +36,32 @@ must be in for that action to be offered or allowed — so `requires()` in `lib/
 `lib/submit.ts` and the buttons on a posting page cannot drift apart. A status outside the enum in
 `schema.ts` will not typecheck.
 
+## Adding an ATS
+
+**Every fetcher is one file in `lib/core/fetch/ats`, and nothing outside that directory names an
+ATS.** The directory is read at run time, so a file dropped in is crawled on the next search and a
+file deleted is simply gone — `lib/core/fetch/contract.ts` refuses one that does not satisfy the
+contract, and `job-companies fetchers` prints what is plugged in.
+
+A fetcher exports one default object: `candidate` turns whatever the user typed into a board
+identifier or `null`, `probe` says whether that board is real and what the employer calls itself,
+and `openings` returns `Posting[]`. Build every row through `posting()` — the shared rules, the
+scoring and the dashboard all read those columns and none of them know which ATS filled them. The
+`Aim` it is handed is a hint, not a contract: push whatever of it the ATS can filter server-side and
+ignore the rest, because the crawl applies all of it again to whatever comes back.
+
+Two things a new fetcher has to get right, because nothing downstream can:
+
+- **`key` must be `<id>:<something stable across runs>`**, or the same job is new every day. Prefer
+  the ATS's own posting id; where it is only unique within a board, prefix the board.
+- **A board that answers with nothing must fail, not return `[]`.** `net.ts` maps 404 and 410 to
+  `Missing`, retries 429 and 5xx, and lets everything else through as an error the crawl reports by
+  name. Swallowing an error hides a dead board behind a quiet search.
+
+Registering an employer costs one request per fetcher, so `candidate` returning `null` for input
+that is obviously not yours is worth the line — Workday needs a full URL and says so rather than
+probing every bare word.
+
 ## Changing the schema
 
 **`lib/core/schema.ts` is the only place a column is declared.** `lib/core/ddl.ts` renders the DDL

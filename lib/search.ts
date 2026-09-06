@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { crawled, registry } from "./companies.ts";
 import { db, one, rows as query } from "./core/db.ts";
 import { POSTING_COLUMNS, Posting } from "./core/posting.ts";
 import { TABLES, options as allowed } from "./core/schema.ts";
@@ -179,12 +180,14 @@ export type Aim = {
   locations: string[];
   remote: boolean;
   since: sources.Since;
-  max: number;
+  max: number | null;
 };
 
 export type Found = Ruled & {
   fetched: number;
   fresh: number;
+  boards: number;
+  failures: { board: string; why: string }[];
 };
 
 export function store(postings: Posting[]) {
@@ -212,10 +215,12 @@ export function store(postings: Posting[]) {
 }
 
 export async function search(aim: Aim): Promise<Found> {
-  if (!aim.terms.length) throw new Error("name what to search for, short and literal");
-  if (!aim.max) throw new Error("say how many jobs to buy: --max <n>");
   if (!aim.since) throw new Error(`say how far back to search: --since ${sources.SINCE.join(" | ")}`);
-  const held = await sources.search({
+  const boards = registry();
+  if (!boards.length)
+    throw new Error("no career sites to crawl — add employers with job-companies add <name, slug, or careers URL>");
+
+  const held = await sources.crawl(boards, {
     terms: aim.terms,
     notTitles: aim.notTitles,
     notOrganizations: aim.notOrganizations,
@@ -224,15 +229,8 @@ export async function search(aim: Aim): Promise<Found> {
     since: aim.since,
     max: aim.max,
   });
-  return found(held);
-}
+  crawled(boards);
 
-export function replay(payload: unknown): Found {
-  const items = Array.isArray(payload) ? payload : ((payload as { items?: unknown[] })?.items ?? []);
-  return found(sources.fromApify(items));
-}
-
-function found(held: Posting[]): Found {
-  const fresh = store(held);
-  return { fetched: held.length, fresh, ...rule() };
+  const fresh = store(held.postings);
+  return { fetched: held.postings.length, fresh, boards: held.boards, failures: held.failures, ...rule() };
 }

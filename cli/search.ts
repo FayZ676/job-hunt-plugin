@@ -1,6 +1,5 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import fs from "node:fs";
-import { DISPOSITIONS, type Found, type Ruled, replay, rule, search } from "../lib/search.ts";
+import { DISPOSITIONS, type Found, type Ruled, rule, search } from "../lib/search.ts";
 import * as sources from "../lib/core/sources.ts";
 import { collect, fail, action } from "./kit.ts";
 
@@ -18,15 +17,18 @@ function ruled(held: Ruled) {
 }
 
 function report(found: Found) {
-  console.log(`FETCHED ${found.fetched} postings (${found.fresh} new)`);
+  console.log(`FETCHED ${found.fetched} postings from ${found.boards} career sites (${found.fresh} new)`);
+  for (const failure of found.failures) console.log(`unreachable: ${failure.board} — ${failure.why}`);
   ruled(found);
 }
 
 const { program, runs } = action(
   "job-search",
-  `Find the openings. One paid call, then every rule the profile and settings carry.
+  `Find the openings. Every career site in \`companies\` crawled, then every rule the
+  profile and settings carry. Costs nothing and needs no key -- \`job-companies\` is
+  what decides the reach.
 
-  job-search "AI Engineer" --since 7d --max 200    across every career site
+  job-search "AI Engineer" --since 7d              across every registered career site
   job-search "AI Engineer" --since 7d --location "Oregon, United States"
   job-search "AI Engineer" --since 24h --remote
   job-search "AI Engineer" --since 7d --not-title intern --not-company Insight
@@ -48,11 +50,9 @@ program
   .option("--not-company <name>", "repeatable; an employer the search must not return", collect, [])
   .option("--remote", "only jobs a remote worker can hold")
   .option("--since <window>", `how far back this call reaches: one of ${sources.SINCE.join(", ")}`)
-  .option("--max <n>", "jobs returned -- this is the bill", Number)
-  .option("--file <path>", "replay a saved dataset instead of spending credit")
+  .option("--max <n>", "stop after this many postings", Number)
   .action(
     runs(async (terms: string[], options) => {
-      if (options.file) return report(replay(JSON.parse(fs.readFileSync(options.file, "utf8"))));
       if (!terms.length) fail("name what to search for, short and literal; `job-score instructions` says what");
 
       report(
@@ -63,7 +63,7 @@ program
           locations: options.location,
           remote: Boolean(options.remote),
           since: since(options.since),
-          max: options.max,
+          max: options.max ?? null,
         }),
       );
     }),

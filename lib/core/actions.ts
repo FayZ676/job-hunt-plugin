@@ -23,10 +23,16 @@ export const ACTIONS: Action[] = [
     accepts: [],
   },
   {
+    id: "companies",
+    does: "choose whose career sites get searched",
+    argument: "[who]",
+    accepts: [],
+  },
+  {
     id: "search",
     does: "search and rule only",
-    argument: "[terms] --since --max",
-    seed: "--since 7d --max 20",
+    argument: "[terms] --since",
+    seed: "--since 7d",
     accepts: [],
   },
   {

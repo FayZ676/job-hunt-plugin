@@ -15,7 +15,7 @@ const NOTES = [
   "nothing is submitted without your approval, named by you, in that run",
   "a field your profile does not answer is left empty and reported, never guessed",
   "everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)",
-  "searching costs Apify credit, billed per job returned — ruling again is free",
+  "searching crawls the career sites in `companies` — nothing else is ever searched",
   "ask about your search in plain English — it is answered with a query",
 ];
 
