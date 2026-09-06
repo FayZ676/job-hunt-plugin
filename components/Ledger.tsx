@@ -23,9 +23,7 @@ export type LedgerRow = {
   href?: string;
   mark?: boolean;
   cells: ReactNode[];
-  handle?: ReactNode;
   action?: ReactNode;
-  zone?: Record<string, unknown>;
 };
 
 const HEAD = "eyebrow whitespace-nowrap py-2 pl-3 pr-1 text-left font-medium";
@@ -41,7 +39,6 @@ export default function Ledger({
   rows,
   empty = "Nothing here yet.",
   foot,
-  grip,
   action,
   headless,
   sorted,
@@ -51,14 +48,13 @@ export default function Ledger({
   rows: LedgerRow[];
   empty?: ReactNode;
   foot?: ReactNode;
-  grip?: boolean;
   action?: boolean;
   headless?: boolean;
   sorted?: Sorted | null;
   onSort?: (label: string, dir: Sorted["dir"] | null) => void;
 }) {
   const router = useRouter();
-  const span = 2 + head.length + (grip ? 1 : 0) + (action ? 1 : 0);
+  const span = 2 + head.length + (action ? 1 : 0);
 
   const follow = (href: string) => (event: MouseEvent<HTMLTableRowElement>) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -72,7 +68,6 @@ export default function Ledger({
       <table className="w-full text-sm">
         <colgroup>
           <col className="w-5" />
-          {grip && <col className="w-6" />}
           {head.map((column) => (
             <col key={column.label} style={{ width: column.width }} />
           ))}
@@ -85,11 +80,6 @@ export default function Ledger({
               <th scope="col" className={`${SLIM} pl-3`}>
                 <span className="sr-only">Waiting on you</span>
               </th>
-              {grip && (
-                <th scope="col" className={`${SLIM} px-1`}>
-                  <span className="sr-only">Order</span>
-                </th>
-              )}
               {head.map((column) => {
                 const on = sorted?.label === column.label;
                 return (
@@ -150,7 +140,6 @@ export default function Ledger({
           {rows.map((row) => (
             <tr
               key={row.key}
-              {...row.zone}
               onClick={row.href ? follow(row.href) : undefined}
               className={`ledgerrow group/row border-b border-base-200 last:border-0
                   ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}
@@ -160,12 +149,6 @@ export default function Ledger({
                   <Mark on={row.mark} />
                 </span>
               </td>
-
-              {grip && (
-                <td className="py-2.5 px-1 align-top">
-                  <span className="flex h-5 items-center">{row.handle}</span>
-                </td>
-              )}
 
               {row.cells.map((cell, index) => (
                 <td

@@ -4,7 +4,6 @@ import Ledger from "@/components/Ledger";
 import Adder from "./Adder";
 import DeleteButton from "./DeleteButton";
 import Field from "./Field";
-import { useReorder } from "./reorder";
 import { title, type Column } from "./columns";
 
 export type Record_ = { rowid: number } & { [column: string]: unknown };
@@ -19,7 +18,6 @@ export default function RecordList({
   what = "this row",
   addLabel,
   empty,
-  ordered,
   headless,
 }: {
   table: string;
@@ -29,24 +27,18 @@ export default function RecordList({
   what?: string;
   addLabel?: string;
   empty?: string;
-  ordered?: boolean;
   headless?: boolean;
 }) {
-  const { Grip, dropzone } = useReorder(table, rows);
-
   return (
     <Ledger
       headless={headless}
-      grip={ordered}
       action
       empty={empty}
       head={columns.map((column) => ({ label: title(column), width: column.width }))}
       foot={<Adder table={table} columns={columns} seed={seed} label={addLabel ?? "Add"} />}
-      rows={rows.map((row, place) => ({
+      rows={rows.map((row) => ({
         key: String(row.rowid),
         mark: unanswered(row, columns),
-        zone: ordered ? dropzone(place) : undefined,
-        handle: ordered ? <Grip place={place} what={what} /> : undefined,
         action: <DeleteButton table={table} rowid={row.rowid} what={what} />,
         cells: columns.map((column) => (
           <Field
