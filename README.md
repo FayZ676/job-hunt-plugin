@@ -21,8 +21,11 @@ and never writes an answer your profile doesn't support.
 
 - Node 22.18+
 - [Typst](https://typst.app) and Poppler, for resumes: `brew install typst poppler`
-- A browser MCP server, for filling forms — such as
-  [Playwright MCP](https://github.com/microsoft/playwright-mcp)
+- A Chrome-family browser, for searching and filling forms. `.mcp.json` points
+  [Playwright MCP](https://github.com/microsoft/playwright-mcp) at one that `job-browser` starts and
+  leaves running, on `127.0.0.1:9222`, with its own profile in `~/data/job/browser` — so a captcha or
+  a half-filled form is still waiting when you answer, instead of dying with the conversation that
+  opened it. The dashboard starts it for you before any action that browses.
 
 Node alone is enough to start. Add the rest before your first resume.
 
@@ -34,10 +37,10 @@ npm install --prefix ~/.claude/skills/job
 npm link --prefix ~/.claude/skills/job
 ```
 
-Then `/job setup`, which interviews you, builds your profile, and registers a starting set of
-employers to crawl — hand it a resume or LinkedIn export and it drafts the whole thing for you to
-correct. `/job companies` changes who gets crawled at any time. `/job help` lists every command; `/job ui`
-serves a dashboard for editing your profile and watching the actions run.
+Then `/job setup`, which interviews you and builds your profile — hand it a resume or LinkedIn
+export and it drafts the whole thing for you to correct. What the search looks for comes out of that
+interview, in your words, and `/job feedback` changes it at any time. `/job help` lists every command;
+`/job ui` serves a dashboard for editing your profile and watching the actions run.
 
 ## Your files
 

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       erase(asked.erase);
       return Response.json({ run: asked.erase });
     }
-    return Response.json({ run: begin(asked) });
+    return Response.json({ run: await begin(asked) });
   } catch (error) {
     return failed(error);
   }

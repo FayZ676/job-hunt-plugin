@@ -25,7 +25,8 @@ application for approval; never resubmit silently. Then `job-submit record`, quo
 you have seen in a snapshot.
 
 **On a Lever posting, the user clicks.** hCaptcha gates the submit button, and the challenge is
-never attempted — a captcha is an explicit request for a person. Hand the open tab over.
+never attempted — a captcha is an explicit request for a person. Hand the open tab over; it is still
+open when they come back, so confirm from the page rather than filling it again.
 
 ## Recording what comes back
 

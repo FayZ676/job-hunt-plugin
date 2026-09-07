@@ -60,6 +60,11 @@ Two files are not an action and are read when they apply:
 defaults to, and what it gives back. Read it before invoking rather than reading the source, and
 never carry a flag from a file here that `--help` does not list.
 
+**Playwright MCP attaches to a Chrome that `job-browser` starts and leaves running**, so the browser
+outlives this conversation: a tab left open is still open when the user comes back to it, and a
+captcha they solve stays solved. Hand a tab over rather than closing it — never `browser_close` — and
+if the tools reach no browser, run `job-browser`.
+
 **What a command needs and the profile does not hold, ask for.** Read the profile first; if the
 answer is not there and the user did not say it, ask them — never infer it, and never let a value
 they would have chosen come from a fallback.

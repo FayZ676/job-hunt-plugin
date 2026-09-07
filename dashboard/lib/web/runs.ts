@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { runnable, seeded, shown, asked } from "@/core/actions";
+import { browses, runnable, seeded, shown, asked } from "@/core/actions";
+import { ensure } from "@/core/browser";
 import { CAREER } from "@/core/db";
 import { ROOT } from "@/core/root";
 import { CLOSING, DONE, WORKING, declared, type Standing } from "@/core/standing";
@@ -136,7 +137,7 @@ export function remembered(runs: Run[]): Record<string, string> {
   return held;
 }
 
-export function begin({
+export async function begin({
   action = "",
   argument = "",
   note,
@@ -160,6 +161,8 @@ export function begin({
 
   const resume = [...kept].reverse().find((one) => one.kind === "session")?.id;
   if (run && !resume) throw new Error("that conversation cannot be continued");
+
+  if (browses(named)) await ensure();
 
   const started = new Date().toISOString();
   if (!run) append(id, { kind: "opened", action: named, title: shown(named, words), started, argument: words });

@@ -158,6 +158,6 @@ job-search rule --redo
 | `harvest holds no job cards` | Indeed changed the payload shape, or the wrong object was saved | Snapshot the page and find where the cards now live; the path is one line in `lib/core/indeed.ts` |
 | A search returns almost nothing | The terms do not match how titles are worded | Widen the terms, not the window |
 | A 403 or a captcha | Something did `fetch()` instead of navigating | Navigate; see above |
-| A captcha on a browser that was fine yesterday | Playwright starts a fresh profile with no Indeed cookies, so a cold session draws one sooner | Solve it once in the open window; a harvest that stops early reads as a quiet market, so check the card count against the queries you ran |
+| A captcha mid-harvest | Indeed is asking for a person, and only a person answers it | Hand the open window over; a harvest that stopped early reads as a quiet market, so check the card count against the queries you ran before ruling on it |
 | Sponsored junk from staffing firms | Indeed sells placement | `--not-company`, and name them in `instructions` |
 | A prospect has no description at scoring | The `/viewjob` pass has not run for it | `job-search descriptions` lists exactly which rows are missing one |

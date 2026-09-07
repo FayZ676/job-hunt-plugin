@@ -11,6 +11,7 @@
   "bin": {
     "job-paths": "cli/paths.ts",
     "job-q": "cli/q.ts",
+    "job-browser": "cli/browser.ts",
     "job-profile": "cli/profile.ts",
     "job-search": "cli/search.ts",
     "job-score": "cli/score.ts",

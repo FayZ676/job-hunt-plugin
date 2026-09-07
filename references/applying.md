@@ -125,8 +125,8 @@ Screenshot the completed form into `$CAREER/resumes/`; that screenshot is what t
 Then record the application with `job-stage add`, one `--field` per answer.
 
 `job-profile answers` and `job-profile missing` are where the identity and policy answers come from,
-and which of them are still `NULL`. Keep the browser tab open; the staged rows survive a lost session
-and refilling from them is cheap.
+and which of them are still `NULL`. Leave the tab open: the browser outlives the conversation, so a
+form stays filled while the user answers whatever blocked it.
 
 **A start date is computed, not stored.** Every employer has a `finish` date and they can start at once;
 otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier

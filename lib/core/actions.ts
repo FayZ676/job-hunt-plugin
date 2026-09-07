@@ -5,6 +5,7 @@ export type Action = {
   does: string;
   argument: string;
   accepts: Status[];
+  browses?: boolean;
   asks?: string;
   seed?: string;
 };
@@ -15,6 +16,7 @@ export const ACTIONS: Action[] = [
     does: "run every action in order: search, score, resume, stage, submit",
     argument: "",
     accepts: [],
+    browses: true,
   },
   {
     id: "setup",
@@ -27,6 +29,7 @@ export const ACTIONS: Action[] = [
     does: "harvest Indeed in the browser, then rule what came back",
     argument: "[terms]",
     accepts: [],
+    browses: true,
   },
   {
     id: "score",
@@ -45,12 +48,14 @@ export const ACTIONS: Action[] = [
     does: "stage every shortlisted application, stopping before submit",
     argument: "[key or URL]",
     accepts: ["shortlisted", "staged"],
+    browses: true,
   },
   {
     id: "submit",
     does: "review what is staged and submit only what you name",
     argument: "[key]",
     accepts: ["staged"],
+    browses: true,
   },
   {
     id: "cleanup",
@@ -91,6 +96,8 @@ export function commanded(said: string): { action: string; argument: string } | 
 export const shown = (id: string, argument: string) => (BY_ID.get(id)?.asks ? argument : asked(id, argument));
 
 export const seeded = (id: string) => BY_ID.get(id)?.seed;
+
+export const browses = (id: string) => Boolean(BY_ID.get(id)?.browses);
 
 export const offered = (status: string | null | undefined) =>
   ACTIONS.filter((action) => action.accepts.some((allowed) => allowed === status));

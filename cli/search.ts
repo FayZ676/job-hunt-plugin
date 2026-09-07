@@ -1,6 +1,8 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import fs from "node:fs";
+import path from "node:path";
 
+import { DOWNLOADS } from "../lib/core/db.ts";
 import { CARDS, VIEWJOB } from "../lib/core/indeed.ts";
 import { DISPOSITIONS, type Harvested, type Ruled, describe, harvest, rule } from "../lib/search.ts";
 import { collect, fail, action } from "./kit.ts";
@@ -24,12 +26,14 @@ function report(held: Harvested) {
   ruled(held);
 }
 
-const read = (path: string) => {
-  if (!fs.existsSync(path)) fail(`no harvest at ${path}`);
+const read = (named: string) => {
+  const tried = [named, path.join(DOWNLOADS, path.basename(named))];
+  const at = tried.find((held) => fs.existsSync(held));
+  if (!at) fail(`no harvest at ${tried.join(" or ")}`);
   try {
-    return JSON.parse(fs.readFileSync(path, "utf8"));
+    return JSON.parse(fs.readFileSync(at, "utf8"));
   } catch (error) {
-    fail(`${path} is not JSON: ${error instanceof Error ? error.message : String(error)}`);
+    fail(`${at} is not JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 

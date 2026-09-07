@@ -16,6 +16,7 @@ const NOTES = [
   "a field your profile does not answer is left empty and reported, never guessed",
   "everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)",
   "searching is an Indeed harvest you drive in the browser — see references/searching.md",
+  "`job-browser` starts the browser the actions drive; it stays open between them, so a captcha or a half-filled form waits for you",
   "ask about your search in plain English — it is answered with a query",
 ];
 
