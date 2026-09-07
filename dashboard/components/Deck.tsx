@@ -7,7 +7,7 @@ import { ChevronLeft, Plus, Trash2 } from "lucide-react";
 import Glyph from "@/components/Glyph";
 import Options from "@/components/Options";
 import { Output, useRun, type Asking } from "@/components/run";
-import { Empty, Ghost, Row, confirmDelete } from "@/components/ui";
+import { Empty, Ghost, Row } from "@/components/ui";
 import { commanded, type Action } from "@/core/actions";
 import { DONE, WAITING, WORKING } from "@/core/standing";
 import type { Run } from "@/lib/web/runs";
@@ -228,7 +228,7 @@ export default function Deck({
                           label: "Delete chat",
                           tone: "grave",
                           icon: <Glyph icon={Trash2} size={13} />,
-                          onPick: () => confirmDelete(held.title) && erase(held.id),
+                          onPick: () => erase(held.id),
                         },
                       ]}
                     />
