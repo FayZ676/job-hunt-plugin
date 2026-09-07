@@ -23,16 +23,9 @@ export const ACTIONS: Action[] = [
     accepts: [],
   },
   {
-    id: "companies",
-    does: "choose whose career sites get searched",
-    argument: "[who]",
-    accepts: [],
-  },
-  {
     id: "search",
-    does: "search and rule only",
-    argument: "[terms] --since",
-    seed: "--since 7d",
+    does: "harvest Indeed in the browser, then rule what came back",
+    argument: "[terms]",
     accepts: [],
   },
   {

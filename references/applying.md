@@ -20,20 +20,32 @@ not in `projects` is a flag, not an inference.
 
 ## Reaching the form
 
+**Every row arrives from Indeed**, so its `url` is a listing, not an application form. Resolving it
+to the employer's own form is the first half of this action.
+
+1. **Follow Indeed's apply link.** `https://www.indeed.com/applystart?jk=<jobkey>&from=vj` redirects
+   to the employer's ATS for anything that is not Indeed Apply. That is the cheap path and it works
+   most of the time.
+2. **Search the web when it dead-ends** — an Indeed Apply form, an expired listing, or a redirect
+   that lands on a careers homepage. Search the exact title plus the company name, and prefer a
+   result on an ATS domain over the employer's marketing page.
+3. **Store what you land on.** `staged.url` is the form actually filled, so a later run does not
+   resolve it twice.
+
+**Confirm it is the same role before filling.** A search can land on a different opening at the same
+employer. Title and location must match the prospect; if they do not, flag it rather than applying.
+
+Once landed, **the domain names the ATS** — that is what the table below is keyed on, not the
+prospect key, which is `indeed:<jobkey>` for every row.
+
 | ATS | Apply URL | Notes |
 | --- | --------- | ----- |
 | **Ashby** | Job URL + `/application` | Renders client-side; wait, below |
-| **Greenhouse** | `job-boards.greenhouse.io/<slug>/jobs/<id>` | Career pages embed this in an iframe. Go to the canonical URL, from the `gh_jid` in the prospect key |
+| **Greenhouse** | `job-boards.greenhouse.io/<slug>/jobs/<id>` | Career pages embed this in an iframe; go to the canonical URL |
 | **Lever** | `jobs.lever.co/<slug>/<id>/apply` | Server-rendered and predictable, but **submission is gated by hCaptcha** |
 | **Workday** | `<company>.wd<N>.myworkdayjobs.com/…` | **Fully drivable.** Needs a per-employer account, then a five-step flow |
-| **Everything else** | The row's `url` | iCIMS, SuccessFactors, Oracle Cloud, Rippling, SmartRecruiters, BambooHR, Eightfold and 40-odd more now arrive. Untested, one at a time: **do not assume any of them is blocked** — open it and look before writing it off |
-
-The prospect `key` prefix names the ATS the posting came from — `ashby:`, `greenhouse:`,
-`lever.co:`, `workday:`, `icims:` — and `postings.source` holds the same value. There are 54
-of them, so **read the prefix rather than expecting a short list.**
-
-**Every `url` is the employer's own posting.** Nothing arrives through an aggregator any more,
-so there is no redirect to follow and no listing link to resolve.
+| **Indeed Apply** | The listing itself | Indeed hosts the form; the resume upload is the same, the screening questions are Indeed's |
+| **Everything else** | Where the redirect landed | iCIMS, SuccessFactors, Oracle Cloud, Rippling, SmartRecruiters, BambooHR, Eightfold and 40-odd more. Untested, one at a time: **do not assume any of them is blocked** — open it and look before writing it off |
 
 An ATS met for the first time is worth a note in this file once it is driven — that is how the table
 above earned its rows.

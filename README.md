@@ -1,13 +1,13 @@
 # job-hunt
 
-A Claude Code skill that runs your job search end to end: it crawls the career sites of the
-employers you choose, scores every new opening against your profile, tailors a resume for the ones
-worth applying to, fills the application form, and submits only what you approve. Every result is
-the employer's own posting — no aggregator, no gig spam.
+A Claude Code skill that runs your job search end to end: it searches Indeed in your browser, scores
+every new opening against your profile, tailors a resume for the ones worth applying to, fills the
+application form on the employer's own ATS, and submits only what you approve.
 
-Postings come straight off each employer's applicant tracking system, so there is no API key to
-get, no search quota, and no bill. It ships knowing Greenhouse, Ashby, Lever, SmartRecruiters and
-Workday, and a new one is a single file under `lib/core/fetch/ats`.
+Indeed is navigated the way a person would, so there is no API key to get, no search quota, and no
+bill — and no list of employers to maintain, since the queries you search are the whole reach.
+Applications are resolved back to the employer's own form: Greenhouse, Ashby, Lever and Workday are
+driven end to end, and the rest are opened one at a time.
 
 ```
 /job

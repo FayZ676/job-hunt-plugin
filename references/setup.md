@@ -68,20 +68,7 @@ command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 ```
 
-**5. Register who to crawl.** Nothing is searched until `companies` holds someone. Start from the
-shipped list and then make it theirs — the employers in their instructions, the ones they name in
-conversation, the ones they have applied to before:
-
-```bash
-job-companies add --file "$HOME/.claude/skills/job/assets/companies.txt"
-job-companies add <each employer they named>
-job-companies list
-```
-
-`job-companies list` prints the name each board calls itself. **Read it** — slugs are first-come,
-and a wrong company registered quietly is a search that quietly returns the wrong jobs.
-
-**6. Do a dry run.** `job-search "<a role they named>" --since 7d`, then query `triage`. It costs
-nothing, so the point is only to see whether the prose aims straight. Sensible companies means it is
-tuned; nothing, or all noise, means another pass at what the instructions say and what you passed
-the search.
+**5. Do a dry run.** Harvest one Indeed query for a role they named — `references/searching.md` has
+the browser half — then query `triage`. It costs nothing, so the point is only to see whether the
+prose aims straight. Sensible companies means it is tuned; nothing, or all noise, means another pass
+at what the instructions say and at the queries you built from them.

@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-import { crawled, registry } from "./companies.ts";
 import { db, one, rows as query } from "./core/db.ts";
+import { described, harvested } from "./core/indeed.ts";
 import { POSTING_COLUMNS, Posting } from "./core/posting.ts";
 import { TABLES, options as allowed } from "./core/schema.ts";
-import * as sources from "./core/sources.ts";
 import { ageDays, norm, normCompany } from "./core/text.ts";
 
 export const DISPOSITIONS: Record<string, string> = {
@@ -173,23 +172,6 @@ export function rule(options: Options = {}): Ruled {
   };
 }
 
-export type Aim = {
-  terms: string[];
-  notTitles: string[];
-  notOrganizations: string[];
-  locations: string[];
-  remote: boolean;
-  since: sources.Since;
-  max: number | null;
-};
-
-export type Found = Ruled & {
-  fetched: number;
-  fresh: number;
-  boards: number;
-  failures: { board: string; why: string }[];
-};
-
 export function store(postings: Posting[]) {
   const known = new Set(query(TABLES.postings.pick({ key: true }), "SELECT key FROM postings").map((row) => row.key));
   const insert = db().prepare(
@@ -214,23 +196,33 @@ export function store(postings: Posting[]) {
   return fresh;
 }
 
-export async function search(aim: Aim): Promise<Found> {
-  if (!aim.since) throw new Error(`say how far back to search: --since ${sources.SINCE.join(" | ")}`);
-  const boards = registry();
-  if (!boards.length)
-    throw new Error("no career sites to crawl — add employers with job-companies add <name, slug, or careers URL>");
+export type Excludes = { notTitles: string[]; notCompanies: string[] };
 
-  const held = await sources.crawl(boards, {
-    terms: aim.terms,
-    notTitles: aim.notTitles,
-    notOrganizations: aim.notOrganizations,
-    locations: aim.locations,
-    remote: aim.remote,
-    since: aim.since,
-    max: aim.max,
-  });
-  crawled(boards);
+export type Harvested = Ruled & { read: number; stored: number; fresh: number; dropped: number };
 
-  const fresh = store(held.postings);
-  return { fetched: held.postings.length, fresh, boards: held.boards, failures: held.failures, ...rule() };
+const holds = (haystack: string, needles: string[]) => needles.some((needle) => haystack.includes(norm(needle)));
+
+const wanted = (row: Posting, excludes: Excludes) =>
+  !holds(norm(row.title), excludes.notTitles) && !holds(normCompany(row.company), excludes.notCompanies);
+
+export function harvest(payload: unknown, excludes: Excludes = { notTitles: [], notCompanies: [] }): Harvested {
+  const read = harvested(payload);
+  const kept = read.filter((row) => wanted(row, excludes));
+  const fresh = store(kept);
+  return { read: read.length, stored: kept.length, fresh, dropped: read.length - kept.length, ...rule() };
+}
+
+export function describe(payload: unknown) {
+  const held = described(payload);
+  const attach = db().prepare("UPDATE postings SET description=? WHERE key=?");
+  let attached = 0;
+  db().transaction(() => {
+    for (const one of held) attached += attach.run(one.description, one.key).changes;
+  })();
+  const missing = query(
+    TABLES.postings.pick({ key: true, company: true, title: true, url: true }),
+    "SELECT key, company, title, url FROM postings " +
+      "WHERE disposition='kept' AND (description IS NULL OR trim(description)='')",
+  );
+  return { read: held.length, attached, missing };
 }

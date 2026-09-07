@@ -1,7 +1,7 @@
 ---
 name: job
-description: Searches every company career site for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "search and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
-argument-hint: [setup|companies [who]|search|score [key]|resume [JD|url|key]|apply [key|url]|submit [key]|cleanup <what to remove>|feedback <what is wrong>|ui|help]
+description: Searches Indeed in the browser for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "search and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
+argument-hint: [setup|search|score [key]|resume [JD|url|key]|apply [key|url]|submit [key]|cleanup <what to remove>|feedback <what is wrong>|ui|help]
 ---
 
 # Job routine
@@ -35,8 +35,7 @@ Nothing below overrides these.
 | ---------- | ---- | ---------- |
 | `/job setup` | First-run setup | `references/setup.md` |
 | `/job` | Every action, in order | each action's file, as it starts |
-| `/job companies [who]` | Choose whose career sites get searched | `references/searching.md` |
-| `/job search` | Find the openings, and rule on them | `references/searching.md` |
+| `/job search` | Harvest Indeed in the browser, and rule on what came back | `references/searching.md` |
 | `/job score [key]` | Score every prospect, or the one named | `references/scoring.md` |
 | `/job resume [JD, URL, or key]` | Build a resume for every `shortlisted` posting, or the one named | `references/resume.md` |
 | `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
@@ -73,6 +72,6 @@ job-profile missing              # every NULL, each one a hard stop
 ```
 
 Each action is self-contained and knows nothing of the others, so any step can be redone without
-the ones before it. Nothing here costs money or needs a key: `search` crawls the career sites in
-`companies` straight off each employer's ATS, so **what the registry holds is the whole reach of
-the search** — an employer the user cares about and has not registered is the one failure mode.
+the ones before it. Nothing here costs money or needs a key: `search` is Indeed, navigated in the
+browser, so **the queries you build are the whole reach of the search** — a role worded in a way
+none of them match is the one failure mode.

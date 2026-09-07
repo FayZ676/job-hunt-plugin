@@ -13,7 +13,6 @@
     "job-q": "cli/q.ts",
     "job-profile": "cli/profile.ts",
     "job-search": "cli/search.ts",
-    "job-companies": "cli/companies.ts",
     "job-score": "cli/score.ts",
     "job-resume": "cli/resume.ts",
     "job-stage": "cli/stage.ts",

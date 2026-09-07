@@ -41,28 +41,6 @@ export const TABLES = {
     value: z.string().nullable(),
   }),
 
-  companies: z
-    .object({
-      ats: col(z.string(), { sql: filled("ats") }),
-      board: col(z.string(), { sql: filled("board") }),
-      name: col(z.string(), { sql: filled("name") }),
-      added_on: col(z.string(), {
-        sql: "DEFAULT (date('now')) CHECK (added_on IS date(added_on))",
-        takes: "a date, as YYYY-MM-DD",
-      }),
-      last_crawled: col(z.string().nullable(), {
-        sql: "CHECK (last_crawled IS NULL OR last_crawled IS date(last_crawled))",
-        takes: "a date, as YYYY-MM-DD",
-      }),
-    })
-    .meta({
-      note:
-        "Whose career sites get crawled. `ats` names the fetcher module that knows how to\n" +
-        "read the board, `board` is that fetcher's identifier for this employer. An\n" +
-        "employer absent here is an employer never searched.",
-      constraints: ["PRIMARY KEY (ats, board)"],
-    } satisfies Shape),
-
   postings: z
     .object({
       key: col(z.string(), { sql: "PRIMARY KEY" }),
@@ -362,7 +340,6 @@ export const STATUSES = TABLES.postings.shape.status.unwrap().options as Status[
 
 export const ORDER: Table[] = [
   "settings",
-  "companies",
   "postings",
   "events",
   "staged",

@@ -15,7 +15,7 @@ const NOTES = [
   "nothing is submitted without your approval, named by you, in that run",
   "a field your profile does not answer is left empty and reported, never guessed",
   "everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)",
-  "searching crawls the career sites in `companies` — nothing else is ever searched",
+  "searching is an Indeed harvest you drive in the browser — see references/searching.md",
   "ask about your search in plain English — it is answered with a query",
 ];
 
@@ -41,7 +41,7 @@ const folded = (text: string, room: number) => {
   return lines;
 };
 
-console.log(`job — search every company career site, score the openings, tailor a resume,
+console.log(`job — harvest Indeed for openings, score them, tailor a resume,
       stage the application, and submit what you approve.
 
 usage: /job [command] [argument]

@@ -1,6 +1,8 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { DISPOSITIONS, type Found, type Ruled, rule, search } from "../lib/search.ts";
-import * as sources from "../lib/core/sources.ts";
+import fs from "node:fs";
+
+import { CARDS, VIEWJOB } from "../lib/core/indeed.ts";
+import { DISPOSITIONS, type Harvested, type Ruled, describe, harvest, rule } from "../lib/search.ts";
 import { collect, fail, action } from "./kit.ts";
 
 const dropped = (counts: Record<string, number>) =>
@@ -16,56 +18,65 @@ function ruled(held: Ruled) {
   if (held.pending) console.log(`\n${held.pending} postings still pending`);
 }
 
-function report(found: Found) {
-  console.log(`FETCHED ${found.fetched} postings from ${found.boards} career sites (${found.fresh} new)`);
-  for (const failure of found.failures) console.log(`unreachable: ${failure.board} — ${failure.why}`);
-  ruled(found);
+function report(held: Harvested) {
+  console.log(`READ ${held.read} cards, stored ${held.stored} (${held.fresh} new)`);
+  if (held.dropped) console.log(`excluded before storing: ${held.dropped}`);
+  ruled(held);
 }
+
+const read = (path: string) => {
+  if (!fs.existsSync(path)) fail(`no harvest at ${path}`);
+  try {
+    return JSON.parse(fs.readFileSync(path, "utf8"));
+  } catch (error) {
+    fail(`${path} is not JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
 
 const { program, runs } = action(
   "job-search",
-  `Find the openings. Every career site in \`companies\` crawled, then every rule the
-  profile and settings carry. Costs nothing and needs no key -- \`job-companies\` is
-  what decides the reach.
+  `Load an Indeed harvest into postings and rule on it. The browser does the searching --
+  you drive Indeed, save the cards, and this reads the file. Nothing here touches the network.
 
-  job-search "AI Engineer" --since 7d              across every registered career site
-  job-search "AI Engineer" --since 7d --location "Oregon, United States"
-  job-search "AI Engineer" --since 24h --remote
-  job-search "AI Engineer" --since 7d --not-title intern --not-company Insight
-  job-search rule --redo          rule stored postings again, no network
-  job-search dispositions         every verdict, in the order ruled`,
+  job-search harvest --file indeed-raw.json
+  job-search harvest --file indeed-raw.json --not-title intern --not-company Insight
+  job-search descriptions --file indeed-descs.json   attach full text to what was kept
+  job-search rule --redo                             rule stored postings again
+  job-search dispositions                            every verdict, in the order ruled
+
+The cards live at ${CARDS}
+on a search results page -- see references/searching.md for the harvest itself.`,
 );
 
-const since = (held: string | undefined) => {
-  if (!held) fail(`say how far back this call reaches: --since ${sources.SINCE.join(" | ")}`);
-  if (!(sources.SINCE as readonly string[]).includes(held))
-    fail(`--since ${held} is not one of ${sources.SINCE.join(", ")}`);
-  return held as sources.Since;
-};
-
 program
-  .argument("[role...]", "what to search for, short and literal")
-  .option("--location <where>", "repeatable; 'City, State, Country', spelled out", collect, [])
-  .option("--not-title <word>", "repeatable; a title word the search must not return", collect, [])
-  .option("--not-company <name>", "repeatable; an employer the search must not return", collect, [])
-  .option("--remote", "only jobs a remote worker can hold")
-  .option("--since <window>", `how far back this call reaches: one of ${sources.SINCE.join(", ")}`)
-  .option("--max <n>", "stop after this many postings", Number)
+  .command("harvest")
+  .description("read a saved Indeed harvest into postings, then rule on it")
+  .requiredOption("--file <path>", "the harvest JSON saved out of the browser")
+  .option("--not-title <word>", "repeatable; a title word to drop before storing", collect, [])
+  .option("--not-company <name>", "repeatable; an employer to drop before storing", collect, [])
   .action(
-    runs(async (terms: string[], options) => {
-      if (!terms.length) fail("name what to search for, short and literal; `job-score instructions` says what");
-
+    runs((options) => {
       report(
-        await search({
-          terms,
+        harvest(read(options.file), {
           notTitles: options.notTitle,
-          notOrganizations: options.notCompany,
-          locations: options.location,
-          remote: Boolean(options.remote),
-          since: since(options.since),
-          max: options.max ?? null,
+          notCompanies: options.notCompany,
         }),
       );
+    }),
+  );
+
+program
+  .command("descriptions")
+  .description("attach full descriptions, harvested from the posting pages, to kept rows")
+  .requiredOption("--file <path>", "[{jobkey, description}, ...] saved out of the browser")
+  .action(
+    runs((options) => {
+      const held = describe(read(options.file));
+      console.log(`READ ${held.read} descriptions, attached ${held.attached}`);
+      if (!held.missing.length) return;
+      console.log(`\n${held.missing.length} kept postings still have no description — job-score set refuses these:`);
+      for (const row of held.missing)
+        console.log(`  ${row.key}  ${row.company} — ${row.title}  ${row.url ?? VIEWJOB + row.key.split(":")[1]}`);
     }),
   );
 
@@ -83,7 +94,7 @@ program
 
 program
   .command("rule")
-  .description("rule stored postings again; fetches nothing")
+  .description("rule stored postings again; reads nothing new")
   .option("--redo", "rule again on postings already dispositioned")
   .option("--include-seen", "ignore what is already in prospects")
   .option("--max-age-days <n>", "override the stored age limit for one run", Number)
@@ -97,7 +108,7 @@ program
         comp_floor: options.compFloor ?? null,
       });
 
-      if (!held.examined) return console.log("nothing pending in postings — search first, or pass --redo");
+      if (!held.examined) return console.log("nothing pending in postings — harvest first, or pass --redo");
       ruled(held);
     }),
   );
