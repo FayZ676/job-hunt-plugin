@@ -18,8 +18,6 @@ framing and facts together.
   read them before writing and never contradict one.
 - **A number goes on the resume only if `about` states it** — no estimating, no rounding up, no
   "over N" where N was never measured. A duration implied by a date range is a number too.
-- **Shared work is described as shared.** A bullet that says so — "with one other analyst" — costs
-  nothing and is true. Work done alone stays unqualified.
 - **Discontinued and in-progress work is labeled**, and **singular evidence stays singular** — one
   site adopting one procedure is not "sites". Verify every tool, system or credential claim against
   the record rather than memory.
@@ -94,18 +92,16 @@ Rewrite any line matching a row below.
 
 ## Check on every build
 
-Each is a defect that reached a built resume, two of them a submitted one.
+Each is a defect that reached a built resume, one of them a submitted one.
 
 1. **Every number in the summary traces to a row**, durations included. The summary is written last
    and freely, and is where the one fabricated figure — "three years" for a 14-month tenure — was
    generated.
-2. **Every shared project carries its qualifier.** This is the defect that drifts most: present in
-   three specs of seven, absent in four already submitted.
-3. **No plural where the evidence is singular.**
-4. **No personal pronouns, no bullet that states a duty rather than an accomplishment, no
+2. **No plural where the evidence is singular.**
+3. **No personal pronouns, no bullet that states a duty rather than an accomplishment, no
    unexplained date gap, and no line carrying the vocabulary or the shapes `references/writing.md`
    bans.**
-5. **The rendered image was looked at**, not just the page count, and the page is full — more than
+4. **The rendered image was looked at**, not just the page count, and the page is full — more than
    ~0.75in of blank foot means content was left out.
 
 ## Format and length
