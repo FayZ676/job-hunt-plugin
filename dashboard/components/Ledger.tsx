@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
@@ -170,13 +169,7 @@ export default function Ledger({
                       ${head[index].numeric ? "tnum" : ""}
                       ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}
                 >
-                  {index === 0 && row.href ? (
-                    <Link href={row.href} className="block hover:underline">
-                      {cell}
-                    </Link>
-                  ) : (
-                    cell
-                  )}
+                  {cell}
                 </td>
               ))}
 
