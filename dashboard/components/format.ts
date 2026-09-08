@@ -10,26 +10,49 @@ export function shortDate(iso: string | null | undefined) {
 
 const thousands = (amount: number) => Math.round(amount / 1000);
 
-const AMOUNT = /^\s*\$?([\d,]+)\s*(?:[-–—]\s*\$?([\d,]+))?\s*(.*)$/;
+const MONEY =
+  /^\s*([A-Z]{0,3}\$|[£€])?\s*([\d,]+(?:\.\d+)?)\s*([KkMm])?\s*(?:(?:[-–—]|to)\s*(?:[A-Z]{0,3}\$|[£€])?\s*([\d,]+(?:\.\d+)?)\s*([KkMm])?)?\s*([\s\S]*)$/;
+
+const scale = (amount: number, unit: string | undefined) =>
+  unit ? amount * (unit.toLowerCase() === "k" ? 1_000 : 1_000_000) : amount;
+
+type Money = { sign: string; low: number; high: number | null; hourly: boolean };
+
+function money(raw: string | null | undefined): Money | null {
+  const found = MONEY.exec(raw ?? "");
+  if (!found) return null;
+  const [, sign, lowText, lowUnit, highText, highUnit, rest] = found;
+  const low = scale(Number(lowText.replace(/,/g, "")), lowUnit);
+  if (!Number.isFinite(low) || low === 0) return null;
+  const high = highText ? scale(Number(highText.replace(/,/g, "")), highUnit ?? lowUnit) : null;
+  return {
+    sign: sign ?? "$",
+    low,
+    high: high !== null && Number.isFinite(high) ? high : null,
+    hourly: /\bhour|\bhr\b|\/hr/i.test(rest),
+  };
+}
 
 export function shortPay(raw: string | null | undefined) {
   if (!raw) return null;
-  const match = AMOUNT.exec(raw);
-  if (!match) return raw;
-  const [, low, high, rest] = match;
-  const start = Number(low.replace(/,/g, ""));
-  if (!Number.isFinite(start) || start === 0) return raw;
-  const end = high ? Number(high.replace(/,/g, "")) : null;
-  if (/hour/i.test(rest)) {
-    return end ? `$${low}–${high}/hr` : `$${low}/hr`;
-  }
-  const span = end ? `$${thousands(start)}–${thousands(end)}k` : `$${thousands(start)}k`;
-  return span;
+  const found = money(raw);
+  if (!found) return raw.split("•")[0].trim() || raw;
+  const { sign, low, high, hourly } = found;
+  if (hourly) return high ? `${sign}${low}–${high}/hr` : `${sign}${low}/hr`;
+  return high ? `${sign}${thousands(low)}–${thousands(high)}k` : `${sign}${thousands(low)}k`;
 }
 
 const ZIP = /,?\s+\d{5}(?:-\d{4})?\b/g;
+const APART = /\s*[|;]\s*|\s+•\s+/;
 
-export const shortPlace = (raw: string | null | undefined) => (raw ? raw.replace(ZIP, "") : raw);
+export function places(raw: string | null | undefined) {
+  const list = (raw ?? "")
+    .replace(ZIP, "")
+    .split(APART)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return { full: list.join(" | "), lead: list[0] ?? "", more: list.length - 1 };
+}
 
 export type When = { year: number; month: number | null };
 
@@ -67,10 +90,7 @@ export function spanLabel(start: When | null, finish: When | null, current: bool
 }
 
 export function payAmount(raw: string | null | undefined) {
-  const match = AMOUNT.exec(raw ?? "");
-  if (!match) return null;
-  const [, low, , rest] = match;
-  const start = Number(low.replace(/,/g, ""));
-  if (!Number.isFinite(start) || start === 0) return null;
-  return /hour/i.test(rest) ? start * 2080 : start;
+  const found = money(raw);
+  if (!found) return null;
+  return found.hourly ? found.low * 2080 : found.low;
 }

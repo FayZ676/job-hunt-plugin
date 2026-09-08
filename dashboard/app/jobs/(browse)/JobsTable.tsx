@@ -5,7 +5,7 @@ import { Copy, Trash2 } from "lucide-react";
 import { Command, useDiscard } from "@/components/act";
 import { useDeck } from "@/components/Deck";
 import DataTable, { features, type Look } from "@/components/DataTable";
-import { payAmount, shortDate, shortPay, shortPlace } from "@/components/format";
+import { payAmount, places, shortDate, shortPay } from "@/components/format";
 import { ORDER, label, rankOf, reading } from "@/components/status";
 import { offered } from "@/core/actions";
 import Glyph from "@/components/Glyph";
@@ -21,25 +21,30 @@ const look = (meta: Look) => meta;
 const columns = helper.columns([
   helper.accessor("company", {
     header: "Company",
-    meta: look({ width: "16%", search: true }),
+    meta: look({ width: "15%", search: true }),
     filterFn: filterFn_includesString,
     cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
   }),
   helper.accessor("title", {
     header: "Title",
-    meta: look({ width: "26%", search: true }),
+    meta: look({ width: "32%", search: true }),
     filterFn: filterFn_includesString,
+    cell: ({ getValue }) => (
+      <span title={getValue()} className="line-clamp-2">
+        {getValue()}
+      </span>
+    ),
   }),
   helper.accessor("score", {
     header: "Score",
-    meta: look({ width: "6%", numeric: true }),
+    meta: look({ width: "4%", numeric: true }),
     enableColumnFilter: false,
     cell: ({ row, getValue }) => <Score value={getValue()} why={row.original.reason} />,
   }),
   helper.accessor("status", {
     header: "Status",
     meta: look({
-      width: "12%",
+      width: "11%",
       facet: {
         legend: "Filter openings by status",
         order: ORDER,
@@ -54,17 +59,27 @@ const columns = helper.columns([
     sortFn: (left, right) => rankOf(left.original.status) - rankOf(right.original.status),
     cell: ({ getValue }) => <Badge>{getValue()}</Badge>,
   }),
-  helper.accessor((job) => shortPlace(job.location) || (job.remote ? "Remote" : null), {
+  helper.accessor((job) => places(job.location).full || (job.remote ? "Remote" : ""), {
     id: "location",
     header: "Location",
-    meta: look({ width: "20%", hideNarrow: true, search: true }),
+    meta: look({ width: "18%", keep: "roomy", search: true }),
     filterFn: filterFn_includesString,
-    cell: ({ getValue }) => getValue() ?? dash,
+    cell: ({ row, getValue }) => {
+      const full = getValue();
+      if (!full) return dash;
+      const { lead, more } = places(row.original.location);
+      if (more < 1) return <span className="line-clamp-2">{full}</span>;
+      return (
+        <span title={full} className="whitespace-nowrap">
+          {lead} <span className="text-soft">+{more}</span>
+        </span>
+      );
+    },
   }),
   helper.accessor((job) => payAmount(job.compensation), {
     id: "pay",
     header: "Pay",
-    meta: look({ width: "8%", hideNarrow: true, numeric: true }),
+    meta: look({ width: "8%", keep: "roomy", numeric: true }),
     enableColumnFilter: false,
     cell: ({ row }) =>
       shortPay(row.original.compensation) ? (
@@ -75,7 +90,7 @@ const columns = helper.columns([
   }),
   helper.accessor("first_seen", {
     header: "Seen",
-    meta: look({ width: "6%", hideNarrow: true, numeric: true }),
+    meta: look({ width: "6%", keep: "wide", numeric: true }),
     enableColumnFilter: false,
     cell: ({ getValue }) => <Stamp>{shortDate(getValue())}</Stamp>,
   }),
@@ -84,7 +99,7 @@ const columns = helper.columns([
     header: "Resume",
     meta: look({
       width: "6%",
-      hideNarrow: true,
+      keep: "wide",
       facet: { legend: "Filter openings by résumé", read: (key) => ({ label: key, quiet: key === "None" }) },
     }),
     filterFn: filterFn_equalsString,

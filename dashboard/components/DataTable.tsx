@@ -17,7 +17,7 @@ import {
   type ColumnDef,
   type RowData,
 } from "@tanstack/react-table";
-import Ledger, { type LedgerColumn, type Sorted } from "./Ledger";
+import Ledger, { type Keep, type LedgerColumn, type Sorted } from "./Ledger";
 import Find from "./Find";
 import Menu, { type Choice } from "./Menu";
 import type { Option } from "./Options";
@@ -38,7 +38,7 @@ export const features = tableFeatures({
 export type Look = {
   width?: string;
   numeric?: boolean;
-  hideNarrow?: boolean;
+  keep?: Keep;
   search?: boolean;
   facet?: { legend: string; order?: string[]; read: (key: string) => Omit<Choice, "key" | "count"> };
 };
@@ -78,7 +78,7 @@ export default function DataTable<T extends RowData>({
       label: String(column.columnDef.header),
       width: look.width,
       numeric: look.numeric,
-      hideNarrow: look.hideNarrow,
+      keep: look.keep,
       sortable: column.getCanSort(),
       filter: look.search ? (
         <Find

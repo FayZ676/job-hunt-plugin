@@ -7,11 +7,13 @@ import Menu from "./Menu";
 import { Options, useRightClick, type Option } from "./Options";
 import { Empty, Mark } from "./ui";
 
+export type Keep = "roomy" | "wide";
+
 export type LedgerColumn = {
   label: string;
   width?: string;
   numeric?: boolean;
-  hideNarrow?: boolean;
+  keep?: Keep;
   sortable?: boolean;
   filter?: ReactNode;
 };
@@ -26,6 +28,13 @@ export type LedgerRow = {
   action?: ReactNode;
   menu?: Option[];
 };
+
+const KEEP: Record<Keep, string> = {
+  roomy: "hidden @2xl:table-cell",
+  wide: "hidden @5xl:table-cell",
+};
+
+const kept = (keep?: Keep) => (keep ? KEEP[keep] : "");
 
 const HEAD = "eyebrow whitespace-nowrap py-2 pl-3 pr-1 text-left font-medium";
 const SLIM = "eyebrow whitespace-nowrap py-2 text-left font-medium";
@@ -73,7 +82,7 @@ export default function Ledger({
   };
 
   return (
-    <div className="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+    <div className="@container overflow-x-auto rounded-box border border-base-300 bg-base-100">
       <table className="w-full text-sm">
         <colgroup>
           <col className="w-5" />
@@ -96,7 +105,7 @@ export default function Ledger({
                     key={column.label}
                     scope="col"
                     aria-sort={on ? (sorted!.dir === "asc" ? "ascending" : "descending") : undefined}
-                    className={`group/head ${HEAD} ${column.hideNarrow ? "hidden md:table-cell" : ""}`}
+                    className={`group/head ${HEAD} ${kept(column.keep)}`}
                   >
                     <div className="flex items-center gap-0.5">
                       <span
@@ -167,7 +176,7 @@ export default function Ledger({
                   key={head[index].label}
                   className={`py-2.5 px-3 align-top
                       ${head[index].numeric ? "tnum" : ""}
-                      ${head[index].hideNarrow ? "hidden md:table-cell" : ""}`}
+                      ${kept(head[index].keep)}`}
                 >
                   {cell}
                 </td>
