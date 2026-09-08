@@ -1,7 +1,7 @@
 "use client";
 
 import { createColumnHelper, filterFn_equalsString, filterFn_includesString } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import { Command, useDiscard } from "@/components/act";
 import { useDeck } from "@/components/Deck";
 import DataTable, { features, type Look } from "@/components/DataTable";
@@ -10,6 +10,7 @@ import { ORDER, label, rankOf, reading } from "@/components/status";
 import { offered } from "@/core/actions";
 import Glyph from "@/components/Glyph";
 import type { Option } from "@/components/Options";
+import { say } from "@/components/Toaster";
 import { Badge, Out, Score, Stamp } from "@/components/ui";
 import type { Job } from "@/lib/web/queries";
 
@@ -103,6 +104,17 @@ export default function JobsTable({ rows }: { rows: Job[] }) {
       label: <Command id={id} />,
       onPick: () => draft(id, job.key),
     })),
+    {
+      key: "copy",
+      label: "Copy job ID",
+      icon: <Glyph icon={Copy} size={13} />,
+      onPick: () => {
+        navigator.clipboard.writeText(job.key).then(
+          () => say("Job ID copied"),
+          () => say("Could not copy the job ID", true),
+        );
+      },
+    },
     {
       key: "delete",
       label: "Delete opening",
