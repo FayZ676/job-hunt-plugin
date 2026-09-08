@@ -26,7 +26,6 @@ export default function Nav({ db }: { db: string }) {
           onClick={toggle}
           aria-expanded={shown}
           aria-label="Conversations"
-          className={shown ? "bg-base-200" : ""}
           icon={<Wordmark size={17} working={working} />}
         />
 
