@@ -6,8 +6,9 @@ application form on the employer's own ATS, and submits only what you approve.
 
 Indeed is navigated the way a person would, so there is no API key to get, no search quota, and no
 bill — and no list of employers to maintain, since the queries you search are the whole reach.
-Applications are resolved back to the employer's own form: Greenhouse, Ashby, Lever and Workday are
-driven end to end, and the rest are opened one at a time.
+Applications are resolved back to the employer's own form: Greenhouse and Ashby are driven all the
+way to submitted, Workday too once you have made an account with that employer, Lever is filled for
+you but its hCaptcha leaves the submit click to you, and the rest are opened one at a time.
 
 ```
 /job
