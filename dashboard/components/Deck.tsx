@@ -46,7 +46,7 @@ function Standing({ standing }: { standing: string }) {
     );
 
   return (
-    <span className="flex items-center gap-1.5 text-soft">
+    <span className={`flex items-center gap-1.5 ${standing === WORKING ? "font-medium text-mark" : "text-soft"}`}>
       {standing === WORKING && <span aria-hidden className="size-1.5 animate-blink bg-current" />}
       {standing}
     </span>
