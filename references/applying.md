@@ -13,8 +13,10 @@ Every field is one of three tiers, and the tier decides who answers it:
 | **Policy** | Work authorization, sponsorship, EEO, start date, compensation | `identity` | Yes |
 | **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
 
-A judgment question gets the answer the profile supports. Where nothing supports one, flag it for the
-user, **except** when a row in `projects` plainly answers it — then answer, cite that project, and
+A judgment question gets the answer the profile supports, written to **`references/writing.md`** — a
+screening essay reaches the same reader as the resume and is discarded for the same tells. Where
+nothing supports an answer, flag it for the user, **except** when a row in `projects` plainly
+answers it — then answer, cite that project, and
 flag `evidence-backed` so the review can check the reasoning. A question needing a project that is
 not in `projects` is a flag, not an inference.
 

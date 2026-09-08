@@ -48,10 +48,11 @@ Nothing below overrides these.
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
 means adding it to the table above and to `lib/core/actions.ts`.
 
-Two files are not an action and are read when they apply:
+Three files are not an action and are read when they apply:
 
 | File | Read before |
 | ---- | ----------- |
+| `references/writing.md` | Writing anything a person reads — resume bullets, cover letter, screening answers |
 | `references/storage.md` | Any query, any write to the profile, anything the user asks about their search |
 | `references/architecture.md` | Changing the code, or installing it |
 
