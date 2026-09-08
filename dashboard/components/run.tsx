@@ -8,6 +8,7 @@ import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
 import { Button, Empty, Prose, Row, Stamp } from "@/components/ui";
 import { asked, suggested, type Action } from "@/core/actions";
+import { WAITING } from "@/core/standing";
 import type { Line } from "@/lib/web/runs";
 
 const parse = (line: string): Line | null => {
@@ -142,7 +143,7 @@ function Turn({ line, lead }: { line: Line; lead: boolean }) {
   const mine = line.kind === "asked";
 
   if (line.kind === "end")
-    return (
+    return line.body === WAITING ? null : (
       <div className="px-4 py-2">
         <Stamp>{line.body}</Stamp>
       </div>
@@ -222,13 +223,18 @@ function Composer({
   said,
   onSaid,
   working,
+  waiting,
   onStop,
-}: Asking & { working?: boolean; onStop?: () => void }) {
+}: Asking & { working?: boolean; waiting?: boolean; onStop?: () => void }) {
   const [at, setAt] = useState(0);
   const [shut, setShut] = useState(false);
   const ready = said.trim().length > 0 && !working;
   const menu = shut ? [] : suggested(said);
   const chosen = menu[Math.min(at, menu.length - 1)];
+
+  useEffect(() => {
+    if (waiting) input?.current?.focus({ preventScroll: true });
+  }, [waiting, input]);
 
   const write = (words: string) => {
     setAt(0);
@@ -244,7 +250,7 @@ function Composer({
 
   return (
     <form
-      className="border-t border-base-300 p-3"
+      className={`border-t p-3 ${waiting ? "border-mark" : "border-base-300"}`}
       onSubmit={(event) => {
         event.preventDefault();
         if (!ready) return;
@@ -252,6 +258,13 @@ function Composer({
         write("");
       }}
     >
+      {waiting && (
+        <p className="-mx-3 -mt-3 mb-3 flex items-center gap-2 border-b border-mark/30 bg-mark/[0.08] px-3 py-2 text-mini">
+          <span aria-hidden className="size-1.5 shrink-0 bg-mark" />
+          Waiting on your answer
+        </p>
+      )}
+
       {chosen && <Menu actions={menu} at={menu.indexOf(chosen)} onHover={setAt} onPick={complete} />}
 
       <textarea
@@ -329,6 +342,8 @@ export function Output({
   className?: string;
 }) {
   const tail = useRef<HTMLDivElement | null>(null);
+  const last = lines.at(-1);
+  const waiting = !working && last?.kind === "end" && last.body === WAITING;
 
   useEffect(() => {
     const held = tail.current;
@@ -366,7 +381,7 @@ export function Output({
         )}
       </div>
 
-      {asking && <Composer {...asking} working={working} onStop={onStop} />}
+      {asking && <Composer {...asking} working={working} waiting={waiting} onStop={onStop} />}
     </div>
   );
 }

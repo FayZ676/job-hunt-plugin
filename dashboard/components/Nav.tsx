@@ -18,15 +18,15 @@ const SECTIONS: Item[] = [
 
 export default function Nav({ db }: { db: string }) {
   const here = usePathname();
-  const { shown, working, toggle } = useDeck();
+  const { shown, working, waiting, toggle } = useDeck();
   return (
     <nav aria-label="Sections" className="sticky top-0 z-40 border-b border-base-300 bg-base-100">
       <div className="mx-auto flex h-[var(--nav)] max-w-[104rem] items-center gap-4 px-4 md:px-6">
         <Ghost
           onClick={toggle}
           aria-expanded={shown}
-          aria-label="Conversations"
-          icon={<Wordmark size={17} working={working} />}
+          aria-label={waiting ? `Conversations, ${waiting} waiting on you` : "Conversations"}
+          icon={<Wordmark size={17} working={working} waiting={waiting} />}
         />
 
         <span aria-hidden className="h-4 w-px shrink-0 bg-base-300" />

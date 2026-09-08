@@ -22,6 +22,7 @@ const clock = (started: string) =>
 type Deck = {
   shown: boolean;
   working: boolean;
+  waiting: number;
   toggle: () => void;
   draft: (action: string, argument?: string) => void;
 };
@@ -34,15 +35,19 @@ export const useDeck = () => {
   return held;
 };
 
-const loud = (standing: string) => standing === WORKING || standing === WAITING;
-
 function Standing({ standing }: { standing: string }) {
   if (standing === DONE) return null;
+
+  if (standing === WAITING)
+    return (
+      <span className="inline-flex items-center bg-mark px-1.5 py-0.5 font-medium text-mark-content">
+        {standing}
+      </span>
+    );
+
   return (
-    <span className={`flex items-center gap-1.5 ${loud(standing) ? "text-signal" : "text-soft"}`}>
-      {loud(standing) && (
-        <span aria-hidden className={`size-1.5 bg-mark ${standing === WORKING ? "animate-blink" : ""}`} />
-      )}
+    <span className="flex items-center gap-1.5 text-soft">
+      {standing === WORKING && <span aria-hidden className="size-1.5 animate-blink bg-current" />}
       {standing}
     </span>
   );
@@ -71,6 +76,7 @@ export default function Deck({
 
   const talks = actions.find((action) => action.asks);
   const busy = runs.some((held) => held.standing === WORKING);
+  const waiting = runs.filter((held) => held.standing === WAITING).length;
   const here = runs.find((held) => held.id === run);
 
   useEffect(() => {
@@ -85,6 +91,20 @@ export default function Deck({
       }),
     [],
   );
+
+  useEffect(() => {
+    const tag = document.querySelector("title");
+    if (!tag) return;
+    const apply = () => {
+      const bare = (tag.textContent ?? "").replace(/^\(\d+\)\s/, "");
+      const want = waiting ? `(${waiting}) ${bare}` : bare;
+      if (tag.textContent !== want) tag.textContent = want;
+    };
+    apply();
+    const watch = new MutationObserver(apply);
+    watch.observe(tag, { childList: true, characterData: true, subtree: true });
+    return () => watch.disconnect();
+  }, [waiting]);
 
   useEffect(() => {
     if (!busy && !working) return;
@@ -140,7 +160,7 @@ export default function Deck({
   const title = here?.title ?? "New chat";
 
   return (
-    <DeckContext.Provider value={{ shown, working: busy || working, toggle, draft }}>
+    <DeckContext.Provider value={{ shown, working: busy || working, waiting, toggle, draft }}>
       {nav}
       <div className={`transition-[padding] duration-200 ${shown ? "xl:pl-[30rem]" : ""}`}>{children}</div>
 
@@ -198,8 +218,14 @@ export default function Deck({
             <div className="h-full w-1/2 overflow-auto" inert={reading || undefined}>
               {runs.length === 0 && <Empty>No conversations yet.</Empty>}
               {runs.map((held) => (
-                <div key={held.id} className="relative border-b border-base-200 last:border-0">
-                  {loud(held.standing) && <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 bg-mark" />}
+                <div
+                  key={held.id}
+                  className={`relative border-b border-base-200 last:border-0
+                    ${held.standing === WAITING ? "bg-mark/[0.07]" : ""}`}
+                >
+                  {held.standing === WAITING && (
+                    <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-mark" />
+                  )}
                   <Row
                     roomy
                     onClick={() => enter(held.id)}

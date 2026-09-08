@@ -78,7 +78,9 @@
   --color-soft: var(--soft);
   --color-signal: var(--signal);
   --color-mark: #fa5f2f;
+  --color-mark-content: oklch(21% 0.04 45);
   --animate-blink: blink 1.2s ease-in-out infinite;
+  --animate-arrive: arrive 0.5s ease-out 1;
 
   @keyframes blink {
     0%,
@@ -87,6 +89,20 @@
     }
     50% {
       opacity: 1;
+    }
+  }
+
+  @keyframes arrive {
+    0% {
+      transform: scale(0.7);
+      opacity: 0.3;
+    }
+    60% {
+      transform: scale(1.15);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
     }
   }
 }
