@@ -20,6 +20,7 @@ import {
 import Ledger, { type LedgerColumn, type Sorted } from "./Ledger";
 import Find from "./Find";
 import Menu, { type Choice } from "./Menu";
+import type { Option } from "./Options";
 import { Button } from "./ui";
 
 export const features = tableFeatures({
@@ -50,12 +51,14 @@ export default function DataTable<T extends RowData>({
   empty,
   href,
   mark,
+  menu,
 }: {
   data: T[];
   columns: ColumnDef<typeof features, T, any>[];
   empty?: string;
   href?: (row: T) => string;
   mark?: (row: T) => boolean;
+  menu?: (row: T) => Option[];
 }) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: PAGE });
   const table = useTable({
@@ -117,6 +120,7 @@ export default function DataTable<T extends RowData>({
           key: row.id,
           href: href?.(row.original),
           mark: mark?.(row.original),
+          menu: menu?.(row.original),
           cells: row.getAllCells().map((cell) => <table.FlexRender key={cell.id} cell={cell} />),
         }))}
         empty={narrowed ? "Nothing matches that. Clear the column filters to see the rest." : empty}

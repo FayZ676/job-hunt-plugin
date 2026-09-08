@@ -1,8 +1,6 @@
 "use client";
 
-import type { Saved } from "@/lib/web/edit";
-
-export const answered = async (write: Promise<Saved>): Promise<Saved> => {
+export const answered = async <T,>(write: Promise<T>): Promise<T | { error: string }> => {
   try {
     return await write;
   } catch {

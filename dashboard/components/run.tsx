@@ -6,7 +6,7 @@ import { SendHorizontal, Square } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
-import { Button, Empty, Ghost, Prose, Row, Stamp } from "@/components/ui";
+import { Button, Empty, Prose, Row, Stamp } from "@/components/ui";
 import { asked, suggested, type Action } from "@/core/actions";
 import type { Line } from "@/lib/web/runs";
 
@@ -120,7 +120,7 @@ export function useRun() {
     run,
     working: streaming && lines.at(-1)?.kind !== "end",
     open,
-    start: (action: string, argument = "", note?: string) => send({ action, argument, note }),
+    start: (action: string, argument = "") => send({ action, argument }),
     reply: (words: string) => send({ run, argument: words }),
     detach,
     stop: () => {
@@ -151,10 +151,7 @@ function Turn({ line, lead }: { line: Line; lead: boolean }) {
   return (
     <div className={`px-4 ${lead ? "pt-3" : "pt-1"} pb-3 ${mine ? "bg-base-200" : ""}`}>
       {who && lead && (
-        <p className="mb-1.5 flex items-baseline gap-2 font-mono text-xs text-soft">
-          {who}
-          {line.note && <Stamp>{line.note}</Stamp>}
-        </p>
+        <p className="mb-1.5 font-mono text-xs text-soft">{who}</p>
       )}
       {line.kind === "said" ? (
         <Markdown>{line.body}</Markdown>
@@ -167,9 +164,9 @@ function Turn({ line, lead }: { line: Line; lead: boolean }) {
 
 export type Asking = {
   asks: string;
-  about?: string;
   seeds?: Record<string, string>;
-  onDetach?: () => void;
+  said: string;
+  onSaid: (said: string) => void;
   onSay: (said: string) => void;
   input?: RefObject<HTMLTextAreaElement | null>;
 };
@@ -219,16 +216,14 @@ function Menu({
 
 function Composer({
   asks,
-  about,
   seeds,
-  onDetach,
   onSay,
   input,
   said,
   onSaid,
   working,
   onStop,
-}: Asking & { said: string; onSaid: (said: string) => void; working?: boolean; onStop?: () => void }) {
+}: Asking & { working?: boolean; onStop?: () => void }) {
   const [at, setAt] = useState(0);
   const [shut, setShut] = useState(false);
   const ready = said.trim().length > 0 && !working;
@@ -244,7 +239,7 @@ function Composer({
   const complete = (action: Action) => {
     setShut(true);
     onSaid(`${asked(action.id, seeds?.[action.id] ?? action.seed ?? "")} `);
-    input?.current?.focus();
+    input?.current?.focus({ preventScroll: true });
   };
 
   return (
@@ -258,18 +253,6 @@ function Composer({
       }}
     >
       {chosen && <Menu actions={menu} at={menu.indexOf(chosen)} onHover={setAt} onPick={complete} />}
-
-      {about && (
-        <span
-          className="mb-2 flex w-fit items-center gap-1 rounded-field border border-base-300
-            bg-base-100 py-0.5 pl-2 pr-1"
-        >
-          <Stamp>{about}</Stamp>
-          <Ghost tight aria-label={`Send without ${about}`} onClick={onDetach} className="text-xs">
-            ×
-          </Ghost>
-        </span>
-      )}
 
       <textarea
         ref={input}
@@ -346,7 +329,6 @@ export function Output({
   className?: string;
 }) {
   const tail = useRef<HTMLDivElement | null>(null);
-  const [said, setSaid] = useState("");
 
   useEffect(() => {
     const held = tail.current;
@@ -384,7 +366,7 @@ export function Output({
         )}
       </div>
 
-      {asking && <Composer {...asking} said={said} onSaid={setSaid} working={working} onStop={onStop} />}
+      {asking && <Composer {...asking} working={working} onStop={onStop} />}
     </div>
   );
 }

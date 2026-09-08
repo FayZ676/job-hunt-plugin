@@ -1,10 +1,15 @@
 "use client";
 
 import { createColumnHelper, filterFn_equalsString, filterFn_includesString } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
+import { Command, useDiscard } from "@/components/act";
+import { useDeck } from "@/components/Deck";
 import DataTable, { features, type Look } from "@/components/DataTable";
 import { payAmount, shortDate, shortPay, shortPlace } from "@/components/format";
 import { ORDER, label, rankOf, reading } from "@/components/status";
+import { offered } from "@/core/actions";
 import Glyph from "@/components/Glyph";
+import type { Option } from "@/components/Options";
 import { Badge, Out, Score, Stamp } from "@/components/ui";
 import type { Job } from "@/lib/web/queries";
 
@@ -89,6 +94,24 @@ const columns = helper.columns([
 ]);
 
 export default function JobsTable({ rows }: { rows: Job[] }) {
+  const { draft } = useDeck();
+  const drop = useDiscard();
+
+  const menu = (job: Job): Option[] => [
+    ...offered(job.status).map(({ id }) => ({
+      key: id,
+      label: <Command id={id} />,
+      onPick: () => draft(id, job.key),
+    })),
+    {
+      key: "delete",
+      label: "Delete opening",
+      tone: "grave" as const,
+      icon: <Glyph icon={Trash2} size={13} />,
+      onPick: () => drop(job.key, `${job.company} — ${job.title}`),
+    },
+  ];
+
   return (
     <DataTable
       data={rows}
@@ -96,6 +119,7 @@ export default function JobsTable({ rows }: { rows: Job[] }) {
       empty="Nothing scanned yet."
       href={(job) => `/jobs/${encodeURIComponent(job.key)}`}
       mark={(job) => reading(job.status).stage === "waiting"}
+      menu={menu}
     />
   );
 }

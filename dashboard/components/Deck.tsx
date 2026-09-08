@@ -1,14 +1,15 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus, Trash2 } from "lucide-react";
 
 import Glyph from "@/components/Glyph";
-import Options from "@/components/Options";
+import { Options, useRightClick } from "@/components/Options";
 import { Output, useRun, type Asking } from "@/components/run";
 import { Empty, Ghost, Row } from "@/components/ui";
-import { commanded, type Action } from "@/core/actions";
+import { asked, commanded, type Action } from "@/core/actions";
 import { DONE, WAITING, WORKING } from "@/core/standing";
 import type { Run } from "@/lib/web/runs";
 
@@ -22,7 +23,7 @@ type Deck = {
   shown: boolean;
   working: boolean;
   toggle: () => void;
-  run: (action: string, argument?: string) => void;
+  draft: (action: string, argument?: string) => void;
 };
 
 const DeckContext = createContext<Deck | null>(null);
@@ -64,7 +65,8 @@ export default function Deck({
   const { lines, run, working, open, start, reply, detach, stop, erase } = useRun();
   const [shown, setShown] = useState(false);
   const [reading, setReading] = useState(false);
-  const [about, setAbout] = useState("");
+  const [said, setSaid] = useState("");
+  const { held: raised, open: raise, close: lower } = useRightClick<string>();
   const input = useRef<HTMLTextAreaElement>(null);
 
   const talks = actions.find((action) => action.asks);
@@ -90,17 +92,25 @@ export default function Deck({
     return () => clearInterval(timer);
   }, [busy, working, router]);
 
-  const pick = useCallback(
-    (action: Action, held = "") => {
-      setReading(true);
-      if (action.asks) {
-        setAbout(held);
+  const fresh = useCallback(
+    (words?: string) => {
+      flushSync(() => {
+        setReading(true);
+        if (words !== undefined) setSaid(words);
         detach();
-        return input.current?.focus();
-      }
-      start(action.id, held);
+      });
+      input.current?.focus({ preventScroll: true });
     },
-    [detach, start],
+    [detach],
+  );
+
+  const draft = useCallback(
+    (id: string, argument = "") => {
+      setShown(true);
+      localStorage.setItem(KEPT, "open");
+      fresh(`${asked(id, argument)} `);
+    },
+    [fresh],
   );
 
   const enter = useCallback(
@@ -111,33 +121,18 @@ export default function Deck({
     [open],
   );
 
-  const fire = useCallback(
-    (id: string, argument = "") => {
-      const found = actions.find((action) => action.id === id);
-      if (!found) return;
-      setShown(true);
-      localStorage.setItem(KEPT, "open");
-      pick(found, argument);
-    },
-    [actions, pick],
-  );
-
   const asking: Asking | null = talks
     ? {
         asks: talks.asks!,
-        about: about || undefined,
         seeds,
-        onDetach: () => setAbout(""),
+        said,
+        onSaid: setSaid,
         input,
         onSay: (words) => {
           if (run) return reply(words);
           const command = commanded(words);
-          if (command) {
-            setAbout("");
-            return start(command.action, command.argument);
-          }
-          setAbout("");
-          start(talks.id, about ? `About ${about}:\n\n${words}` : words, about || undefined);
+          if (command) return start(command.action, command.argument);
+          start(talks.id, words);
         },
       }
     : null;
@@ -145,7 +140,7 @@ export default function Deck({
   const title = here?.title ?? "New chat";
 
   return (
-    <DeckContext.Provider value={{ shown, working: busy || working, toggle, run: fire }}>
+    <DeckContext.Provider value={{ shown, working: busy || working, toggle, draft }}>
       {nav}
       <div className={`transition-[padding] duration-200 ${shown ? "xl:pl-[30rem]" : ""}`}>{children}</div>
 
@@ -187,7 +182,7 @@ export default function Deck({
             <>
               <h2 className="eyebrow flex-1">Conversations</h2>
               {talks && (
-                <Ghost onClick={() => pick(talks)} className="-mr-2 text-mini" icon={<Glyph icon={Plus} size={12} />}>
+                <Ghost onClick={() => fresh()} className="-mr-2 text-mini" icon={<Glyph icon={Plus} size={12} />}>
                   New chat
                 </Ghost>
               )}
@@ -203,38 +198,38 @@ export default function Deck({
             <div className="h-full w-1/2 overflow-auto" inert={reading || undefined}>
               {runs.length === 0 && <Empty>No conversations yet.</Empty>}
               {runs.map((held) => (
-                <div key={held.id} className="group/row relative border-b border-base-200 last:border-0">
+                <div key={held.id} className="relative border-b border-base-200 last:border-0">
                   {loud(held.standing) && <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 bg-mark" />}
-                  <Row roomy onClick={() => enter(held.id)} className="grid gap-y-1">
+                  <Row
+                    roomy
+                    onClick={() => enter(held.id)}
+                    onContextMenu={(event) => raise(held.id, event)}
+                    className={`grid gap-y-1 ${raised?.key === held.id ? "bg-base-200" : ""}`}
+                  >
                     <span className="min-w-0 truncate font-mono text-mini">{held.title}</span>
                     <span className="flex items-center gap-2 text-xs text-soft">
                       {clock(held.started)}
                       <Standing standing={held.standing} />
                     </span>
                   </Row>
-                  <div
-                    className="pointer-events-none absolute inset-y-0 right-0 flex border-l border-base-300
-                      bg-base-200 opacity-0 transition-opacity group-hover/row:pointer-events-auto
-                      group-hover/row:opacity-100 has-[[aria-expanded='true']]:pointer-events-auto
-                      has-[[aria-expanded='true']]:opacity-100"
-                  >
-                    <Options
-                      legend={`Options for ${held.title}`}
-                      className="h-full px-2.5"
-                      lit
-                      options={[
-                        {
-                          key: "erase",
-                          label: "Delete chat",
-                          tone: "grave",
-                          icon: <Glyph icon={Trash2} size={13} />,
-                          onPick: () => erase(held.id),
-                        },
-                      ]}
-                    />
-                  </div>
                 </div>
               ))}
+
+              {raised && (
+                <Options
+                  at={raised.at}
+                  onClose={lower}
+                  options={[
+                    {
+                      key: "erase",
+                      label: "Delete chat",
+                      tone: "grave",
+                      icon: <Glyph icon={Trash2} size={13} />,
+                      onPick: () => erase(raised.key),
+                    },
+                  ]}
+                />
+              )}
             </div>
 
             <div className="h-full w-1/2" inert={!reading || undefined}>

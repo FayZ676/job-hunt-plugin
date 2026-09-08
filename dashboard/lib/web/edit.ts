@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { z } from "zod";
 
+import { purge } from "../../../lib/cleanup.ts";
 import { db } from "@/core/db.ts";
 import { TABLES, numeric, type Table } from "@/core/schema.ts";
 
@@ -17,6 +18,7 @@ const WRITABLE = new Set<Table>([
 ]);
 
 export type Saved = { rowid: number } | { error: string };
+export type Dropped = { gone: number } | { error: string };
 
 const failed = (error: unknown) => ({
   error:
@@ -78,6 +80,17 @@ export async function remove(table: string, rowid: number): Promise<Saved> {
       return { error: `no row ${rowid} in ${table}` };
     revalidatePath("/", "layout");
     return { rowid };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+export async function discard(key: string): Promise<Dropped> {
+  try {
+    const purged = purge(`key = '${key.replaceAll("'", "''")}'`);
+    if (!purged.postings.length) return { error: `no posting keyed ${key}` };
+    revalidatePath("/", "layout");
+    return { gone: purged.postings.length };
   } catch (error) {
     return failed(error);
   }

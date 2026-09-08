@@ -9,7 +9,7 @@ import { CAREER } from "@/core/db";
 import { ROOT } from "@/core/root";
 import { CLOSING, DONE, WORKING, declared, type Standing } from "@/core/standing";
 
-export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string; note?: string };
+export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string };
 
 export type Run = { id: string; action: string; title: string; argument: string; started: string; standing: string };
 
@@ -140,12 +140,10 @@ export function remembered(runs: Run[]): Record<string, string> {
 export async function begin({
   action = "",
   argument = "",
-  note,
   run = null,
 }: {
   action?: string;
   argument?: string;
-  note?: string;
   run?: string | null;
 }) {
   if (argument.length > LONGEST) throw new Error(`an argument is at most ${LONGEST} characters`);
@@ -166,7 +164,7 @@ export async function begin({
 
   const started = new Date().toISOString();
   if (!run) append(id, { kind: "opened", action: named, title: shown(named, words), started, argument: words });
-  append(id, { kind: "asked", body: resume ? words : shown(named, words), note });
+  append(id, { kind: "asked", body: resume ? words : shown(named, words) });
 
   const child = spawn(
     "claude",

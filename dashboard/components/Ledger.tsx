@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, ChevronsUpDown } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import Menu from "./Menu";
+import { Options, useRightClick, type Option } from "./Options";
 import { Empty, Mark } from "./ui";
 
 export type LedgerColumn = {
@@ -24,6 +25,7 @@ export type LedgerRow = {
   mark?: boolean;
   cells: ReactNode[];
   action?: ReactNode;
+  menu?: Option[];
 };
 
 const HEAD = "eyebrow whitespace-nowrap py-2 pl-3 pr-1 text-left font-medium";
@@ -54,6 +56,7 @@ export default function Ledger({
   onSort?: (label: string, dir: Sorted["dir"] | null) => void;
 }) {
   const router = useRouter();
+  const { held, open, close } = useRightClick<string>();
   const span = 2 + head.length + (action ? 1 : 0);
 
   const follow = (href: string) => (event: MouseEvent<HTMLTableRowElement>) => {
@@ -61,6 +64,13 @@ export default function Ledger({
     if ((event.target as HTMLElement).closest("a, button, input, select, textarea, label")) return;
     if (!window.getSelection()?.isCollapsed) return;
     router.push(href);
+  };
+
+  const shown = rows.find((row) => row.key === held?.key);
+
+  const raise = (event: MouseEvent<HTMLTableRowElement>, key: string) => {
+    if ((event.target as HTMLElement).closest("a, button, input, select, textarea, label")) return;
+    open(key, event);
   };
 
   return (
@@ -142,8 +152,10 @@ export default function Ledger({
             <tr
               key={row.key}
               onClick={row.href ? follow(row.href) : undefined}
+              onContextMenu={row.menu?.length ? (event) => raise(event, row.key) : undefined}
               className={`ledgerrow group/row border-b border-base-200 last:border-0
-                  ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}`}
+                  ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}
+                  ${held?.key === row.key ? "bg-base-200" : ""}`}
             >
               <td className="py-2.5 pl-3 pr-0 align-top">
                 <span className="flex h-5 items-center">
@@ -190,6 +202,8 @@ export default function Ledger({
           </tfoot>
         )}
       </table>
+
+      {shown?.menu && <Options at={held!.at} options={shown.menu} onClose={close} />}
     </div>
   );
 }
