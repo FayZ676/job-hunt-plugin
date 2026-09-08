@@ -2,41 +2,41 @@ export const DENSITY = {
   tight: {
     body: 9.5,
     name: 17.0,
-    name_gap: 4.0,
+    name_gap: 5.0,
     section: 10.5,
-    leading: 0.58,
-    para_gap: 4.0,
-    sec_above: 10.0,
-    sec_below: 3.0,
-    rule_gap: 1.5,
-    role_gap: 5.0,
-    bullet_gap: 0.3,
+    leading: 0.46,
+    para_gap: 5.0,
+    item_gap: 5.5,
+    role_gap: 10.0,
+    sec_above: 14.0,
+    sec_below: 4.0,
+    rule_gap: 2.0,
   },
   normal: {
     body: 10.0,
     name: 18.0,
     name_gap: 6.0,
     section: 11.0,
-    leading: 0.65,
-    para_gap: 5.5,
-    sec_above: 13.0,
-    sec_below: 4.0,
-    rule_gap: 2.0,
-    role_gap: 6.5,
-    bullet_gap: 0.4,
+    leading: 0.5,
+    para_gap: 6.0,
+    item_gap: 6.5,
+    role_gap: 12.0,
+    sec_above: 17.0,
+    sec_below: 4.5,
+    rule_gap: 2.5,
   },
   roomy: {
     body: 10.5,
     name: 19.0,
-    name_gap: 8.0,
+    name_gap: 7.0,
     section: 11.5,
-    leading: 0.72,
+    leading: 0.56,
     para_gap: 7.0,
-    sec_above: 16.5,
-    sec_below: 5.0,
-    rule_gap: 2.5,
-    role_gap: 8.0,
-    bullet_gap: 0.5,
+    item_gap: 8.0,
+    role_gap: 14.5,
+    sec_above: 21.0,
+    sec_below: 5.5,
+    rule_gap: 3.0,
   },
 };
 
@@ -104,8 +104,9 @@ export function build(spec: Record<string, any>, density: Density) {
     `#set par(leading: ${d.leading}em, spacing: ${d.para_gap}pt, justify: false)`,
     "#set smartquote(enabled: false)",
     '#show link: set text(fill: rgb("#0563c1"))',
-    `#set list(indent: 1.1em, body-indent: 0.45em, spacing: ${d.bullet_gap}em, ` + "marker: text(0.95em)[•])",
+    `#set list(indent: 1.1em, body-indent: 0.45em, spacing: ${d.item_gap}pt, ` + "marker: text(0.95em)[•])",
     "",
+    "#let apart(gap, body) = block(above: gap, below: 0pt, width: 100%)[#body]",
     `#let sec(title) = block(above: ${d.sec_above}pt, below: ${d.sec_below}pt, width: 100%)[`,
     `  #text(size: ${d.section}pt, weight: "bold")[#title]`,
     `  #v(${d.rule_gap}pt)`,
@@ -130,25 +131,24 @@ export function build(spec: Record<string, any>, density: Density) {
         for (const item of section.items ?? []) L.push(`- ${inline(item)}`);
         break;
       case "labeled":
-        L.push(
-          (section.items ?? [])
-            .map((item: any) => `#strong(text(${s(`${item.label ?? ""}:`)}))#text(" ")${inline(item.text ?? "")}`)
-            .join(" \\\n"),
-        );
+        (section.items ?? []).forEach((held: any, at: number) => {
+          const line = `#strong(text(${s(`${held.label ?? ""}:`)}))#text(" ")${inline(held.text ?? "")}`;
+          L.push(`#apart(${at ? d.item_gap : 0}pt)[${line}]`);
+        });
         break;
       case "entries":
-        L.push(
-          (section.items ?? [])
-            .map((item: any) => `#strong(text(${s(item.primary ?? "")}))#text(" — ")${inline(item.secondary ?? "")}`)
-            .join(" \\\n"),
-        );
+        (section.items ?? []).forEach((held: any, at: number) => {
+          const line = `#strong(text(${s(held.primary ?? "")}))#text(" — ")${inline(held.secondary ?? "")}`;
+          L.push(`#apart(${at ? d.item_gap : 0}pt)[${line}]`);
+        });
         break;
       case "experience":
-        (section.roles ?? []).forEach((role: any, at: number) => {
-          if (at) L.push(`#v(${d.role_gap}pt)`);
-          const head = `#strong(text(${s(`${role.title ?? ""}, ${role.company ?? ""}`)}))`;
-          L.push(`${head}#text(" — ")${inline(role.dates ?? "")}`);
-          for (const bullet of role.bullets ?? []) L.push(`- ${inline(bullet)}`);
+        (section.roles ?? []).forEach((held: any, at: number) => {
+          const head = `#strong(text(${s(`${held.title ?? ""}, ${held.company ?? ""}`)}))`;
+          const body = [`${head}#text(" — ")${inline(held.dates ?? "")}`].concat(
+            (held.bullets ?? []).map((bullet: string) => `- ${inline(bullet)}`),
+          );
+          L.push(`#apart(${at ? d.role_gap : 0}pt)[`, ...body, "]");
         });
         break;
       default:
