@@ -42,9 +42,12 @@ must be in for that action to be offered or allowed — so `requires()` in `lib/
 into `Posting` rows through `posting()`; the ruling, the scoring and the dashboard read those columns
 and none of them know where a row came from. A shape change is one file.
 
-The browser half is not code and is not meant to be — `references/searching.md` holds it. What the
-code owns is the file-to-rows step, because a 90KB harvest read through the model is 90KB of context
-and a hand-written INSERT is a row silently dropped.
+**`lib/core/cdp.ts` drives the browser, and `lib/crawl.ts` is the run**: navigate a query, read the
+cards, rule, then navigate each survivor's page for its description. It is code rather than model
+turns because a run is hundreds of navigations, and through the model that is hundreds of
+round-trips and a harvest's worth of context. Each description is written as it lands, so a run cut
+short keeps what it fetched and running it again finishes the job. `harvest --file` stays for the
+times a person has to drive the browser instead.
 
 **`key` is `indeed:<jobkey>`**, and `jobkey` is stable across runs, which is what makes the same job
 recognizable tomorrow.
