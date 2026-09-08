@@ -9,7 +9,7 @@ const SPEC_HELP = (types: string) =>
 
 {
   "name": "Ada Lovelace",
-  "contact": ["Denver, CO 80202", "ada@example.com",
+  "contact": ["Denver, CO", "ada@example.com",
               {"text": "linkedin.com/in/ada", "link": "https://linkedin.com/in/ada"}],
   "sections": [{"heading": "Summary", "type": "paragraph", "text": "…"}]
 }

@@ -147,8 +147,8 @@ wording so bullets stop before wrapping one word onto a new line; margins in the
 0.4in.
 
 Build with `--key` or the PDF is written and nothing is recorded. Then give the gap report, and
-offer, without doing: a matching cover letter, and writing anything newly surfaced back into the
-profile tables.
+offer, without doing, to write anything newly surfaced back into the profile tables. **A cover
+letter is written only where the application asks for one** — never offered alongside a resume.
 
 ## The spec
 
@@ -167,7 +167,9 @@ Experience, a new graduate puts Education first.
 | Education | `entries` | From the `education` table, verbatim: `{"primary": "BS Computer Science", "secondary": "State University, May 2022"}` |
 | Skills | `labeled` | Group under labels the field uses, drawn from the selected bullets plus the JD's named tools that appear in `project_technologies`. Drop a label rather than pad it. No aspirational entries, no soft skills. Order each label by depth of professional use, and never place a skill under an employer whose projects do not carry it |
 
-**Keep the contact line identical to the `identity` table** — it is the canonical header.
+**The contact line is five entries in this order**, values verbatim from `identity`: `location`
+(city and state only — no ZIP, no country), `email`, `phone`, then `linkedin` and `github` as
+`{text, link}` with the URL stripped of its scheme. Never a street address.
 
 **The summary opens with the total years** — a reader filtering on experience may discard the
 candidate before the end of the sentence. Then the two or three specifics this JD cares about, then
