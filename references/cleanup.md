@@ -14,7 +14,7 @@ rows the user wants off the disk, not for rows that are merely finished.
 
 **Show them the preview and let them say the word.** The run without `--confirm` is the whole
 proof they get that the condition means what they said; a delete is not undone by searching
-again, and the row comes back with its score, its history and its status gone.
+again, and the row comes back with its score and its status gone.
 
 **Never delete what was applied to.** `applied` and `interviewing` are the record that this
 skill did its work, and a posting deleted out of them will be found, scored and applied to a

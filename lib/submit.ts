@@ -64,10 +64,7 @@ export function record(key: string, confirmation: string) {
       move(held, target);
       moved.push([held, target]);
     }
-    db().transaction(() => {
-      db().prepare("UPDATE postings SET status='applied', resume=? WHERE key=?").run(resume, key);
-      db().prepare("INSERT INTO events(key,status,note) VALUES(?,'applied',?)").run(key, said);
-    })();
+    db().prepare("UPDATE postings SET status='applied', resume=? WHERE key=?").run(resume, key);
   } catch (error) {
     for (const [original, target] of [...moved].reverse()) if (fs.existsSync(target)) move(target, original);
     throw error;
@@ -76,20 +73,15 @@ export function record(key: string, confirmation: string) {
   return { resume, confirmation: said };
 }
 
-export function rejected(key: string, note: string) {
-  const said = note.trim();
+export function rejected(key: string) {
   const row = one(
     VIEWS.prospects.pick({ key: true, resume: true, status: true }),
     "SELECT key, resume, status FROM prospects WHERE key=?",
     [key],
   );
   if (!row) throw new Error(`no prospect '${key}'`);
-  if (!said) throw new Error("--note cannot be empty: record the shape — days elapsed, and any interview stage");
 
-  db().transaction(() => {
-    db().prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?").run(key);
-    db().prepare("INSERT INTO events(key,status,note) VALUES(?,'rejected',?)").run(key, said);
-  })();
+  db().prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?").run(key);
 
   const deleted: string[] = [];
   const stubborn: string[] = [];

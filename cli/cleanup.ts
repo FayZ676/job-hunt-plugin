@@ -12,8 +12,8 @@ const { program, runs } = action(
   job-cleanup --where "company='Acme'" --json
 
 Prints what matches and deletes nothing until --confirm. A row taken with
---confirm is gone: its events, its staged answers and its resume files go with
-it, and no later search brings back what it knew.`,
+--confirm is gone: its staged answers and its resume files go with it, and no
+later search brings back what it knew.`,
 );
 
 program
@@ -34,7 +34,7 @@ program
       console.log(
         `\n${done.postings.length} postings` +
           (done.duplicates ? ` (${done.duplicates} pulled in as duplicates of one)` : "") +
-          `, ${done.events} events, ${done.staged} staged, ${done.files.length} resume files`,
+          `, ${done.staged} staged, ${done.files.length} resume files`,
       );
       if (!removed) return console.log("nothing removed — run again with --confirm");
 

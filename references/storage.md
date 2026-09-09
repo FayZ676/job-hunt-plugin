@@ -1,7 +1,7 @@
 # Storage
 
-One convention: `$CAREER/job.db` — postings, prospects, staged applications, history, and the
-user's whole profile are rows in it. The filesystem holds only built PDFs: `$CAREER/resumes/`,
+One convention: `$CAREER/job.db` — postings, prospects, staged applications, and the user's whole
+profile are rows in it. The filesystem holds only built PDFs: `$CAREER/resumes/`,
 moved to `submitted/` when an application goes out.
 
 **`$CAREER` is a fixed absolute directory, so `/job` runs identically from anywhere.** Ask the skill
@@ -32,12 +32,9 @@ job-q --json "SELECT * FROM staged"
 `$Q` stands for `job-q` throughout this skill and its references.
 
 **Read `--schema` before writing SQL** — it documents every table, and its `CHECK`s make an invalid
-row impossible to write. Two things it does not say:
-
-- **Insert into `events` only to add a `note`** the status change alone does not carry; the triggers
-  write the rest.
-- **`triage` omits `description` on purpose.** Pull descriptions one at a time, for survivors only:
-  `SELECT * FROM prospects` is almost always a mistake, and `SELECT * FROM postings` more so.
+row impossible to write. One thing it does not say: **`triage` omits `description` on purpose.**
+Pull descriptions one at a time, for survivors only: `SELECT * FROM prospects` is almost always a
+mistake, and `SELECT * FROM postings` more so.
 
 ## The profile
 

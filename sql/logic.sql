@@ -1,6 +1,9 @@
--- Behavior the schema cannot declare: the triggers that keep history and couple
--- score to status, and the views whose bodies are not a column list.
+-- Behavior the schema cannot declare: the triggers that stamp a posting once it
+-- is kept and couple score to status, and the views whose bodies are not a
+-- column list.
 -- Tables, indexes and the views derived from them are rendered from lib/core/ddl.ts.
+
+DROP TRIGGER IF EXISTS on_kept;
 
 CREATE TRIGGER IF NOT EXISTS on_kept AFTER UPDATE OF disposition ON postings
 WHEN new.disposition = 'kept' AND old.disposition IS NOT 'kept'
@@ -9,9 +12,6 @@ BEGIN
                       first_seen = COALESCE(first_seen, date('now')),
                       last_seen = date('now')
   WHERE key = new.key;
-  INSERT INTO events(key,status,note)
-    SELECT new.key, COALESCE(new.status, 'new'), 'first seen'
-    WHERE new.first_seen IS NULL;
 END;
 
 DROP TRIGGER IF EXISTS on_kept_insert;
@@ -23,19 +23,11 @@ BEGIN
                       first_seen = COALESCE(first_seen, date('now')),
                       last_seen = date('now')
   WHERE key = new.key;
-  INSERT INTO events(key,status,note)
-    SELECT new.key, COALESCE(new.status, 'new'), 'first seen'
-    WHERE new.first_seen IS NULL;
 END;
 
 DROP TRIGGER IF EXISTS on_status_change;
 
-CREATE TRIGGER IF NOT EXISTS on_status_change AFTER UPDATE OF status ON postings
-WHEN new.status IS NOT old.status AND new.status IS NOT NULL
-     AND old.status IS NOT NULL
-BEGIN
-  INSERT INTO events(key,status) VALUES(new.key, new.status);
-END;
+DROP TABLE IF EXISTS events;
 
 -- Scoring sets the status by the threshold in settings, so a score and a
 -- shortlist decision can never disagree.

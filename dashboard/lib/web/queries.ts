@@ -45,12 +45,10 @@ export function career(): Employer[] {
 }
 
 const STAGED = TABLES.staged.omit({ key: true });
-const EVENT = TABLES.events.pick({ at: true, status: true, note: true });
 
 export type Posting = z.infer<typeof VIEWS.prospects>;
 export type Prospect = {
   posting: Posting;
-  events: z.infer<typeof EVENT>[];
   staged: z.infer<typeof STAGED> | null;
   aliases: string[];
 };
@@ -60,7 +58,6 @@ export function prospect(key: string): Prospect | null {
   if (!posting) return null;
   return {
     posting,
-    events: rows(EVENT, "SELECT at, status, note FROM events WHERE key=? ORDER BY id", [key]),
     staged: one(STAGED, "SELECT url, status, blocked_on FROM staged WHERE key=?", [key]),
     aliases: rows(z.object({ key: z.string() }), "SELECT key FROM postings WHERE canonical_key=?", [key]).map(
       (row) => row.key,

@@ -20,7 +20,6 @@ export type Doomed = z.infer<typeof Doomed>;
 export type Reckoning = {
   postings: Doomed[];
   duplicates: number;
-  events: number;
   staged: number;
   files: string[];
 };
@@ -47,7 +46,7 @@ function selected(where: string): string[] {
 
 export function reckon(where: string): Reckoning {
   const matched = selected(where);
-  if (!matched.length) return { postings: [], duplicates: 0, events: 0, staged: 0, files: [] };
+  if (!matched.length) return { postings: [], duplicates: 0, staged: 0, files: [] };
 
   const held = new Set(matched);
   for (const row of rows(
@@ -67,7 +66,6 @@ export function reckon(where: string): Reckoning {
   return {
     postings,
     duplicates: keys.length - matched.length,
-    events: counted("SELECT COUNT(*) n FROM events WHERE key IN (?keys)", keys),
     staged: counted("SELECT COUNT(*) n FROM staged WHERE key IN (?keys)", keys),
     files: postings.filter((row) => row.resume).flatMap((row) => companions(absolute(row.resume as string))),
   };

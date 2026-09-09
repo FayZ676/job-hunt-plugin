@@ -9,7 +9,7 @@ const { program, runs } = action(
 
   job-submit review              one row per staged application, for approval
   job-submit record KEY --confirmation "Application received — #A12"
-  job-submit rejected KEY --note "3 days, no interview — resume screen"
+  job-submit rejected KEY
 
 Recording an application moves its resume into submitted/ in the same step that
 sets \`applied\`; a rejection deletes that file, and checks it did not come back.`,
@@ -48,10 +48,9 @@ program
   .command("rejected")
   .description("record a reported rejection and delete its resume")
   .argument("<key>")
-  .requiredOption("--note <text>")
   .action(
-    runs((key: string, options) => {
-      const gone = rejected(key, options.note);
+    runs((key: string) => {
+      const gone = rejected(key);
       console.log(`${key}  rejected`);
       for (const held of gone.deleted) console.log(`  deleted ${held}`);
       if (gone.stubborn.length) {

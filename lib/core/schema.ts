@@ -124,22 +124,6 @@ export const TABLES = {
       ],
     } satisfies Shape),
 
-  events: z
-    .object({
-      id: col(z.number(), { sql: "PRIMARY KEY AUTOINCREMENT" }),
-      key: col(z.string(), { sql: owned("postings(key)") }),
-      at: col(z.string(), {
-        sql: "DEFAULT (datetime('now')) CHECK (datetime(at) IS NOT NULL)",
-        takes: "a timestamp",
-      }),
-      status: z.string().nullable(),
-      note: z.string().nullable(),
-    })
-    .meta({
-      note: "History. Written by the triggers in logic.sql, never by hand.",
-      indexes: ["idx_events_key ON events(key)"],
-    } satisfies Shape),
-
   staged: z.object({
     key: col(z.string(), {
       sql: "PRIMARY KEY REFERENCES postings(key) ON DELETE CASCADE",
@@ -332,7 +316,6 @@ export const STATUSES = TABLES.postings.shape.status.unwrap().options as Status[
 export const ORDER: Table[] = [
   "settings",
   "postings",
-  "events",
   "staged",
   "identity",
   "education",

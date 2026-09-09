@@ -49,13 +49,6 @@ the chat rule in `SKILL.md`: a feedback run always answers.
 Say so plainly when nothing should change — a hard stop already written down, a one-off they are not
 asking to generalise. Inventing an edit to look responsive is worse than saying no.
 
-Where the complaint came from a posting, record it against that posting so the next reader of its
-history knows why it stopped moving:
-
-```sql
-INSERT INTO events(key,note) VALUES('<key>','<what they said, and what changed>');
-```
-
 **A complaint that rejects the posting is a decision about it.** Set it `passed` — they have no
 other way to clear a row they have ruled out — unless they said otherwise.
 
