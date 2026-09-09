@@ -176,11 +176,11 @@ export const Badge = ({ children }: { children: string | null | undefined }) => 
   if (!children) return null;
   const { stage, icon } = reading(children);
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs
-      ${STAGE_TEXT[stage]}`}
-    >
-      <Glyph icon={icon} className={stage === "waiting" ? "text-signal" : ""} />
+    <span className={`whitespace-nowrap text-xs ${STAGE_TEXT[stage]}`}>
+      <Glyph
+        icon={icon}
+        className={`mr-1.5 inline-block align-[-0.15em] ${stage === "waiting" ? "text-signal" : ""}`}
+      />
       {label(children)}
     </span>
   );

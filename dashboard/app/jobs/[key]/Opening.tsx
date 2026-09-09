@@ -8,19 +8,22 @@ import { shortDate } from "@/components/format";
 import { offered } from "@/core/actions";
 import type { Prospect } from "@/lib/web/queries";
 
-const Fit = ({ score, why }: { score: number | null; why: string | null }) => {
-  if (score === null && !why) return <p className="mt-4 text-sm text-soft">Not scored yet.</p>;
+const Read = ({ posting }: { posting: Prospect["posting"] }) => (
+  <div className="min-w-0">
+    <h1 className="font-display text-2xl font-medium leading-tight md:text-3xl">{posting.title}</h1>
+    <p className="mt-1 text-sm font-medium">{posting.company}</p>
+  </div>
+);
 
-  return (
-    <div className="mt-4 flex gap-4">
-      <p className="w-8 shrink-0 text-center">
-        <span className={`tnum block font-display text-2xl leading-none ${fitTone(score)}`}>{score ?? "—"}</span>
-        <span className="eyebrow mt-1 block">fit</span>
-      </p>
-      {why && <p className="max-h-36 max-w-[76ch] overflow-auto text-sm leading-6">{why}</p>}
-    </div>
-  );
-};
+const Judged = ({ posting }: { posting: Prospect["posting"] }) => (
+  <p className="mt-3 max-w-[76ch] text-sm leading-6 text-soft">
+    <span className="mr-3 border-r border-base-300 pr-3">
+      <Badge>{posting.status}</Badge>
+    </span>
+    <span className={`tnum mr-2 font-display text-base ${fitTone(posting.score)}`}>{posting.score ?? "—"}</span>
+    {posting.reason}
+  </p>
+);
 
 const Blocked = ({ on }: { on: string }) => (
   <p className="mt-3 flex items-start gap-2 rounded-field border border-error/40 px-2.5 py-1.5 text-xs text-error">
@@ -51,16 +54,9 @@ export default function Opening({ found }: { found: Prospect }) {
       <div className="@container overflow-hidden rounded-box border border-base-300 bg-base-100">
         <div className="grid @4xl:grid-cols-[minmax(0,1fr)_28rem]">
           <div className="min-w-0 p-4 md:p-5">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="text-sm font-medium">{posting.company}</span>
-              <Badge>{posting.status}</Badge>
-            </div>
-
-            <h1 className="mt-1 font-display text-2xl font-medium leading-tight md:text-3xl">{posting.title}</h1>
-
+            <Read posting={posting} />
+            <Judged posting={posting} />
             {staged?.blocked_on && <Blocked on={staged.blocked_on} />}
-
-            <Fit score={posting.score} why={posting.reason} />
           </div>
 
           <div className="border-t border-base-300 @4xl:border-l @4xl:border-t-0">
