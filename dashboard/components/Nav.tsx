@@ -7,6 +7,7 @@ import { useDeck } from "./Deck";
 import Glyph from "./Glyph";
 import ThemeToggle from "./ThemeToggle";
 import Wordmark from "./Wordmark";
+import { say } from "./Toaster";
 import { Ghost } from "@/components/ui";
 
 type Item = { href: string; label: string; icon: LucideIcon };
@@ -58,12 +59,21 @@ export default function Nav({ db }: { db: string }) {
 
         <span
           data-tip={db}
-          className="tooltip tooltip-left shrink-0 text-soft
+          className="tooltip tooltip-left shrink-0
             before:max-w-[min(28rem,80vw)] before:whitespace-normal before:break-all
             before:font-mono before:text-micro"
         >
-          <span className="sr-only">Database at {db}</span>
-          <Glyph icon={Database} size={16} />
+          <Ghost
+            onClick={() =>
+              navigator.clipboard.writeText(db).then(
+                () => say("Database path copied"),
+                () => say("Could not copy the database path", true),
+              )
+            }
+            aria-label={`Copy the database path, ${db}`}
+            className="text-soft"
+            icon={<Glyph icon={Database} size={16} />}
+          />
         </span>
       </div>
     </nav>
