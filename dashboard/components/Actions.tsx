@@ -21,7 +21,7 @@ export default function Actions({
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
       {ids.map((id) => (
-        <span key={id} data-tip={describes(id)} className="tooltip tooltip-loose tooltip-bottom [&:before]:text-left">
+        <span key={id} data-tip={describes(id)} className="tooltip tooltip-loose tooltip-bottom [&:before]:text-left before:text-micro">
           <Button onClick={() => draft(id, argument)}>
             <Command id={id} />
           </Button>
