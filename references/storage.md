@@ -50,8 +50,8 @@ there is one copy and not two: a column added there arrives in both on the next 
 Profile page groups it by where it was declared.
 
 **Point the user at the dashboard rather than reading rows aloud.** `/job ui` serves
-`127.0.0.1:8765` — every job opening on its full application with each drafted essay and flagged
-field, and the whole profile with its `NULL`s called out. **The Profile page writes.** Every box on it
+`127.0.0.1:8765` — every job opening with its posting, resume and staging status, and the whole
+profile with its `NULL`s called out. **The Profile page writes.** Every box on it
 saves the moment it loses focus, and emptying one sets `NULL` — the user correcting their own answers
 is the one thing they should never need you for. Everything an action decides — postings, scores,
 staged forms — is read-only there, because the invariants that make a write safe live here, not in

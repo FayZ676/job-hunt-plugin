@@ -3,7 +3,7 @@ import path from "node:path";
 import { z } from "zod";
 import { CAREER, absolute, one } from "@/core/db";
 
-const FROM = { resume: "postings", screenshot: "staged" } as const;
+const FROM = { resume: "postings" } as const;
 
 const TYPES: Record<string, string> = {
   ".pdf": "application/pdf",

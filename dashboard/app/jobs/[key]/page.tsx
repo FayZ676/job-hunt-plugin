@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Badge, Card, Out, Prose, Score, ScreenHead, Section, Sheet, Split, Stamp } from "@/components/ui";
 import { shortDate } from "@/components/format";
 import { reading } from "@/components/status";
-import { options, prospect } from "@/lib/web/queries";
+import { prospect } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,6 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
   const { posting, staged } = found;
 
   const asset = (kind: string) => `/asset/${kind}/${encodeURIComponent(posting.key)}`;
-  const papers = [posting.resume, staged?.screenshot].filter(Boolean).length;
 
   const facts = (
     <>
@@ -97,45 +96,26 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
 
         {staged && (
           <Section title="Staged application">
-            <div className="space-y-4">
-              <Sheet
-                readout
-                bands={[
-                  {
-                    notes: [
-                      {
-                        label: "Form status",
-                        value: <Badge>{staged.status}</Badge>,
-                        mark: reading(staged.status).stage === "waiting",
-                      },
-                      { label: "Apply URL", value: <Out href={staged.url}>open</Out> },
-                      staged.blocked_on !== null && {
-                        label: "Blocked on",
-                        value: <span className="text-error">{staged.blocked_on}</span>,
-                        mark: true,
-                      },
-                    ],
-                  },
-                ]}
-              />
-
-              <Sheet
-                readout
-                bands={options("staged_fields", "tier")
-                  .map((tier) => ({
-                    label: tier,
-                    notes: found.fields
-                      .filter((field) => field.tier === tier)
-                      .map((answer) => ({
-                        label: answer.label,
-                        value: <Prose className="max-w-[72ch]">{answer.value}</Prose>,
-                        flag: answer.flag,
-                        mark: Boolean(answer.flag),
-                      })),
-                  }))
-                  .filter((band) => band.notes.length > 0)}
-              />
-            </div>
+            <Sheet
+              readout
+              bands={[
+                {
+                  notes: [
+                    {
+                      label: "Form status",
+                      value: <Badge>{staged.status}</Badge>,
+                      mark: reading(staged.status).stage === "waiting",
+                    },
+                    { label: "Apply URL", value: <Out href={staged.url}>open</Out> },
+                    staged.blocked_on !== null && {
+                      label: "Blocked on",
+                      value: <span className="text-error">{staged.blocked_on}</span>,
+                      mark: true,
+                    },
+                  ],
+                },
+              ]}
+            />
           </Section>
         )}
 
@@ -148,24 +128,11 @@ export default async function ProspectPage({ params }: { params: Promise<{ key: 
         )}
       </Split>
 
-      {papers > 0 && (
-        <div className="@container mt-8">
-          <div className={`grid gap-x-6 ${papers > 1 ? "@5xl:grid-cols-2" : ""}`}>
-            {posting.resume && (
-              <Section title="Resume" sub={posting.resume}>
-                <iframe src={asset("resume")} title="resume" className={PAPER} />
-              </Section>
-            )}
-            {staged?.screenshot && (
-              <Section title="Filled form">
-                <img
-                  src={asset("screenshot")}
-                  alt="the filled application form"
-                  className={`${PAPER} object-contain object-top`}
-                />
-              </Section>
-            )}
-          </div>
+      {posting.resume && (
+        <div className="mt-8">
+          <Section title="Resume" sub={posting.resume}>
+            <iframe src={asset("resume")} title="resume" className={PAPER} />
+          </Section>
         </div>
       )}
     </>

@@ -148,17 +148,8 @@ export const TABLES = {
       sql: url("url"),
       takes: "a URL, starting http",
     }),
-    screenshot: z.string().nullable(),
     status: z.enum(["ready", "blocked"]).nullable(),
     blocked_on: z.string().nullable(),
-  }),
-
-  staged_fields: z.object({
-    key: col(z.string(), { sql: owned("postings(key)") }),
-    label: z.string(),
-    value: z.string().nullable(),
-    tier: z.enum(["identity", "policy", "judgment"]).nullable(),
-    flag: z.string().nullable(),
   }),
 
   identity: z
@@ -343,7 +334,6 @@ export const ORDER: Table[] = [
   "postings",
   "events",
   "staged",
-  "staged_fields",
   "identity",
   "education",
   "employers",

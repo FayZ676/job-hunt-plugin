@@ -45,7 +45,6 @@ export function career(): Employer[] {
 }
 
 const STAGED = TABLES.staged.omit({ key: true });
-const ANSWER = TABLES.staged_fields.omit({ key: true });
 const EVENT = TABLES.events.pick({ at: true, status: true, note: true });
 
 export type Posting = z.infer<typeof VIEWS.prospects>;
@@ -53,7 +52,6 @@ export type Prospect = {
   posting: Posting;
   events: z.infer<typeof EVENT>[];
   staged: z.infer<typeof STAGED> | null;
-  fields: z.infer<typeof ANSWER>[];
   aliases: string[];
 };
 
@@ -63,11 +61,9 @@ export function prospect(key: string): Prospect | null {
   return {
     posting,
     events: rows(EVENT, "SELECT at, status, note FROM events WHERE key=? ORDER BY id", [key]),
-    staged: one(STAGED, "SELECT url, screenshot, status, blocked_on FROM staged WHERE key=?", [key]),
-    fields: rows(ANSWER, "SELECT label, value, tier, flag FROM staged_fields WHERE key=? ORDER BY rowid", [key]),
+    staged: one(STAGED, "SELECT url, status, blocked_on FROM staged WHERE key=?", [key]),
     aliases: rows(z.object({ key: z.string() }), "SELECT key FROM postings WHERE canonical_key=?", [key]).map(
       (row) => row.key,
     ),
   };
 }
-

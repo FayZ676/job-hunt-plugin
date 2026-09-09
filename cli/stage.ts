@@ -1,71 +1,48 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { printRows } from "../lib/core/table.ts";
-import { TIERS, add, drop, list, show, type Field } from "../lib/stage.ts";
-import { collect, fail, action } from "./kit.ts";
-
-function parseField(raw: string): Field {
-  const parts = raw.split("|");
-  if (parts.length < 3) fail(`--field wants 'label|value|tier' or 'label|value|tier|flag', got '${raw}'`);
-  const [label, value, tier] = parts.slice(0, 3).map((part) => part.trim());
-  return {
-    label,
-    value,
-    tier,
-    flag: parts.length > 3 && parts[3].trim() ? parts[3].trim() : null,
-  };
-}
+import { add, drop, list, show } from "../lib/stage.ts";
+import { action } from "./kit.ts";
 
 const { program, runs } = action(
   "job-stage",
-  `Fill the form, record it, and stop with a finger over the button.
+  `Fill the form, mark it staged, and stop with a finger over the button.
 
-  job-stage add KEY --url URL --screenshot shot.png
-      --field 'Legal right to work without sponsorship?|Yes|policy'
-      --field 'Tell us about an AI product you built|…|judgment|needs-review'
-  job-stage show KEY              every field staged for one application
+  job-stage add KEY --url URL
+  job-stage add KEY --url URL --blocked-on "no answer for: desired salary"
+  job-stage show KEY              the application waiting at one key
   job-stage list                  everything staged, and what blocks each
   job-stage drop KEY              unstage, back to shortlisted
 
-\`ready\` and \`blocked\` are derived, never asserted: a field staged with no value
-blocks the application and names itself in blocked_on.`,
+The filled form itself stays in the browser tab; nothing about it is copied here.`,
 );
 
 program
   .command("add")
-  .description("record a filled form; status is derived from the fields")
+  .description("mark a filled form staged and waiting for approval")
   .argument("<key>")
   .requiredOption("--url <url>", "the apply URL the form was filled at")
-  .requiredOption("--screenshot <path>", "the completed form, captured")
-  .option("--field <label|value|tier[|flag]>", `tier is one of ${TIERS().join(", ")}`, collect, [])
-  .option("--blocked-on <what>", "what is missing, when the block is not an empty field")
+  .option("--blocked-on <what>", "what is unanswered, when the form could not be completed")
   .action(
     runs((key: string, options) => {
-      const staged = add(key, {
-        url: options.url,
-        screenshot: options.screenshot,
-        fields: options.field.map(parseField),
-        blockedOn: options.blockedOn,
-      });
-      console.log(`${key}  ${staged.status}  ${staged.fields} fields`);
+      const staged = add(key, { url: options.url, blockedOn: options.blockedOn });
+      console.log(`${key}  ${staged.status}`);
       if (staged.blockedOn) console.log(`  blocked_on: ${staged.blockedOn}`);
-      if (staged.flagged.length) console.log(`  flagged for review: ${staged.flagged.join("; ")}`);
     }),
   );
 
 program
   .command("show")
-  .description("every field staged for one application")
+  .description("the application waiting at one key")
   .argument("<key>")
   .option("--json")
   .action(
     runs((key: string, options) => {
-      const { application, fields } = show(key);
+      const application = show(key);
+      if (options.json) return console.log(JSON.stringify(application, null, 2));
       console.log(`${application.company} — ${application.title}  [${application.key}]  ${application.status}`);
       if (application.blocked_on) console.log(`  blocked_on: ${application.blocked_on}`);
       console.log(`  ${application.url || ""}`);
-      console.log(`  resume     ${application.resume}`);
-      console.log(`  screenshot ${application.screenshot}\n`);
-      printRows(fields, options.json);
+      console.log(`  resume  ${application.resume}`);
     }),
   );
 

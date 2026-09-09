@@ -7,8 +7,8 @@
 Submitting only, and only for applications the user named. **A key given with the command is that
 naming** — submit that one and nothing else, with no table and no question. Otherwise present every
 staged application in one table — company, title, score, status, and whatever is named in
-`blocked_on` (`job-submit review`). Keep it to that table; the user reads the applications themselves
-in the dashboard. Then ask which to submit, accepting "all", a subset, or none.
+`blocked_on` (`job-submit review`). Keep it to that table; the user reads the filled forms themselves
+in the open browser tabs. Then ask which to submit, accepting "all", a subset, or none.
 
 ## The click
 

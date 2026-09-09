@@ -251,7 +251,7 @@ export const Out = ({ href, children }: { href: string | null; children?: ReactN
     <span className="text-soft">—</span>
   );
 
-export type Note = { label: ReactNode; value: ReactNode; mark?: boolean; flag?: ReactNode };
+export type Note = { label: ReactNode; value: ReactNode; mark?: boolean };
 export type Band = { label?: string; note?: string; notes: (Note | false | null | undefined)[] };
 
 const kept = (notes: Band["notes"]) => notes.filter((note): note is Note => Boolean(note));
@@ -294,19 +294,12 @@ export const Sheet = ({
           {band.label && <BandHead label={band.label} note={band.note} lead={place === 0} />}
           <dl className="divide-y divide-base-200">
             {kept(band.notes).map((note, index) => (
-              <div
-                key={index}
-                className={`sheetrow py-1.5 ${readout ? "" : "px-3"}
-              ${note.flag ? "bg-error/10" : ""}`}
-              >
+              <div key={index} className={`sheetrow py-1.5 ${readout ? "" : "px-3"}`}>
                 <dt className="flex items-baseline gap-1.5 py-1 text-sm text-soft">
                   <span className="self-center">
                     <Mark on={note.mark} />
                   </span>
-                  <span className="min-w-0">
-                    {note.label}
-                    {note.flag && <span className="block text-xs text-error">{note.flag}</span>}
-                  </span>
+                  <span className="min-w-0">{note.label}</span>
                 </dt>
                 <dd className="min-w-0 break-words py-1 text-sm">{note.value}</dd>
               </div>

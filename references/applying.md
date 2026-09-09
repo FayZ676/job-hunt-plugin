@@ -5,20 +5,15 @@ filled and staged; `job-submit` is what clicks.
 
 ## Who answers a field
 
-Every field is one of three tiers, and the tier decides who answers it:
+Name, email, phone, location, LinkedIn, GitHub, work authorization, sponsorship, EEO, start date and
+compensation all come from `identity` — fill them without asking.
 
-| Tier | What it is | Source | Auto-filled |
-| ---- | ---------- | ------ | ----------- |
-| **Identity** | Name, email, phone, location, LinkedIn, GitHub, resume upload | `identity` | Yes |
-| **Policy** | Work authorization, sponsorship, EEO, start date, compensation | `identity` | Yes |
-| **Judgment** | Screening questions, essays, "why this company" | Nothing stored | No — drafted and flagged |
-
-A judgment question gets the answer the profile supports, written to **`references/writing.md`** — a
-screening essay reaches the same reader as the resume and is discarded for the same tells. Where
-nothing supports an answer, flag it for the user, **except** when a row in `projects` plainly
-answers it — then answer, cite that project, and
-flag `evidence-backed` so the review can check the reasoning. A question needing a project that is
-not in `projects` is a flag, not an inference.
+Screening questions and essays have no stored answer. Write what the profile supports, in the voice
+of **`references/writing.md`** — a screening essay reaches the same reader as the resume and is
+discarded for the same tells. Where nothing supports an answer, raise it with the user, **except**
+when a row in `projects` plainly answers it — then answer and cite that project, so the reasoning is
+there to check. A question needing a project that is not in `projects` is a question for the user,
+not an inference.
 
 ## Reaching the form
 
@@ -123,12 +118,14 @@ Re-snapshot and check every required field — marked `*` — holds a value. The
 uncommitted typeahead, a radio group that looks answered because one option is visible, and a file
 input that never received the upload.
 
-Screenshot the completed form into `$CAREER/resumes/`; that screenshot is what the user reviews.
-Then record the application with `job-stage add`, one `--field` per answer.
+Then `job-stage add`, naming `--blocked-on` if anything is still unanswered.
 
-`job-profile answers` and `job-profile missing` are where the identity and policy answers come from,
-and which of them are still `NULL`. Leave the tab open: the browser outlives the conversation, so a
-form stays filled while the user answers whatever blocked it.
+**Leave the tab open. The filled form is the record** — the browser outlives the conversation, so
+what was typed stays reviewable in the tab it was typed into, and nothing about it is copied into the
+database. Whatever the user needs to weigh in on, raise it in the conversation while the tab is open.
+
+`job-profile answers` and `job-profile missing` are where the stored answers come from, and which of
+them are still `NULL`.
 
 **A start date is computed, not stored.** Every employer has a `finish` date and they can start at once;
 otherwise it is today plus `identity.notice_period`. Never carry a date over from an earlier
