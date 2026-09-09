@@ -13,6 +13,7 @@ export type LedgerColumn = {
   label: string;
   width?: string;
   numeric?: boolean;
+  center?: boolean;
   keep?: Keep;
   sortable?: boolean;
   filter?: ReactNode;
@@ -110,10 +111,10 @@ export default function Ledger({
                     aria-sort={on ? (sorted!.dir === "asc" ? "ascending" : "descending") : undefined}
                     className={`group/head ${HEAD} ${kept(column.keep)}`}
                   >
-                    <div className="flex items-center gap-0.5">
+                    <div className={`flex items-center gap-0.5 ${column.center ? "justify-center" : ""}`}>
                       <span
-                        className={`flex-1 transition-colors group-hover/head:text-base-content
-                        ${on ? "text-base-content" : ""}`}
+                        className={`transition-colors group-hover/head:text-base-content
+                        ${column.center ? "" : "flex-1"} ${on ? "text-base-content" : ""}`}
                       >
                         {column.label}
                       </span>
@@ -181,6 +182,7 @@ export default function Ledger({
                   key={head[index].label}
                   className={`py-2.5 px-3 align-top
                       ${head[index].numeric ? "tnum" : ""}
+                      ${head[index].center ? "text-center" : ""}
                       ${kept(head[index].keep)}`}
                 >
                   {cell}

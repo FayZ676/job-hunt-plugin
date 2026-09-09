@@ -1,7 +1,7 @@
 "use client";
 
 import { createColumnHelper, filterFn_equalsString, filterFn_includesString } from "@tanstack/react-table";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, FileText, Trash2 } from "lucide-react";
 import { Command, copyKey, useDiscard } from "@/components/act";
 import { useDeck } from "@/components/Deck";
 import DataTable, { features, type Look } from "@/components/DataTable";
@@ -10,7 +10,7 @@ import { ORDER, label, rankOf, reading } from "@/components/status";
 import { offered } from "@/core/actions";
 import Glyph from "@/components/Glyph";
 import type { Option } from "@/components/Options";
-import { Badge, Out, Score, Stamp } from "@/components/ui";
+import { Badge, Score, Stamp } from "@/components/ui";
 import type { Job } from "@/lib/web/queries";
 
 const helper = createColumnHelper<typeof features, Job>();
@@ -26,7 +26,7 @@ const columns = helper.columns([
   }),
   helper.accessor("title", {
     header: "Title",
-    meta: look({ width: "32%", search: true }),
+    meta: look({ width: "34%", search: true }),
     filterFn: filterFn_includesString,
     cell: ({ getValue }) => (
       <span title={getValue()} className="line-clamp-2">
@@ -97,14 +97,28 @@ const columns = helper.columns([
     id: "resume",
     header: "Resume",
     meta: look({
-      width: "6%",
+      width: "4%",
+      center: true,
       keep: "wide",
       facet: { legend: "Filter openings by résumé", read: (key) => ({ label: key, quiet: key === "None" }) },
     }),
     filterFn: filterFn_equalsString,
     enableSorting: false,
     cell: ({ row }) =>
-      row.original.resume ? <Out href={`/asset/resume/${encodeURIComponent(row.original.key)}`}>Résumé</Out> : dash,
+      row.original.resume ? (
+        <a
+          href={`/asset/resume/${encodeURIComponent(row.original.key)}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Open the tailored résumé"
+          title="Open the tailored résumé"
+          className="inline-flex text-soft hover:text-current"
+        >
+          <Glyph icon={FileText} size={15} />
+        </a>
+      ) : (
+        dash
+      ),
   }),
 ]);
 

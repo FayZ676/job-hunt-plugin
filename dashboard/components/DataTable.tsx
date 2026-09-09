@@ -38,6 +38,7 @@ export const features = tableFeatures({
 export type Look = {
   width?: string;
   numeric?: boolean;
+  center?: boolean;
   keep?: Keep;
   search?: boolean;
   facet?: { legend: string; order?: string[]; read: (key: string) => Omit<Choice, "key" | "count"> };
@@ -76,6 +77,7 @@ export default function DataTable<T extends RowData>({
       label: String(column.columnDef.header),
       width: look.width,
       numeric: look.numeric,
+      center: look.center,
       keep: look.keep,
       sortable: column.getCanSort(),
       filter: look.search ? (
