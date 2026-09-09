@@ -6,7 +6,7 @@ import type { Usage } from "@/lib/web/usage";
 const RADIUS = 6;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-const tone = (used: number) => (used >= 90 ? "text-error" : used >= 75 ? "text-warning" : "text-soft");
+const SPENT = 80;
 
 const lasting = (ms: number) => {
   const minutes = Math.max(0, Math.round(ms / 60000));
@@ -40,10 +40,7 @@ export default function Usage({ usage }: { usage: Usage }) {
 
   return (
     <span data-tip={tip} className="tooltip tooltip-left shrink-0 before:whitespace-pre before:text-micro">
-      <span
-        aria-label={tip.replace(/\n/g, ". ")}
-        className={`flex items-center rounded-field p-1.5 ${tone(five.used)}`}
-      >
+      <span aria-label={tip.replace(/\n/g, ". ")} className="flex items-center rounded-field p-1.5 text-soft">
         <svg viewBox="0 0 16 16" width={16} height={16} aria-hidden className="shrink-0 -rotate-90">
           <circle cx="8" cy="8" r={RADIUS} fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
           <circle
@@ -53,6 +50,7 @@ export default function Usage({ usage }: { usage: Usage }) {
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
+            className={five.used >= SPENT ? "text-error" : undefined}
             strokeLinecap="round"
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={CIRCUMFERENCE * (1 - Math.min(100, five.used) / 100)}
