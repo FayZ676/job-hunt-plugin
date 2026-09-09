@@ -227,7 +227,7 @@ export default function Deck({
           )}
         </div>
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div className="relative min-h-0 flex-1 overflow-clip">
           <div
             className={`flex h-full w-[200%] transition-transform duration-200
               ${reading ? "-translate-x-1/2" : ""}`}
