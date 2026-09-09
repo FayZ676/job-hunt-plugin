@@ -33,7 +33,7 @@ const Pending = VIEWS.prospects.pick({
   company: true,
   title: true,
   location: true,
-  first_seen: true,
+  last_updated: true,
 });
 
 const Scored = VIEWS.prospects.pick({ score: true, status: true });
@@ -75,7 +75,7 @@ export const triage = (filter: { status?: string; limit?: number } = {}) =>
 export const prospect = (key: string) => one(Prospect, `SELECT ${listed(Prospect)} FROM prospects WHERE key=?`, [key]);
 
 export const unscored = () =>
-  rows(Pending, `SELECT ${listed(Pending)} FROM prospects WHERE score IS NULL ORDER BY first_seen DESC`);
+  rows(Pending, `SELECT ${listed(Pending)} FROM prospects WHERE score IS NULL ORDER BY last_updated DESC`);
 
 export function record(key: string, score: number, reason: string) {
   const row = prospect(key);

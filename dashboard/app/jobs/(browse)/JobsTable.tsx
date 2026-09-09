@@ -26,7 +26,7 @@ const columns = helper.columns([
   }),
   helper.accessor("title", {
     header: "Title",
-    meta: look({ width: "34%", search: true }),
+    meta: look({ width: "32%", search: true }),
     filterFn: filterFn_includesString,
     cell: ({ getValue }) => (
       <span title={getValue()} className="line-clamp-2">
@@ -87,9 +87,9 @@ const columns = helper.columns([
         dash
       ),
   }),
-  helper.accessor("first_seen", {
-    header: "Seen",
-    meta: look({ width: "6%", keep: "wide", numeric: true }),
+  helper.accessor("last_updated", {
+    header: "Updated",
+    meta: look({ width: "8%", keep: "wide", numeric: true }),
     enableColumnFilter: false,
     cell: ({ getValue }) => <Stamp>{shortDate(getValue())}</Stamp>,
   }),

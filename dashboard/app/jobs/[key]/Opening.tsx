@@ -73,7 +73,6 @@ export default function Opening({ found }: { found: Prospect }) {
                     { label: "Location", value: posting.location || (posting.remote ? "Remote" : "—") },
                     { label: "Compensation", value: posting.compensation || "—" },
                     { label: "Posted", value: shortDate(posting.posted_at) },
-                    { label: "First seen", value: shortDate(posting.first_seen) },
                     { label: "Posting", value: <Out href={posting.url}>{posting.source || "open"}</Out> },
                     aliases.length > 0 && {
                       label: "Also listed as",

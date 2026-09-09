@@ -92,12 +92,8 @@ export const TABLES = {
       canonical_key: col(z.string().nullable(), {
         sql: "REFERENCES postings(key) ON DELETE SET NULL",
       }),
-      first_seen: col(z.string().nullable(), {
-        sql: "CHECK (first_seen IS date(first_seen))",
-        takes: "a date, as YYYY-MM-DD",
-      }),
-      last_seen: col(z.string().nullable(), {
-        sql: "CHECK (last_seen IS date(last_seen))",
+      last_updated: col(z.string().nullable(), {
+        sql: "CHECK (last_updated IS date(last_updated))",
         takes: "a date, as YYYY-MM-DD",
       }),
       score: col(z.number().nullable(), {
@@ -114,12 +110,12 @@ export const TABLES = {
         "CHECK (disposition IS NOT 'kept' OR canonical_key IS NULL)",
         "CHECK (canonical_key IS NULL OR canonical_key <> key)",
         "CHECK (disposition IS 'kept' OR (status IS NULL AND score IS NULL AND reason IS NULL\n" +
-          "                                   AND resume IS NULL AND first_seen IS NULL))",
+          "                                   AND resume IS NULL AND last_updated IS NULL))",
       ],
       indexes: [
         "idx_postings_pending ON postings(disposition, last_fetched)",
         "idx_postings_status ON postings(status)",
-        "idx_postings_seen ON postings(first_seen)",
+        "idx_postings_updated ON postings(last_updated)",
         "idx_postings_canonical ON postings(canonical_key)",
       ],
     } satisfies Shape),
@@ -338,8 +334,7 @@ export const VIEWS = {
     remote: true,
     compensation: true,
     posted_at: true,
-    first_seen: true,
-    last_seen: true,
+    last_updated: true,
     source: true,
     description: true,
     score: true,
@@ -355,7 +350,7 @@ export const VIEWS = {
     remote: true,
     compensation: true,
     posted_at: true,
-    first_seen: true,
+    last_updated: true,
     source: true,
     score: true,
     status: true,
@@ -379,7 +374,7 @@ export const DERIVED: Partial<Record<keyof typeof VIEWS, { where: string; order?
   prospects: { where: "disposition = 'kept'" },
   triage: {
     where: "disposition = 'kept'",
-    order: "COALESCE(score,-1) DESC, first_seen DESC",
+    order: "COALESCE(score,-1) DESC, last_updated DESC",
   },
 };
 

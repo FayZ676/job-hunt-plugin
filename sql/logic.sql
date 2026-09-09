@@ -9,8 +9,7 @@ CREATE TRIGGER IF NOT EXISTS on_kept AFTER UPDATE OF disposition ON postings
 WHEN new.disposition = 'kept' AND old.disposition IS NOT 'kept'
 BEGIN
   UPDATE postings SET status = COALESCE(status, 'new'),
-                      first_seen = COALESCE(first_seen, date('now')),
-                      last_seen = date('now')
+                      last_updated = date('now')
   WHERE key = new.key;
 END;
 
@@ -20,14 +19,23 @@ CREATE TRIGGER IF NOT EXISTS on_kept_insert AFTER INSERT ON postings
 WHEN new.disposition = 'kept'
 BEGIN
   UPDATE postings SET status = COALESCE(status, 'new'),
-                      first_seen = COALESCE(first_seen, date('now')),
-                      last_seen = date('now')
+                      last_updated = date('now')
   WHERE key = new.key;
 END;
 
 DROP TRIGGER IF EXISTS on_status_change;
 
 DROP TABLE IF EXISTS events;
+
+-- The day the row last moved: scored, shortlisted, tailored, staged, applied.
+-- A re-fetch is not progress, so `last_fetched` is not among the columns watched.
+DROP TRIGGER IF EXISTS on_change;
+
+CREATE TRIGGER IF NOT EXISTS on_change AFTER UPDATE OF status, score, resume ON postings
+WHEN new.disposition = 'kept'
+BEGIN
+  UPDATE postings SET last_updated = date('now') WHERE key = new.key;
+END;
 
 -- Scoring sets the status by the threshold in settings, so a score and a
 -- shortlist decision can never disagree.

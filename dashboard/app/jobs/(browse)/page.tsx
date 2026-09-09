@@ -13,7 +13,7 @@ export default function JobsPage() {
       (left, right) =>
         rankOf(left.status) - rankOf(right.status) ||
         (right.score ?? -1) - (left.score ?? -1) ||
-        (right.first_seen ?? "").localeCompare(left.first_seen ?? ""),
+        (right.last_updated ?? "").localeCompare(left.last_updated ?? ""),
     );
 
   return (
