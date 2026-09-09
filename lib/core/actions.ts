@@ -26,7 +26,7 @@ export const ACTIONS: Action[] = [
   },
   {
     id: "search",
-    does: "harvest Indeed in the browser, then rule what came back",
+    does: "search Indeed for new openings",
     argument: "[terms]",
     accepts: [],
     browses: true,
@@ -98,6 +98,8 @@ export const shown = (id: string, argument: string) => (BY_ID.get(id)?.asks ? ar
 export const seeded = (id: string) => BY_ID.get(id)?.seed;
 
 export const browses = (id: string) => Boolean(BY_ID.get(id)?.browses);
+
+export const describes = (id: string) => BY_ID.get(id)?.does ?? "";
 
 export const offered = (status: string | null | undefined) =>
   ACTIONS.filter((action) => action.accepts.some((allowed) => allowed === status));

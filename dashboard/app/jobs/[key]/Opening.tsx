@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, CircleAlert } from "lucide-react";
-import Actions from "./Actions";
+import Actions from "@/components/Actions";
 import CopyKey from "./CopyKey";
 import Glyph from "@/components/Glyph";
 import { Badge, Out, Sheet, Stamp, fitTone } from "@/components/ui";
@@ -96,7 +96,7 @@ export default function Opening({ found }: { found: Prospect }) {
           className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-base-300
           px-4 py-2.5 md:px-5"
         >
-          <Actions jobKey={posting.key} ids={elsewhere(posting.status)} />
+          <Actions ids={elsewhere(posting.status)} argument={posting.key} />
           <span className="ml-auto">
             <CopyKey jobKey={posting.key} />
           </span>

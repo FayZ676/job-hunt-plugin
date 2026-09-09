@@ -126,10 +126,10 @@ export default function JobsTable({ rows }: { rows: Job[] }) {
     },
     {
       key: "delete",
-      label: "Delete opening",
+      label: "Delete job",
       tone: "grave" as const,
       icon: <Glyph icon={Trash2} size={13} />,
-      onPick: () => drop(job.key, `${job.company} — ${job.title}`),
+      onPick: () => drop(job.key),
     },
   ];
 
@@ -137,7 +137,7 @@ export default function JobsTable({ rows }: { rows: Job[] }) {
     <DataTable
       data={rows}
       columns={columns}
-      empty="Nothing scanned yet."
+      empty="No openings yet."
       href={(job) => `/jobs/${encodeURIComponent(job.key)}`}
       menu={menu}
     />

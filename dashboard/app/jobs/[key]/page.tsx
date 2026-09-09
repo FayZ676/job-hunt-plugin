@@ -1,4 +1,4 @@
-import Actions from "./Actions";
+import Actions from "@/components/Actions";
 import Opening from "./Opening";
 import { assetAt, held } from "./held";
 import { Card, Out, Prose, Stack, Stamp } from "@/components/ui";
@@ -47,7 +47,7 @@ const Resume = ({ posting }: { posting: Posting }) => {
               <Out href={file}>Open the PDF</Out>
             </span>
           )}
-          <Actions jobKey={posting.key} ids={build} />
+          <Actions ids={build} argument={posting.key} />
         </span>
       </div>
 

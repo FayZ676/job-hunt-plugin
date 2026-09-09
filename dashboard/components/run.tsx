@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { useRouter } from "next/navigation";
 import { SendHorizontal, Square } from "lucide-react";
 
+import { Command } from "@/components/act";
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
 import { Button, Empty, Prose, Row, Stamp } from "@/components/ui";
@@ -151,9 +152,7 @@ function Turn({ line, lead }: { line: Line; lead: boolean }) {
 
   return (
     <div className={`px-4 ${lead ? "pt-3" : "pt-1"} pb-3 ${mine ? "bg-base-200" : ""}`}>
-      {who && lead && (
-        <p className="mb-1.5 font-mono text-xs text-soft">{who}</p>
-      )}
+      {who && lead && <p className="mb-1.5 font-mono text-xs text-soft">{who}</p>}
       {line.kind === "said" ? (
         <Markdown>{line.body}</Markdown>
       ) : (
@@ -207,7 +206,9 @@ function Menu({
           onClick={() => onPick(action)}
           className="grid grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-base-200 last:border-0"
         >
-          <span className="min-w-0 truncate font-mono text-sm">{asked(action.id, action.argument)}</span>
+          <span className="min-w-0 truncate text-sm">
+            <Command id={action.id} argument={action.argument} />
+          </span>
           <span className="text-xs text-soft">{action.does}</span>
         </Row>
       ))}

@@ -5,12 +5,12 @@ import { useDeck } from "@/components/Deck";
 import { Button } from "@/components/ui";
 
 export default function Actions({
-  jobKey,
   ids,
+  argument = "",
   className = "",
 }: {
-  jobKey: string;
   ids: string[];
+  argument?: string;
   className?: string;
 }) {
   const { draft } = useDeck();
@@ -20,7 +20,7 @@ export default function Actions({
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
       {ids.map((id) => (
-        <Button key={id} onClick={() => draft(id, jobKey)}>
+        <Button key={id} onClick={() => draft(id, argument)}>
           <Command id={id} />
         </Button>
       ))}
