@@ -267,7 +267,7 @@ export const Sheet = ({
       {shown.map((band, place) => (
         <section key={band.label ?? place}>
           {band.label && <BandHead label={band.label} note={band.note} lead={place === 0} />}
-          <dl className="divide-y divide-base-200">
+          <dl className="divide-y divide-rule">
             {kept(band.notes).map((note, index) => (
               <div key={index} className={`sheetrow py-1.5 ${readout ? "" : "px-3"}`}>
                 <dt className="flex items-baseline gap-1.5 py-1 text-sm text-soft">
@@ -319,7 +319,7 @@ export const Disclosure = ({
   children: ReactNode;
   className?: string;
 }) => (
-  <details className={`border-b border-base-200 last:border-0 ${className}`}>
+  <details className={`border-b border-rule last:border-0 ${className}`}>
     <summary
       className="flex cursor-pointer list-none items-baseline gap-2 px-3 py-2.5
       transition-colors hover:bg-base-200 [&::-webkit-details-marker]:hidden"

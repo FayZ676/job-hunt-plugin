@@ -204,7 +204,7 @@ function Menu({
           aria-selected={index === at}
           onMouseMove={() => onHover(index)}
           onClick={() => onPick(action)}
-          className="grid grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-base-200 last:border-0"
+          className="grid grid-cols-[minmax(0,1fr)] gap-y-0.5 border-b border-rule last:border-0"
         >
           <span className="min-w-0 truncate text-sm">
             <Command id={action.id} argument={action.argument} />

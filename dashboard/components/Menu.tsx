@@ -55,7 +55,7 @@ export default function Menu({
                 onPick(null);
                 close();
               }}
-              className="mt-1 border-t border-base-200 text-soft hover:text-base-content"
+              className="mt-1 border-t border-rule text-soft hover:text-base-content"
             >
               Clear
             </Row>

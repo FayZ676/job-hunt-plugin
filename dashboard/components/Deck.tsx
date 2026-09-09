@@ -220,7 +220,7 @@ export default function Deck({
               {runs.map((held) => (
                 <div
                   key={held.id}
-                  className={`relative border-b border-base-200 last:border-0
+                  className={`relative border-b border-rule last:border-0
                     ${held.standing === WAITING ? "bg-mark/[0.07]" : ""}`}
                 >
                   {held.standing === WAITING && (

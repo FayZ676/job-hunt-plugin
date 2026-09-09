@@ -164,7 +164,7 @@ export default function Ledger({
               key={row.key}
               onClick={row.href ? follow(row.href) : undefined}
               onContextMenu={row.menu?.length ? (event) => raise(event, row.key) : undefined}
-              className={`ledgerrow group/row border-b border-base-200 last:border-0
+              className={`ledgerrow group/row border-b border-rule last:border-0
                   ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}
                   ${held?.key === row.key ? "bg-base-200" : ""}`}
             >
