@@ -15,6 +15,7 @@ import type { Run } from "@/lib/web/runs";
 
 const WATCH = 4000;
 const KEPT = "deck";
+const SPARED = '[data-deck], [role="menu"]';
 
 const clock = (started: string) =>
   new Date(started).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -73,6 +74,7 @@ export default function Deck({
   const [said, setSaid] = useState("");
   const { held: raised, open: raise, close: lower } = useRightClick<string>();
   const input = useRef<HTMLTextAreaElement>(null);
+  const panel = useRef<HTMLElement>(null);
 
   const talks = actions.find((action) => action.asks);
   const busy = runs.some((held) => held.standing === WORKING);
@@ -91,6 +93,19 @@ export default function Deck({
       }),
     [],
   );
+
+  useEffect(() => {
+    if (!shown) return;
+    const away = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.isConnected) return;
+      if (panel.current?.contains(target)) return;
+      if (target.closest(SPARED)) return;
+      toggle();
+    };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [shown, toggle]);
 
   useEffect(() => {
     const tag = document.querySelector("title");
@@ -169,11 +184,13 @@ export default function Deck({
           type="button"
           aria-label="Close conversations"
           onClick={toggle}
+          data-deck
           className="fixed inset-x-0 bottom-0 top-[var(--nav)] z-20 bg-base-content/20 xl:hidden"
         />
       )}
 
       <aside
+        ref={panel}
         aria-label="Conversations"
         aria-hidden={!shown}
         inert={!shown || undefined}
