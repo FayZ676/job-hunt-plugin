@@ -26,8 +26,10 @@ model without the record could have written the line.
 - **No participial tail** — "…, resulting in a 30% reduction", "…, ensuring compliance across
   teams", "…, driving adoption". An abstract consequence bolted onto a concrete clause is the most
   common generated shape there is. Put the outcome in the main clause or cut it.
-- **No three-item list where the record supports two**, and **at most one em dash or colon per
-  sentence** — the doubled em-dash rate is the most measured tell of the lot.
+- **No three-item list where the record supports two**, and **no em dash at all** — the doubled
+  em-dash rate is the most measured tell of the lot, and one is enough for a reader to name the
+  document. Recast on a comma, a period, or one colon per sentence at most. The dash a template
+  prints between a title and its dates is the template's, not yours.
 - **A number with no referent is worse than no number.** "Improved efficiency by 35%" is the
   canonical generated line: nothing says what was measured or against what.
 - **Never name what was not done** — "not just…", "rather than a rewrite", "no separate system to
