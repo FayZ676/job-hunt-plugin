@@ -50,14 +50,12 @@ export default function DataTable<T extends RowData>({
   columns,
   empty,
   href,
-  mark,
   menu,
 }: {
   data: T[];
   columns: ColumnDef<typeof features, T, any>[];
   empty?: string;
   href?: (row: T) => string;
-  mark?: (row: T) => boolean;
   menu?: (row: T) => Option[];
 }) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: PAGE });
@@ -119,7 +117,6 @@ export default function DataTable<T extends RowData>({
         rows={table.getRowModel().rows.map((row) => ({
           key: row.id,
           href: href?.(row.original),
-          mark: mark?.(row.original),
           menu: menu?.(row.original),
           cells: row.getAllCells().map((cell) => <table.FlexRender key={cell.id} cell={cell} />),
         }))}

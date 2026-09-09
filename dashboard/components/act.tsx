@@ -8,6 +8,12 @@ import { say } from "@/components/Toaster";
 import { confirmDelete } from "@/components/ui";
 import { discard } from "@/lib/web/edit";
 
+export const copyKey = (key: string) =>
+  navigator.clipboard.writeText(key).then(
+    () => say("Job ID copied"),
+    () => say("Could not copy the job ID", true),
+  );
+
 export const Command = ({ id }: { id: string }) => (
   <span className="font-mono">
     <span className="text-soft">/job</span> {id}

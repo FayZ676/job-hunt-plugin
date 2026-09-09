@@ -2,27 +2,6 @@ import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import Glyph from "./Glyph";
 import { label, reading } from "./status";
 
-export const ScreenHead = ({
-  kicker,
-  headline,
-  children,
-}: {
-  kicker?: ReactNode;
-  headline: ReactNode;
-  children?: ReactNode;
-}) => (
-  <header className="mb-6">
-    {kicker && <p className="eyebrow">{kicker}</p>}
-    <p
-      className="max-w-3xl font-display text-xl font-medium leading-snug not-first:mt-2
-      md:text-2xl"
-    >
-      {headline}
-    </p>
-    {children}
-  </header>
-);
-
 export const Section = ({
   title,
   sub,
@@ -207,22 +186,17 @@ export const Badge = ({ children }: { children: string | null | undefined }) => 
   );
 };
 
+export const fitTone = (value: number | null) =>
+  value === null
+    ? "text-soft"
+    : value >= 7
+      ? "font-semibold text-base-content"
+      : value >= 4
+        ? "text-base-content"
+        : "text-soft";
+
 export const Score = ({ value, why }: { value: number | null; why?: string | null }) => {
-  const mark = (
-    <span
-      className={`tnum font-mono text-sm ${
-        value === null
-          ? "text-soft"
-          : value >= 7
-            ? "font-semibold text-base-content"
-            : value >= 4
-              ? "text-base-content"
-              : "text-soft"
-      }`}
-    >
-      {value ?? "—"}
-    </span>
-  );
+  const mark = <span className={`tnum font-mono text-sm ${fitTone(value)}`}>{value ?? "—"}</span>;
 
   if (!why) return mark;
 
@@ -276,29 +250,32 @@ export const Sheet = ({
   flush?: boolean;
   readout?: boolean;
   label?: string;
-}) => (
-  <div
-    style={label ? ({ "--label": label } as CSSProperties) : undefined}
-    className={
-      flush
-        ? ""
-        : readout
-          ? "border-y border-base-300"
-          : "overflow-hidden rounded-box border border-base-300 bg-base-100"
-    }
-  >
-    {bands
-      .filter((band): band is Band => Boolean(band))
-      .map((band, place) => (
+}) => {
+  const shown = bands.filter((band): band is Band => Boolean(band));
+  const marked = shown.some((band) => kept(band.notes).some((note) => note.mark !== undefined));
+  return (
+    <div
+      style={label ? ({ "--label": label } as CSSProperties) : undefined}
+      className={
+        flush
+          ? ""
+          : readout
+            ? "border-y border-base-300"
+            : "overflow-hidden rounded-box border border-base-300 bg-base-100"
+      }
+    >
+      {shown.map((band, place) => (
         <section key={band.label ?? place}>
           {band.label && <BandHead label={band.label} note={band.note} lead={place === 0} />}
           <dl className="divide-y divide-base-200">
             {kept(band.notes).map((note, index) => (
               <div key={index} className={`sheetrow py-1.5 ${readout ? "" : "px-3"}`}>
                 <dt className="flex items-baseline gap-1.5 py-1 text-sm text-soft">
-                  <span className="self-center">
-                    <Mark on={note.mark} />
-                  </span>
+                  {marked && (
+                    <span className="self-center">
+                      <Mark on={note.mark} />
+                    </span>
+                  )}
                   <span className="min-w-0">{note.label}</span>
                 </dt>
                 <dd className="min-w-0 break-words py-1 text-sm">{note.value}</dd>
@@ -307,11 +284,22 @@ export const Sheet = ({
           </dl>
         </section>
       ))}
-  </div>
-);
+    </div>
+  );
+};
 
-export const Stack = ({ head, children, foot }: { head?: string; children: ReactNode; foot?: ReactNode }) => (
-  <div className="overflow-hidden rounded-box border border-base-300 bg-base-100">
+export const Stack = ({
+  head,
+  children,
+  foot,
+  className = "",
+}: {
+  head?: string;
+  children: ReactNode;
+  foot?: ReactNode;
+  className?: string;
+}) => (
+  <div className={`overflow-hidden rounded-box border border-base-300 bg-base-100 ${className}`}>
     {head && <BandHead label={head} lead />}
     {children}
     {foot && <div className="border-t border-base-300">{foot}</div>}

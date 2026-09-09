@@ -1,140 +1,79 @@
-import Link from "next/link";
 import Actions from "./Actions";
-import { notFound } from "next/navigation";
-import { Badge, Card, Out, Prose, Score, ScreenHead, Section, Sheet, Split, Stamp } from "@/components/ui";
-import { shortDate } from "@/components/format";
-import { reading } from "@/components/status";
-import { prospect } from "@/lib/web/queries";
+import Opening from "./Opening";
+import { assetAt, held } from "./held";
+import { Card, Out, Prose, Stack, Stamp } from "@/components/ui";
+import { offered } from "@/core/actions";
+import type { Posting } from "@/lib/web/queries";
 
 export const dynamic = "force-dynamic";
 
-const PAPER = "pane w-full rounded-box border border-base-300 bg-white";
+const TALL = "h-[min(44rem,calc(100dvh-25rem))]";
+const TALL_WIDE = "xl:h-[min(44rem,calc(100dvh-25rem))]";
+const FITTED = "#toolbar=0&navpanes=0&view=FitH";
 
-export default async function ProspectPage({ params }: { params: Promise<{ key: string }> }) {
-  const { key } = await params;
-  const found = prospect(decodeURIComponent(key));
-  if (!found) notFound();
-  const { posting, staged } = found;
+const BAND = `flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1
+  border-b border-base-300 px-3 py-2`;
 
-  const asset = (kind: string) => `/asset/${kind}/${encodeURIComponent(posting.key)}`;
+const Description = ({ posting }: { posting: Posting }) => (
+  <Card className={`overflow-auto ${TALL}`}>
+    {posting.description ? (
+      <Prose className="max-w-[72ch]">{posting.description}</Prose>
+    ) : (
+      <p className="text-sm text-soft">
+        No description was captured for this posting. <Out href={posting.url}>Read it on {posting.source}</Out>.
+      </p>
+    )}
+  </Card>
+);
 
-  const facts = (
-    <>
-      <Section title="Opening">
-        <Sheet
-          readout
-          label="9rem"
-          bands={[
-            {
-              notes: [
-                { label: "Location", value: posting.location || (posting.remote ? "Remote" : "—") },
-                { label: "Compensation", value: posting.compensation || "—" },
-                { label: "Posted", value: shortDate(posting.posted_at) },
-                { label: "First seen", value: shortDate(posting.first_seen) },
-                { label: "Source", value: posting.source || "—" },
-                { label: "Posting", value: <Out href={posting.url}>open</Out> },
-                found.aliases.length > 0 && {
-                  label: "Also listed as",
-                  value: <Stamp>{found.aliases.join(" · ")}</Stamp>,
-                },
-              ],
-            },
-          ]}
+const Resume = ({ posting }: { posting: Posting }) => {
+  const file = assetAt("resume", posting.key);
+  const build = offered(posting.status)
+    .map((action) => action.id)
+    .filter((id) => id === "resume");
+
+  return (
+    <Stack className={`flex flex-col ${posting.resume ? TALL : TALL_WIDE}`}>
+      <div className={BAND}>
+        {posting.resume ? (
+          <Stamp>{posting.resume.split("/").pop()}</Stamp>
+        ) : (
+          <span className="text-sm text-soft">No resume built for this opening yet.</span>
+        )}
+
+        <span className="flex items-center gap-3">
+          {posting.resume && (
+            <span className="text-sm">
+              <Out href={file}>Open the PDF</Out>
+            </span>
+          )}
+          <Actions jobKey={posting.key} ids={build} />
+        </span>
+      </div>
+
+      {posting.resume && (
+        <iframe
+          src={`${file}${FITTED}`}
+          title={`Resume tailored for ${posting.company}`}
+          className="min-h-0 w-full flex-1 bg-white"
         />
-      </Section>
-
-      {found.events.length > 0 && (
-        <Section title="History">
-          <Sheet
-            readout
-            label="9rem"
-            bands={[
-              {
-                notes: found.events.map((event) => ({
-                  label: <Stamp>{event.at.slice(0, 16)}</Stamp>,
-                  mark: reading(event.status).stage === "waiting",
-                  value: (
-                    <span className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                      <Badge>{event.status}</Badge>
-                      <span className="min-w-0 text-soft">{event.note}</span>
-                    </span>
-                  ),
-                })),
-              },
-            ]}
-          />
-        </Section>
       )}
-    </>
+    </Stack>
   );
+};
+
+export default async function JobPage({ params }: PageProps<"/jobs/[key]">) {
+  const found = await held(params);
+  const { posting } = found;
 
   return (
     <>
-      <ScreenHead
-        kicker={
-          <>
-            <Link href="/jobs" className="transition-colors hover:text-base-content">
-              Jobs
-            </Link>
-            <span aria-hidden className="mx-2 text-base-300">
-              /
-            </span>
-            {posting.company}
-          </>
-        }
-        headline={posting.title}
-      >
-        <p className="mt-2 flex items-center gap-3 text-sm">
-          {posting.score !== null && <Score value={posting.score} why={posting.reason} />}
-          <Badge>{posting.status}</Badge>
-          <Stamp>{posting.key}</Stamp>
-        </p>
-      </ScreenHead>
+      <Opening found={found} />
 
-      <Split pinned rail={facts}>
-        <Actions jobKey={posting.key} status={posting.status} />
-
-        {staged && (
-          <Section title="Staged application">
-            <Sheet
-              readout
-              bands={[
-                {
-                  notes: [
-                    {
-                      label: "Form status",
-                      value: <Badge>{staged.status}</Badge>,
-                      mark: reading(staged.status).stage === "waiting",
-                    },
-                    { label: "Apply URL", value: <Out href={staged.url}>open</Out> },
-                    staged.blocked_on !== null && {
-                      label: "Blocked on",
-                      value: <span className="text-error">{staged.blocked_on}</span>,
-                      mark: true,
-                    },
-                  ],
-                },
-              ]}
-            />
-          </Section>
-        )}
-
-        {posting.description && (
-          <Section title="Description">
-            <Card readout className="pane-max">
-              <Prose className="max-w-[72ch]">{posting.description}</Prose>
-            </Card>
-          </Section>
-        )}
-      </Split>
-
-      {posting.resume && (
-        <div className="mt-8">
-          <Section title="Resume" sub={posting.resume}>
-            <iframe src={asset("resume")} title="resume" className={PAPER} />
-          </Section>
-        </div>
-      )}
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <Description posting={posting} />
+        <Resume posting={posting} />
+      </div>
     </>
   );
 }

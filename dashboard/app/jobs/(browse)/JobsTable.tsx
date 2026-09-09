@@ -2,7 +2,7 @@
 
 import { createColumnHelper, filterFn_equalsString, filterFn_includesString } from "@tanstack/react-table";
 import { Copy, Trash2 } from "lucide-react";
-import { Command, useDiscard } from "@/components/act";
+import { Command, copyKey, useDiscard } from "@/components/act";
 import { useDeck } from "@/components/Deck";
 import DataTable, { features, type Look } from "@/components/DataTable";
 import { payAmount, places, shortDate, shortPay } from "@/components/format";
@@ -10,7 +10,6 @@ import { ORDER, label, rankOf, reading } from "@/components/status";
 import { offered } from "@/core/actions";
 import Glyph from "@/components/Glyph";
 import type { Option } from "@/components/Options";
-import { say } from "@/components/Toaster";
 import { Badge, Out, Score, Stamp } from "@/components/ui";
 import type { Job } from "@/lib/web/queries";
 
@@ -123,12 +122,7 @@ export default function JobsTable({ rows }: { rows: Job[] }) {
       key: "copy",
       label: "Copy job ID",
       icon: <Glyph icon={Copy} size={13} />,
-      onPick: () => {
-        navigator.clipboard.writeText(job.key).then(
-          () => say("Job ID copied"),
-          () => say("Could not copy the job ID", true),
-        );
-      },
+      onPick: () => copyKey(job.key),
     },
     {
       key: "delete",
@@ -145,7 +139,6 @@ export default function JobsTable({ rows }: { rows: Job[] }) {
       columns={columns}
       empty="Nothing scanned yet."
       href={(job) => `/jobs/${encodeURIComponent(job.key)}`}
-      mark={(job) => reading(job.status).stage === "waiting"}
       menu={menu}
     />
   );

@@ -65,7 +65,8 @@ export default function Ledger({
 }) {
   const router = useRouter();
   const { held, open, close } = useRightClick<string>();
-  const span = 2 + head.length + (action ? 1 : 0);
+  const marked = rows.some((row) => row.mark !== undefined);
+  const span = (marked ? 2 : 1) + head.length + (action ? 1 : 0);
 
   const follow = (href: string) => (event: MouseEvent<HTMLTableRowElement>) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -85,7 +86,7 @@ export default function Ledger({
     <div className="@container overflow-x-auto rounded-box border border-base-300 bg-base-100">
       <table className="w-full text-sm">
         <colgroup>
-          <col className="w-5" />
+          {marked && <col className="w-5" />}
           {head.map((column) => (
             <col key={column.label} style={{ width: column.width }} />
           ))}
@@ -95,9 +96,11 @@ export default function Ledger({
         {!headless && (
           <thead>
             <tr className="border-b border-base-300">
-              <th scope="col" className={`${SLIM} pl-3`}>
-                <span className="sr-only">Waiting on you</span>
-              </th>
+              {marked && (
+                <th scope="col" className={`${SLIM} pl-3`}>
+                  <span className="sr-only">Waiting on you</span>
+                </th>
+              )}
               {head.map((column) => {
                 const on = sorted?.label === column.label;
                 return (
@@ -165,11 +168,13 @@ export default function Ledger({
                   ${row.href ? "cursor-pointer transition-colors hover:bg-base-200" : ""}
                   ${held?.key === row.key ? "bg-base-200" : ""}`}
             >
-              <td className="py-2.5 pl-3 pr-0 align-top">
-                <span className="flex h-5 items-center">
-                  <Mark on={row.mark} />
-                </span>
-              </td>
+              {marked && (
+                <td className="py-2.5 pl-3 pr-0 align-top">
+                  <span className="flex h-5 items-center">
+                    <Mark on={row.mark} />
+                  </span>
+                </td>
+              )}
 
               {row.cells.map((cell, index) => (
                 <td
