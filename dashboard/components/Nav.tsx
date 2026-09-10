@@ -10,6 +10,7 @@ import Usage from "./Usage";
 import Wordmark from "./Wordmark";
 import { say } from "./Toaster";
 import { Ghost } from "@/components/ui";
+import type { Model } from "@/lib/web/queries";
 import type { Usage as Limits } from "@/lib/web/usage";
 
 type Item = { href: string; label: string; icon: LucideIcon };
@@ -19,7 +20,17 @@ const SECTIONS: Item[] = [
   { href: "/profile", label: "Profile", icon: User },
 ];
 
-export default function Nav({ db, limits }: { db: string; limits: Limits | null }) {
+export default function Nav({
+  db,
+  limits,
+  models,
+  model,
+}: {
+  db: string;
+  limits: Limits | null;
+  models: Model[];
+  model: string;
+}) {
   const here = usePathname();
   const { shown, working, waiting, toggle } = useDeck();
   return (
@@ -59,7 +70,7 @@ export default function Nav({ db, limits }: { db: string; limits: Limits | null 
 
         <ThemeToggle />
 
-        {limits && <Usage usage={limits} />}
+        <Usage usage={limits} models={models} model={model} />
 
         <span
           data-tip={db}

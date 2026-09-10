@@ -7,6 +7,7 @@ import { z } from "zod";
 import { purge } from "../../../lib/cleanup.ts";
 import { db } from "@/core/db.ts";
 import { TABLES, numeric, type Table } from "@/core/schema.ts";
+import { MODELS } from "./queries.ts";
 
 const WRITABLE = new Set<Table>([
   "identity",
@@ -91,6 +92,21 @@ export async function discard(key: string): Promise<Dropped> {
     if (!purged.postings.length) return { error: `no posting keyed ${key}` };
     revalidatePath("/", "layout");
     return { gone: purged.postings.length };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+export async function chooseModel(key: string): Promise<{ model: string } | { error: string }> {
+  try {
+    if (!MODELS.some((model) => model.key === key)) return { error: `no such model: ${key}` };
+    db()
+      .prepare(
+        "INSERT INTO settings(key, value) VALUES('model', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      )
+      .run(key);
+    revalidatePath("/", "layout");
+    return { model: key };
   } catch (error) {
     return failed(error);
   }

@@ -8,6 +8,7 @@ import { ensure } from "@/core/browser";
 import { CAREER } from "@/core/db";
 import { ROOT } from "@/core/root";
 import { CLOSING, DONE, WORKING, declared, type Standing } from "@/core/standing";
+import { model } from "./queries";
 
 export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string };
 
@@ -162,6 +163,7 @@ export async function begin({
 
   if (browses(named)) await ensure();
 
+  const chosen = model();
   const started = new Date().toISOString();
   if (!run) append(id, { kind: "opened", action: named, title: shown(named, words), started, argument: words });
   append(id, { kind: "asked", body: resume ? words : shown(named, words) });
@@ -172,6 +174,8 @@ export async function begin({
       "-p",
       resume ? words : asked(named, words),
       ...(resume ? ["--resume", resume] : []),
+      "--model",
+      chosen,
       "--append-system-prompt",
       CLOSING,
       "--output-format",

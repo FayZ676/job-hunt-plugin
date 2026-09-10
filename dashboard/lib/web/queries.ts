@@ -19,6 +19,19 @@ const singleton = <T extends Table>(table: T) =>
 export const identity = () => singleton("identity");
 export const instructions = () => singleton("instructions");
 
+export type Model = { key: string; label: string };
+
+export const MODELS: Model[] = [
+  { key: "opus", label: "Opus" },
+  { key: "sonnet", label: "Sonnet" },
+  { key: "haiku", label: "Haiku" },
+];
+
+const FALLBACK = "sonnet";
+
+export const model = () =>
+  one(TABLES.settings.pick({ value: true }), "SELECT value FROM settings WHERE key='model'")?.value ?? FALLBACK;
+
 export const answers = () => rows(VIEWS.answers, "SELECT section, field, value FROM answers");
 export const education = () => listing("education");
 

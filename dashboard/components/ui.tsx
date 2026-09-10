@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ComponentPropsWithRef, ReactNode } from "react";
 import Glyph from "./Glyph";
 import { label, reading } from "./status";
 
@@ -106,7 +106,7 @@ export const Ghost = ({
   tone?: "quiet" | "grave";
   icon?: ReactNode;
   tight?: boolean;
-} & ButtonHTMLAttributes<HTMLButtonElement>) => (
+} & ComponentPropsWithRef<"button">) => (
   <button
     type="button"
     {...rest}
