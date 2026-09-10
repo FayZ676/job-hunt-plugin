@@ -3,13 +3,10 @@
 .playwright-mcp/
 
 node_modules/
-.next/
-out/
-next-env.d.ts
 *.tsbuildinfo
 
 # A user's own career data, if they run the skill from this directory.
-/skill/career/
+/career/
 
 .env*
 npm-debug.log*
