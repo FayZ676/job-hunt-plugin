@@ -41,13 +41,13 @@ export const ACTIONS: Action[] = [
     id: "resume",
     does: "Tailor a resume for one or more job openings",
     argument: "[JD, URL, or key]",
-    accepts: ["shortlisted", "staged"],
+    accepts: ["new", "shortlisted", "skipped", "staged"],
   },
   {
     id: "apply",
     does: "Fill out a job application",
     argument: "[key or URL]",
-    accepts: ["shortlisted", "staged"],
+    accepts: ["new", "shortlisted", "skipped", "staged"],
     browses: true,
   },
   {
