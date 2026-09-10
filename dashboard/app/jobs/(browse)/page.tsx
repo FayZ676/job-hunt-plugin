@@ -18,7 +18,7 @@ export default function JobsPage() {
   return (
     <>
       <div className="mb-4 flex justify-end">
-        <Actions ids={["search", "cleanup"]} />
+        <Actions ids={["search", "score", "cleanup"]} />
       </div>
       <JobsTable rows={rows} />
     </>
