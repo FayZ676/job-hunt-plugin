@@ -27,7 +27,6 @@ export default function Nav({ db, limits }: { db: string; limits: Limits | null 
       <div className="mx-auto flex h-[var(--nav)] max-w-[104rem] items-center gap-4 px-4 md:px-6">
         <Ghost
           onClick={toggle}
-          data-deck
           aria-expanded={shown}
           aria-label={waiting ? `Conversations, ${waiting} waiting on you` : "Conversations"}
           icon={<Wordmark size={17} working={working} waiting={waiting} />}
