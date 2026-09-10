@@ -1,16 +1,21 @@
 "use client";
 
 import { Fragment, useState, type ReactNode } from "react";
+import { Trash2 } from "lucide-react";
 import Adder from "@/components/edit/Adder";
 import Chips from "@/components/edit/Chips";
-import DeleteButton from "@/components/edit/DeleteButton";
+import { useRemove } from "@/components/edit/DeleteButton";
 import Field from "@/components/edit/Field";
 import { COLUMNS, type Column } from "@/components/edit/columns";
+import Glyph from "@/components/Glyph";
+import { Options, useRightClick } from "@/components/Options";
 import { Mark, Row } from "@/components/ui";
 import { lengthLabel, monthsBetween, spanLabel, today, when, type When } from "@/components/format";
 import type { Employer, Project } from "@/lib/web/queries";
 
 type Held = { kind: "employer" | "project"; rowid: number };
+
+const matches = (one: Held | undefined, kind: Held["kind"], rowid: number) => one?.kind === kind && one.rowid === rowid;
 
 const fields = (row: unknown) => row as unknown as Record<string, unknown>;
 
@@ -45,12 +50,9 @@ const Body = ({ children }: { children: ReactNode }) => (
   <div className="grid gap-x-12 gap-y-7 xl:grid-cols-[minmax(0,72ch)_minmax(16rem,1fr)]">{children}</div>
 );
 
-const Head = ({ name, meta, remove }: { name: ReactNode; meta: (string | null)[]; remove: ReactNode }) => (
+const Head = ({ name, meta }: { name: ReactNode; meta: (string | null)[] }) => (
   <header className="border-b border-base-300 pb-3">
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0 flex-1">{name}</div>
-      {remove}
-    </div>
+    <div className="min-w-0">{name}</div>
     <p className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 pl-1.5 text-xs text-soft">
       {meta.filter(Boolean).map((part) => (
         <span key={part} className="tnum whitespace-nowrap">
@@ -63,7 +65,7 @@ const Head = ({ name, meta, remove }: { name: ReactNode; meta: (string | null)[]
 
 const NAME = "font-display text-2xl font-medium";
 
-function EmployerDetail({ employer, onGone }: { employer: Employer; onGone: () => void }) {
+function EmployerDetail({ employer }: { employer: Employer }) {
   const values = fields(employer);
   const edit = editing("employers", employer.rowid, values);
   const start = when(employer.start);
@@ -85,15 +87,6 @@ function EmployerDetail({ employer, onGone }: { employer: Employer; onGone: () =
           spanLabel(start, finish, current),
           start ? lengthLabel(monthsBetween(start, current ? today() : (finish ?? start))) : null,
         ]}
-        remove={
-          <DeleteButton
-            table="employers"
-            rowid={employer.rowid}
-            what={`${employer.name} and its ${employer.projects.length} projects`}
-            label="Delete"
-            onGone={onGone}
-          />
-        }
       />
 
       <Body>
@@ -118,7 +111,7 @@ function EmployerDetail({ employer, onGone }: { employer: Employer; onGone: () =
   );
 }
 
-function ProjectDetail({ project, employer, onGone }: { project: Project; employer: Employer; onGone: () => void }) {
+function ProjectDetail({ project, employer }: { project: Project; employer: Employer }) {
   const values = fields(project);
   const edit = editing("projects", project.rowid, values);
 
@@ -133,9 +126,6 @@ function ProjectDetail({ project, employer, onGone }: { project: Project; employ
           placeholder: "Name this project",
         })}
         meta={[employer.name, spanLabel(when(project.start), when(project.finish), false)]}
-        remove={
-          <DeleteButton table="projects" rowid={project.rowid} what={project.name} label="Delete" onGone={onGone} />
-        }
       />
 
       <Body>
@@ -184,11 +174,25 @@ function covering(employers: Employer[], mark: When): When | null {
 const GAP_MONTHS = 4;
 
 function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held; onHold: (next: Held) => void }) {
+  const drop = useRemove();
+  const { held: raised, open: raise, close: lower } = useRightClick<Held>();
+  const doomed = locate(employers, raised?.key ?? null);
+
+  const discard = () => {
+    if (!doomed) return;
+    const { employer, project } = doomed;
+    if (!project)
+      return drop("employers", employer.rowid, `${employer.name} and its ${employer.projects.length} projects`);
+    drop("projects", project.rowid, project.name, () => {
+      if (matches(held, "project", project.rowid)) onHold({ kind: "employer", rowid: employer.rowid });
+    });
+  };
+
   return (
     <nav aria-label="Career">
       {employers.map((employer, place) => {
-        const here = held.kind === "employer" && held.rowid === employer.rowid;
-        const inside = (project: Project) => held.kind === "project" && held.rowid === project.rowid;
+        const here = matches(held, "employer", employer.rowid);
+        const inside = (project: Project) => matches(held, "project", project.rowid);
         const open = here || employer.projects.some(inside);
         const start = opened(employer);
         const covered = start ? covering(employers, start) : null;
@@ -200,10 +204,11 @@ function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held;
             <div className={`border-l-2 py-1 not-first:mt-1 ${open ? "border-base-content" : "border-base-300"}`}>
               <Row
                 roomy
-                on={here}
+                on={here || matches(raised?.key, "employer", employer.rowid)}
                 className={here ? "font-medium" : ""}
                 aria-current={here}
                 onClick={() => onHold({ kind: "employer", rowid: employer.rowid })}
+                onContextMenu={(event) => raise({ kind: "employer", rowid: employer.rowid }, event)}
               >
                 <span className="flex items-baseline gap-1.5">
                   <span className="self-center">
@@ -234,9 +239,10 @@ function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held;
                       <li key={project.rowid}>
                         <Row
                           roomy
-                          on={inside(project)}
+                          on={inside(project) || matches(raised?.key, "project", project.rowid)}
                           aria-current={inside(project)}
                           onClick={() => onHold({ kind: "project", rowid: project.rowid })}
+                          onContextMenu={(event) => raise({ kind: "project", rowid: project.rowid }, event)}
                           className={`flex items-baseline gap-1.5 pl-7 ${inside(project) ? "font-medium" : ""}`}
                         >
                           <span className="self-center">
@@ -275,6 +281,22 @@ function Spine({ employers, held, onHold }: { employers: Employer[]; held: Held;
         label="Add an employer"
         onAdded={(rowid) => onHold({ kind: "employer", rowid })}
       />
+
+      {raised && doomed && (
+        <Options
+          at={raised.at}
+          onClose={lower}
+          options={[
+            {
+              key: "delete",
+              label: doomed.project ? "Delete project" : "Delete employer",
+              tone: "grave",
+              icon: <Glyph icon={Trash2} size={13} />,
+              onPick: discard,
+            },
+          ]}
+        />
+      )}
     </nav>
   );
 }
@@ -323,17 +345,8 @@ export default function CareerEditor({ employers }: { employers: Employer[] }) {
               Start with an employer. Every project, and every résumé built from them, hangs off one.
             </p>
           )}
-          {at?.project && (
-            <ProjectDetail
-              key={at.project.rowid}
-              project={at.project}
-              employer={at.employer}
-              onGone={() => setWanted({ kind: "employer", rowid: at.employer.rowid })}
-            />
-          )}
-          {at && !at.project && (
-            <EmployerDetail key={at.employer.rowid} employer={at.employer} onGone={() => setWanted(null)} />
-          )}
+          {at?.project && <ProjectDetail key={at.project.rowid} project={at.project} employer={at.employer} />}
+          {at && !at.project && <EmployerDetail key={at.employer.rowid} employer={at.employer} />}
         </div>
       </div>
     </div>
