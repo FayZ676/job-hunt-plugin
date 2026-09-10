@@ -1,3 +1,4 @@
+import Actions from "@/components/Actions";
 import Glyph from "@/components/Glyph";
 import Tabs from "@/components/Tabs";
 import { PANELS, slugFor } from "./panels";
@@ -18,6 +19,7 @@ export default function ProfileLayout({ children }: LayoutProps<"/profile">) {
           icon: <Glyph icon={panel.icon} />,
           missing: blocking.filter((answer) => slugFor(answer.section) === slug).length,
         }))}
+        trailing={<Actions ids={["feedback"]} />}
       />
       {children}
     </>

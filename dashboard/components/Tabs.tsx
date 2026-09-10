@@ -6,7 +6,15 @@ import type { ReactNode } from "react";
 
 export type Tab = { href: string; label: string; missing?: number; icon?: ReactNode };
 
-export default function Tabs({ items, label = "Views" }: { items: Tab[]; label?: string }) {
+export default function Tabs({
+  items,
+  label = "Views",
+  trailing,
+}: {
+  items: Tab[];
+  label?: string;
+  trailing?: ReactNode;
+}) {
   const here = usePathname();
   return (
     <nav aria-label={label} className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-base-300">
@@ -17,15 +25,16 @@ export default function Tabs({ items, label = "Views" }: { items: Tab[]; label?:
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
+            data-tip={text}
             className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 text-sm
-              transition-colors ${
+              transition-colors max-sm:tooltip max-sm:tooltip-bottom ${
                 active
                   ? "border-base-content font-medium text-base-content"
                   : "border-transparent text-soft hover:border-base-300 hover:text-base-content"
               }`}
           >
             {icon}
-            {text}
+            <span className="max-sm:sr-only">{text}</span>
             {missing > 0 && (
               <span
                 className="tnum rounded-selector bg-signal px-1.5 py-px text-micro
@@ -38,6 +47,7 @@ export default function Tabs({ items, label = "Views" }: { items: Tab[]; label?:
           </Link>
         );
       })}
+      {trailing && <span className="ml-auto pb-2">{trailing}</span>}
     </nav>
   );
 }
