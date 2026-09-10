@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import Flyout, { WIDTH, type Corner } from "./Flyout";
+import Flyout, { useAnchored } from "./Flyout";
 import { say } from "./Toaster";
 import { answered } from "./edit/answered";
 import { Ghost, Mark, Row } from "@/components/ui";
@@ -46,8 +46,7 @@ const Span = ({ label, used, resets }: { label: string; used: number; resets: st
 
 export default function Usage({ usage, models, model }: { usage: Usage | null; models: Model[]; model: string }) {
   const router = useRouter();
-  const anchor = useRef<HTMLButtonElement>(null);
-  const [from, setFrom] = useState<Corner | null>(null);
+  const { anchor, from, toggle, close } = useAnchored();
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -55,8 +54,6 @@ export default function Usage({ usage, models, model }: { usage: Usage | null; m
     const timer = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(timer);
   }, []);
-
-  const close = useCallback(() => setFrom(null), []);
 
   const pick = async (key: string) => {
     close();
@@ -75,10 +72,7 @@ export default function Usage({ usage, models, model }: { usage: Usage | null; m
     <>
       <Ghost
         ref={anchor}
-        onClick={(event) => {
-          const held = event.currentTarget.getBoundingClientRect();
-          setFrom(from ? null : { top: held.top, bottom: held.bottom, left: held.right - WIDTH });
-        }}
+        onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={Boolean(from)}
         aria-label={legend ? `Usage and model — ${legend}` : "Usage and model"}

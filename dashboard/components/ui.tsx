@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, CSSProperties, ComponentPropsWithRef, ReactNode } from "react";
+import type { CSSProperties, ComponentPropsWithRef, ReactNode } from "react";
 import Glyph from "./Glyph";
 import { label, reading } from "./status";
 
@@ -77,7 +77,7 @@ export const Button = ({
   children,
   className = "",
   ...rest
-}: { tone?: "quiet" | "firm" | "grave"; icon?: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) => (
+}: { tone?: "quiet" | "firm" | "grave"; icon?: ReactNode } & ComponentPropsWithRef<"button">) => (
   <button
     type="button"
     {...rest}
@@ -136,7 +136,7 @@ export const Row = ({
   tone?: "quiet" | "grave";
   roomy?: boolean;
   on?: boolean;
-} & ButtonHTMLAttributes<HTMLButtonElement>) => (
+} & ComponentPropsWithRef<"button">) => (
   <button
     type="button"
     {...rest}

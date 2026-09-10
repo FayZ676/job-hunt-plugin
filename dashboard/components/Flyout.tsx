@@ -1,12 +1,36 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent as Clicked,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 
 const GAP = 4;
 export const WIDTH = 200;
 
 export type Corner = { top: number; bottom: number; left: number };
+
+export function useAnchored() {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [from, setFrom] = useState<Corner | null>(null);
+
+  const close = useCallback(() => setFrom(null), []);
+
+  const toggle = useCallback((event: Clicked<HTMLButtonElement>) => {
+    event.stopPropagation();
+    const held = event.currentTarget.getBoundingClientRect();
+    setFrom((open) => (open ? null : { top: held.top, bottom: held.bottom, left: held.right - WIDTH }));
+  }, []);
+
+  return { anchor, from, toggle, close };
+}
 
 export default function Flyout({
   from,

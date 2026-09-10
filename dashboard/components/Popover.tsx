@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
-import Flyout, { WIDTH, type Corner } from "./Flyout";
+import Flyout, { useAnchored } from "./Flyout";
 
 export default function Popover({
   legend,
@@ -19,10 +19,7 @@ export default function Popover({
   className?: string;
   children: (close: () => void) => ReactNode;
 }) {
-  const anchor = useRef<HTMLButtonElement>(null);
-  const [from, setFrom] = useState<Corner | null>(null);
-
-  const close = useCallback(() => setFrom(null), []);
+  const { anchor, from, toggle, close } = useAnchored();
 
   return (
     <>
@@ -32,11 +29,7 @@ export default function Popover({
         aria-label={legend}
         aria-haspopup="menu"
         aria-expanded={Boolean(from)}
-        onClick={(event) => {
-          event.stopPropagation();
-          const held = event.currentTarget.getBoundingClientRect();
-          setFrom(from ? null : { top: held.top, bottom: held.bottom, left: held.right - WIDTH });
-        }}
+        onClick={toggle}
         className={`flex items-center rounded-field p-1 transition-[opacity,color] ${className}
           ${lit || from ? "text-base-content opacity-100" : `opacity-0 focus-visible:opacity-100 ${trigger}`}`}
       >
