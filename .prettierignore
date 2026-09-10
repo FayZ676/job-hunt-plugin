@@ -4,4 +4,4 @@ tsconfig.tsbuildinfo
 
 # Prompt files, hand-wrapped for reading. Prettier only churns them.
 *.md
-references/
+skill/references/

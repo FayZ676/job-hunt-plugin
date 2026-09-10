@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { CAREER } from "@/core/db";
+import { CAREER } from "job/db";
 
 export type Span = { used: number; resets: number };
 export type Usage = { five: Span; week: Span | null; at: number };

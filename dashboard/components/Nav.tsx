@@ -10,8 +10,8 @@ import Usage from "./Usage";
 import Wordmark from "./Wordmark";
 import { say } from "./Toaster";
 import { Ghost } from "@/components/ui";
-import type { Model } from "@/lib/web/queries";
-import type { Usage as Limits } from "@/lib/web/usage";
+import type { Model } from "@/lib/queries";
+import type { Usage as Limits } from "@/lib/usage";
 
 type Item = { href: string; label: string; icon: LucideIcon };
 

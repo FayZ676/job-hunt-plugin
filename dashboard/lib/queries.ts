@@ -1,9 +1,14 @@
 import { z } from "zod";
 
-import { one, rows } from "@/core/db.ts";
-import { TABLES, VIEWS, ask, grouped, options, withRowid, type Rowed, type Table } from "@/core/schema.ts";
+import { one, rows } from "job/db";
+import { TABLES, VIEWS, options, type Table } from "job/schema";
 
-export { ask, grouped, options };
+export { options };
+
+export type Rowed<T extends Table> = z.infer<(typeof TABLES)[T]> & { rowid: number };
+
+const withRowid = <T extends Table>(table: T) =>
+  TABLES[table].extend({ rowid: z.number() }) as unknown as z.ZodType<Rowed<T>>;
 
 const listing = <T extends Table>(table: T, order = "") =>
   rows(withRowid(table), `SELECT rowid AS rowid, * FROM ${table} ${order}`);

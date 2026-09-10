@@ -9,9 +9,9 @@ import Glyph from "@/components/Glyph";
 import { Options, useRightClick } from "@/components/Options";
 import { Output, useRun, type Asking } from "@/components/run";
 import { Empty, Ghost, Row } from "@/components/ui";
-import { asked, commanded, type Action } from "@/core/actions";
-import { DONE, WAITING, WORKING } from "@/core/standing";
-import type { Run } from "@/lib/web/runs";
+import { asked, commanded, type Action } from "@/lib/actions";
+import { DONE, WAITING, WORKING } from "@/lib/standing";
+import type { Run } from "@/lib/runs";
 
 const WATCH = 4000;
 const KEPT = "deck";
@@ -56,13 +56,11 @@ function Standing({ standing }: { standing: string }) {
 export default function Deck({
   actions,
   runs,
-  seeds,
   nav,
   children,
 }: {
   actions: Action[];
   runs: Run[];
-  seeds: Record<string, string>;
   nav: ReactNode;
   children: ReactNode;
 }) {
@@ -144,7 +142,6 @@ export default function Deck({
   const asking: Asking | null = talks
     ? {
         asks: talks.asks!,
-        seeds,
         said,
         onSaid: setSaid,
         input,

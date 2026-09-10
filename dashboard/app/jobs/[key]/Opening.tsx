@@ -5,8 +5,8 @@ import CopyKey from "./CopyKey";
 import Glyph from "@/components/Glyph";
 import { Badge, Out, Sheet, Stamp, fitTone } from "@/components/ui";
 import { shortDate } from "@/components/format";
-import { offered } from "@/core/actions";
-import type { Prospect } from "@/lib/web/queries";
+import { offered } from "@/lib/actions";
+import type { Prospect } from "@/lib/queries";
 
 const Read = ({ posting }: { posting: Prospect["posting"] }) => (
   <div className="min-w-0">

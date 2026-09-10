@@ -7,9 +7,9 @@ import Flyout, { useAnchored } from "./Flyout";
 import { say } from "./Toaster";
 import { answered } from "./edit/answered";
 import { Ghost, Mark, Row } from "@/components/ui";
-import { chooseModel } from "@/lib/web/edit";
-import type { Model } from "@/lib/web/queries";
-import type { Usage } from "@/lib/web/usage";
+import { chooseModel } from "@/lib/edit";
+import type { Model } from "@/lib/queries";
+import type { Usage } from "@/lib/usage";
 
 const RADIUS = 6;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;

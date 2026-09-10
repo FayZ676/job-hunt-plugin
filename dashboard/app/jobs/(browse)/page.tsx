@@ -1,6 +1,6 @@
 import Actions from "@/components/Actions";
 import { rankOf } from "@/components/status";
-import { jobs } from "@/lib/web/queries";
+import { jobs } from "@/lib/queries";
 import JobsTable from "./JobsTable";
 
 export const dynamic = "force-dynamic";

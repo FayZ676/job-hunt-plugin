@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { remove, save } from "@/lib/web/edit";
+import { remove, save } from "@/lib/edit";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";
 import { Ghost } from "@/components/ui";

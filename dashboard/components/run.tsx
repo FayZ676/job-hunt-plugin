@@ -8,9 +8,9 @@ import { Command } from "@/components/act";
 import Glyph from "@/components/Glyph";
 import Markdown from "@/components/Markdown";
 import { Button, Empty, Prose, Row, Stamp } from "@/components/ui";
-import { asked, suggested, type Action } from "@/core/actions";
-import { WAITING } from "@/core/standing";
-import type { Line } from "@/lib/web/runs";
+import { asked, suggested, type Action } from "@/lib/actions";
+import { WAITING } from "@/lib/standing";
+import type { Line } from "@/lib/runs";
 
 const parse = (line: string): Line | null => {
   try {
@@ -164,7 +164,6 @@ function Turn({ line, lead }: { line: Line; lead: boolean }) {
 
 export type Asking = {
   asks: string;
-  seeds?: Record<string, string>;
   said: string;
   onSaid: (said: string) => void;
   onSay: (said: string) => void;
@@ -218,7 +217,6 @@ function Menu({
 
 function Composer({
   asks,
-  seeds,
   onSay,
   input,
   said,
@@ -245,7 +243,7 @@ function Composer({
 
   const complete = (action: Action) => {
     setShut(true);
-    onSaid(`${asked(action.id, seeds?.[action.id] ?? action.seed ?? "")} `);
+    onSaid(`${asked(action.id, "")} `);
     input?.current?.focus({ preventScroll: true });
   };
 

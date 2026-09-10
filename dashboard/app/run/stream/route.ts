@@ -1,4 +1,4 @@
-import { begin, erase, halt, watch } from "@/lib/web/runs";
+import { begin, erase, halt, watch } from "@/lib/runs";
 
 export const dynamic = "force-dynamic";
 

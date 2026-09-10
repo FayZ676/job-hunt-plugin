@@ -2,8 +2,8 @@ import Actions from "@/components/Actions";
 import Opening from "./Opening";
 import { assetAt, held } from "./held";
 import { Card, Out, Prose, Stack, Stamp } from "@/components/ui";
-import { offered } from "@/core/actions";
-import type { Posting } from "@/lib/web/queries";
+import { offered } from "@/lib/actions";
+import type { Posting } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 

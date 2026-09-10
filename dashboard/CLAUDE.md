@@ -1,6 +1,7 @@
 ## Referring to a job action in UI
 
-`core/actions.ts` is the only place an action's command text and description are written.
+`lib/actions.ts` is the only place an action's command text is built, and the skill's `job/actions`
+the only place its description is written.
 Render a reference with `Command` (label) or `Actions` (clickable badges) from `components`;
 never restyle `/job …` text or retype what an action does.
 

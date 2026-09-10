@@ -1,0 +1,46 @@
+{
+  "name": "job",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A Claude Code skill that scans job boards, scores openings, tailors resumes, and applies.",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "bin": {
+    "job-paths": "cli/paths.ts",
+    "job-q": "cli/q.ts",
+    "job-browser": "cli/browser.ts",
+    "job-profile": "cli/profile.ts",
+    "job-search": "cli/search.ts",
+    "job-score": "cli/score.ts",
+    "job-resume": "cli/resume.ts",
+    "job-stage": "cli/stage.ts",
+    "job-submit": "cli/submit.ts",
+    "job-cleanup": "cli/cleanup.ts",
+    "job-help": "cli/help.ts"
+  },
+  "exports": {
+    "./actions": "./lib/core/actions.ts",
+    "./browser": "./lib/core/browser.ts",
+    "./cleanup": "./lib/cleanup.ts",
+    "./db": "./lib/core/db.ts",
+    "./root": "./lib/core/root.ts",
+    "./schema": "./lib/core/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "commander": "^14.0.3",
+    "entities": "^8.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^20",
+    "typescript": "^5"
+  }
+}

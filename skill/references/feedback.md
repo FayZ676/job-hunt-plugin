@@ -1,8 +1,6 @@
 # Feedback
 
-The argument is what the user said was wrong, in their words. Sent from the sidebar about anything,
-or from a job's page — which prefixes the posting it was sent from, so the rest of the argument is
-only their complaint.
+The argument is what the user said was wrong, in their words.
 
 **The complaint is a symptom; the deliverable is the change that stops it recurring.** Nothing is
 stored to act on later: the argument is the whole input, and a run that ends without an edit has
@@ -32,8 +30,7 @@ In this order. The first that fits is right, because each is cheaper than the ne
 | Any other action produced the wrong thing by following this skill | That action's reference file |
 
 **`instructions.text` is their prose, in their voice.** Add the sentence the complaint earns and
-leave the rest alone — no rewriting around it, no number they did not give. Read before writing;
-they may have edited it on the Profile page since.
+leave the rest alone — no rewriting around it, no number they did not give. Read before writing.
 
 **Editing this skill's own files is a real outcome, not a fallback.** Resume wording belongs in
 `references/resume.md` — a row in **The one-pass test** when it is a line to reject, or a line under

@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { answered } from "@/components/edit/answered";
-import { asked } from "@/core/actions";
+import { asked } from "@/lib/actions";
 import { say } from "@/components/Toaster";
-import { discard } from "@/lib/web/edit";
+import { discard } from "@/lib/edit";
 
 export const copyKey = (key: string) =>
   navigator.clipboard.writeText(key).then(

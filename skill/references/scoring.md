@@ -19,7 +19,7 @@ go and the history says where they stand; neither number is yours to invent.
 
 **The prose carries no numbers.** It says in its own words what counts for how much, what is a hard
 stop, and what the search should ask for. Nothing is added up; the score is a judgement those inform.
-It is theirs, edited on the Profile page, so when a score and the prose disagree **the prose is right
+It is theirs, so when a score and the prose disagree **the prose is right
 and the score is wrong** — do not quietly compensate for prose you would have written differently.
 
 ## The order of a run
@@ -46,7 +46,7 @@ against, and what is a hard stop. Read the ranking there rather than inventing a
 ## The reason
 
 **Two short sentences, and stop.** The one thing that drove the score, in the JD's words, and the
-one thing working against it. It is read on the job's page by someone deciding in a glance whether
+one thing working against it. It is read by someone deciding at a glance whether
 to trust the shortlist, so a paragraph is a worse reason than a line, not a more thorough one.
 
 Summarising the posting is not scoring it — they can read the JD. Cut every clause that does not

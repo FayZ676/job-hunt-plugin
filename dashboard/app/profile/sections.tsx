@@ -1,14 +1,15 @@
 import Field from "@/components/edit/Field";
 import { YES_NO, title, type Column } from "@/components/edit/columns";
 import { Card, Disclosure, Sheet, Split, Stack, type Band, type Note } from "@/components/ui";
-import { ask, grouped, identity, instructions, options } from "@/lib/web/queries";
+import { identity, instructions, options } from "@/lib/queries";
+import { grouped, hint } from "./identity";
 
 const held = () => identity() as unknown as Record<string, unknown>;
 
 const asked = (name: string): Column => {
-  const { flag, ...hint } = ask("identity", name);
+  const { flag, ...hinted } = hint(name);
   const listed = options("identity", name);
-  return { name, ...hint, options: flag ? YES_NO : listed.length ? listed : undefined };
+  return { name, ...hinted, options: flag ? YES_NO : listed.length ? listed : undefined };
 };
 
 const noted =
@@ -41,7 +42,7 @@ export function Identity() {
     label: group.label,
     notes: group.names.map(asked).map(note),
   });
-  const [reach, ...rest] = grouped("identity");
+  const [reach, ...rest] = grouped();
   const folded = rest.filter((group) => group.fold);
 
   return (

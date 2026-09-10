@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { z } from "zod";
 
-import { purge } from "../../../lib/cleanup.ts";
-import { db } from "@/core/db.ts";
-import { TABLES, numeric, type Table } from "@/core/schema.ts";
+import { purge } from "job/cleanup";
+import { db } from "job/db";
+import { TABLES, bare, type Table } from "job/schema";
 import { MODELS } from "./queries.ts";
 
 const WRITABLE = new Set<Table>([
@@ -32,6 +32,9 @@ function writable(table: string): Table {
   if (!WRITABLE.has(table as Table)) throw new Error(`${table} is not editable from the dashboard`);
   return table as Table;
 }
+
+const numeric = (table: Table, name: string) =>
+  bare(TABLES[table].shape[name as never] as z.ZodType) instanceof z.ZodNumber;
 
 const marshalled = (table: string, values: Record<string, string>) =>
   Object.fromEntries(

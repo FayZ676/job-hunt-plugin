@@ -9,7 +9,7 @@ next-env.d.ts
 *.tsbuildinfo
 
 # A user's own career data, if they run the skill from this directory.
-/career/
+/skill/career/
 
 .env*
 npm-debug.log*

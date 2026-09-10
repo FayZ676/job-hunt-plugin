@@ -9,8 +9,7 @@ npm link --prefix "$HOME/.claude/skills/job"      # the job-* commands, on PATH
 
 That puts every action on `PATH` as `job-search`, `job-score`, `job-resume`, `job-stage`,
 `job-submit`, `job-cleanup`, `job-q`, `job-profile`, `job-paths` and `job-help` — the names used throughout this
-skill. The same install serves `/job ui`. Node 22.18 or newer runs the TypeScript directly, so there is nothing
-to build.
+skill. Node 22.18 or newer runs the TypeScript directly, so there is nothing to build.
 
 ## Modules
 
@@ -18,29 +17,25 @@ to build.
 
 **One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
 the SQL, and what a column takes), `actions.ts` (the roster), `db.ts` (paths and connect), `text.ts`,
-`table.ts`, `posting.ts`, `sources.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per action that has logic of its own:
-**`lib/x.ts` decides and returns a value, `cli/x.ts` parses argv and prints it**, so a page and a
-command can call the one function. `lib/web/` is the dashboard's own half. `sql/logic.sql` sits under
-none of them, applied on every connect from a page or an action, so neither side owns it.
+`table.ts`, `posting.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per action that has logic of its own:
+**`lib/x.ts` decides and returns a value, `cli/x.ts` parses argv and prints it**. `sql/logic.sql` is
+applied on every connect.
 
-**The pages under `app/` are the only thing that writes the profile.** A page reads the rows it
-renders through `lib/web/queries.ts`, and a server action in `lib/web/edit.ts` writes the one
-column it was given. Everything under `components/edit/` writes and everything beside it only
-displays, so what can reach the database is the part of the tree you can point at.
+**`exports` in `package.json` is the library's public surface.** Renaming or reshaping anything a
+listed module exports breaks whatever imports this package, so say so before doing it.
 
 ## Adding or changing an action
 
 **`lib/core/actions.ts` is the only place an action is declared.** Its `does` and `argument` render
-`job-help`, its order is the order the console lists, and its `accepts` is the statuses a posting
-must be in for that action to be offered or allowed — so `requires()` in `lib/stage.ts` and
-`lib/submit.ts` and the buttons on a posting page cannot drift apart. A status outside the enum in
+`job-help`, and its `accepts` is the statuses a posting must be in for that action to be allowed,
+which `requires()` enforces in `lib/stage.ts` and `lib/submit.ts`. A status outside the enum in
 `schema.ts` will not typecheck.
 
 ## The search half
 
 **`lib/core/indeed.ts` is the only place that knows Indeed's payload shape.** It turns saved cards
-into `Posting` rows through `posting()`; the ruling, the scoring and the dashboard read those columns
-and none of them know where a row came from. A shape change is one file.
+into `Posting` rows through `posting()`; the ruling and the scoring read those columns and neither
+knows where a row came from. A shape change is one file.
 
 **`lib/core/cdp.ts` drives the browser, and `lib/crawl.ts` is the run**: navigate a query, read the
 cards, rule, then navigate each survivor's page for its description. It is code rather than model
@@ -62,9 +57,8 @@ concatenated onto the rendered DDL. `job-q --schema` prints both.
 
 A column is a Zod field plus `.meta()`: `sql` is the DDL after the type (`CHECK`, `DEFAULT`,
 `REFERENCES`), and `takes` is the English a wrong answer is refused with. An enum field generates
-its own `CHECK (x IN (…))`, and `ui` carries what only a form needs — input type, placeholder, an
-HTML pattern — so a column is declared once and reaches the DDL, the dashboard's controls and the
-CLI's errors from there.
+its own `CHECK (x IN (…))`, so a column is declared once and reaches the DDL and the CLI's errors
+from there.
 
 **Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
 exists, so a new column leaves every database that has already been opened exactly as it was, and

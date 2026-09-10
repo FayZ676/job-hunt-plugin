@@ -7,11 +7,11 @@ import { useDeck } from "@/components/Deck";
 import DataTable, { features, type Look } from "@/components/DataTable";
 import { payAmount, places, shortDate, shortPay } from "@/components/format";
 import { ORDER, label, rankOf, reading } from "@/components/status";
-import { offered } from "@/core/actions";
+import { offered } from "@/lib/actions";
 import Glyph from "@/components/Glyph";
 import type { Option } from "@/components/Options";
 import { Badge, Score, Stamp } from "@/components/ui";
-import type { Job } from "@/lib/web/queries";
+import type { Job } from "@/lib/queries";
 
 const helper = createColumnHelper<typeof features, Job>();
 const dash = <span className="text-soft">—</span>;

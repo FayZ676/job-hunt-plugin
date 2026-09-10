@@ -1,14 +1,7 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { ACTIONS } from "../lib/core/actions.ts";
 
-const ELSEWHERE = [
-  {
-    id: "ui",
-    argument: "",
-    does: "serve the dashboard on 127.0.0.1:8765; run the actions and edit your profile there",
-  },
-  { id: "help", argument: "", does: "this message" },
-];
+const ELSEWHERE = [{ id: "help", argument: "", does: "this message" }];
 
 const NOTES = [
   "run `/job setup` first — every other command is a no-op until $CAREER exists",

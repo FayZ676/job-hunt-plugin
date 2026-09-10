@@ -3,7 +3,7 @@
 import { Command } from "@/components/act";
 import { useDeck } from "@/components/Deck";
 import { Button } from "@/components/ui";
-import { describes } from "@/core/actions";
+import { describes } from "@/lib/actions";
 
 export default function Actions({
   ids,

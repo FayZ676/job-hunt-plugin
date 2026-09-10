@@ -3,11 +3,12 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { browses, runnable, seeded, shown, asked } from "@/core/actions";
-import { ensure } from "@/core/browser";
-import { CAREER } from "@/core/db";
-import { ROOT } from "@/core/root";
-import { CLOSING, DONE, WORKING, declared, type Standing } from "@/core/standing";
+import { asked, browses, runnable, shown } from "@/lib/actions";
+import { BRIEFING } from "@/lib/briefing";
+import { ensure } from "job/browser";
+import { CAREER } from "job/db";
+import { ROOT } from "job/root";
+import { CLOSING, DONE, WORKING, declared, type Standing } from "@/lib/standing";
 import { model } from "./queries";
 
 export type Line = { kind: "asked" | "said" | "aside" | "wrong" | "end"; body: string };
@@ -129,15 +130,6 @@ export function listing(): Run[] {
   return runs.sort((one, two) => two.started.localeCompare(one.started));
 }
 
-export function remembered(runs: Run[]): Record<string, string> {
-  const held: Record<string, string> = {};
-  for (const run of runs.slice().reverse()) {
-    if (!seeded(run.action)) continue;
-    if (run.argument) held[run.action] = run.argument;
-  }
-  return held;
-}
-
 export async function begin({
   action = "",
   argument = "",
@@ -177,7 +169,7 @@ export async function begin({
       "--model",
       chosen,
       "--append-system-prompt",
-      CLOSING,
+      `${CLOSING}\n\n${BRIEFING}`,
       "--output-format",
       "stream-json",
       "--verbose",

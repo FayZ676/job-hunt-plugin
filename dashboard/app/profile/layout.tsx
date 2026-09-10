@@ -2,7 +2,7 @@ import Actions from "@/components/Actions";
 import Glyph from "@/components/Glyph";
 import Tabs from "@/components/Tabs";
 import { PANELS, slugFor } from "./panels";
-import { answers } from "@/lib/web/queries";
+import { answers } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 

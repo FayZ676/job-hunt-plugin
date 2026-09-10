@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { save } from "@/lib/web/edit";
+import { save } from "@/lib/edit";
 import { Button, Row } from "@/components/ui";
 import { say } from "@/components/Toaster";
 import { answered } from "./answered";

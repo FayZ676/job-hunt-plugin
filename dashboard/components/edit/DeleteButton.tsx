@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { remove } from "@/lib/web/edit";
+import { remove } from "@/lib/edit";
 import { Ghost, confirmDelete } from "@/components/ui";
 import Glyph from "@/components/Glyph";
 import { say } from "@/components/Toaster";

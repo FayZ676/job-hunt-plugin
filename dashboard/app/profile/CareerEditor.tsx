@@ -11,7 +11,7 @@ import Glyph from "@/components/Glyph";
 import { Options, useRightClick } from "@/components/Options";
 import { Mark, Row } from "@/components/ui";
 import { lengthLabel, monthsBetween, spanLabel, today, when, type When } from "@/components/format";
-import type { Employer, Project } from "@/lib/web/queries";
+import type { Employer, Project } from "@/lib/queries";
 
 type Held = { kind: "employer" | "project"; rowid: number };
 

@@ -15,19 +15,16 @@ no seed. What the search looks for comes out of the interview below, in their wo
 starter list they would have to discover and correct.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
-NULL until answered — not something an interview or the dashboard adds to. They talk; you answer
-with `job-profile set`, one answer per call. If a form genuinely asks something no column covers,
-add the field to
-`lib/core/schema.ts` and `ALTER TABLE` it into the live database; it then appears on the Profile
-page, inside whichever group it was declared in, on the next connect.
+NULL until answered — not something an interview adds to. They talk; you answer with
+`job-profile set`, one answer per call. If a form genuinely asks something no column covers, add the
+field to `lib/core/schema.ts` and `ALTER TABLE` it into the live database.
 
 **Translate the answer into the column's shape**, rather than filing the sentence they said: "two
 weeks after an offer" is `identity.notice_period 2_weeks`. There is no start-date column — notice
 and whether any employer has no `finish` date are what a start date gets computed from.
 
 Never hand them a file to edit, and never make the first pass a form — the interview is a
-conversation. Afterwards they revise themselves in the dashboard, whose Profile page writes every
-one of these tables, so tell them where it is once the profile stands up. Cover:
+conversation. Cover:
 
 - **Identity** (`identity.*`) — contact details, work authorization, when they could start, and
   the EEO questions forms ask last, and the compensation floor. The

@@ -1,57 +1,16 @@
 {
-  "name": "job",
-  "version": "0.1.0",
+  "name": "job-hunt",
   "private": true,
-  "type": "module",
-  "description": "A Claude Code skill that scans job boards, scores openings, tailors resumes, and applies.",
-  "license": "SEE LICENSE IN LICENSE",
-  "engines": {
-    "node": ">=22.18"
-  },
-  "bin": {
-    "job-paths": "cli/paths.ts",
-    "job-q": "cli/q.ts",
-    "job-browser": "cli/browser.ts",
-    "job-profile": "cli/profile.ts",
-    "job-search": "cli/search.ts",
-    "job-score": "cli/score.ts",
-    "job-resume": "cli/resume.ts",
-    "job-stage": "cli/stage.ts",
-    "job-submit": "cli/submit.ts",
-    "job-cleanup": "cli/cleanup.ts",
-    "job-help": "cli/help.ts"
-  },
+  "workspaces": [
+    "skill",
+    "dashboard"
+  ],
   "scripts": {
-    "dev": "next dev dashboard -p 8765",
-    "build": "next build dashboard",
-    "start": "next start dashboard -p 8765",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p dashboard",
+    "typecheck": "npm run typecheck --workspaces",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "dependencies": {
-    "@tanstack/react-table": "^9.2.4",
-    "better-sqlite3": "^13.0.3",
-    "commander": "^14.0.3",
-    "entities": "^8.0.0",
-    "lucide-react": "^1.37.0",
-    "next": "16.3.3",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-markdown": "^10.1.0",
-    "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1",
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^9.6.0",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "daisyui": "^5.7.22",
-    "prettier": "^3.9.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "prettier": "^3.9.6"
   }
 }

@@ -4,11 +4,11 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font
 import Deck from "@/components/Deck";
 import Nav from "@/components/Nav";
 import Toaster from "@/components/Toaster";
-import { ACTIONS } from "@/core/actions";
-import { DB } from "@/core/db";
-import { MODELS, model } from "@/lib/web/queries";
-import { listing, remembered } from "@/lib/web/runs";
-import { usage } from "@/lib/web/usage";
+import { ACTIONS } from "@/lib/actions";
+import { DB } from "job/db";
+import { MODELS, model } from "@/lib/queries";
+import { listing } from "@/lib/runs";
+import { usage } from "@/lib/usage";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -57,12 +57,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <Deck
-          actions={ACTIONS}
-          runs={runs}
-          seeds={remembered(runs)}
-          nav={<Nav db={DB} limits={usage()} models={MODELS} model={model()} />}
-        >
+        <Deck actions={ACTIONS} runs={runs} nav={<Nav db={DB} limits={usage()} models={MODELS} model={model()} />}>
           <main id="content" className="mx-auto min-w-0 max-w-[104rem] px-4 py-7 pb-24 md:px-6">
             {children}
           </main>
