@@ -8,5 +8,8 @@ node_modules/
 # A user's own career data, if they run the skill from this directory.
 /career/
 
+# The dashboard, its own repository, checked out here.
+/dashboard/
+
 .env*
 npm-debug.log*
