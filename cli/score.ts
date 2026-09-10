@@ -31,10 +31,15 @@ program
 
 program
   .command("instructions")
-  .description("everything scoring reads: standing profile facts, then the instructions")
+  .description("everything scoring reads: the work history, the standing profile facts, then the instructions")
   .action(
     runs(() => {
-      const { standing, text } = instructions();
+      const { background, standing, text } = instructions();
+      if (background.length) {
+        console.log("What they have actually done:");
+        for (const line of background) console.log(line);
+        console.log("");
+      }
       if (standing.length) {
         console.log("From the profile, and not up for debate:");
         for (const line of standing) console.log(`- ${line}`);

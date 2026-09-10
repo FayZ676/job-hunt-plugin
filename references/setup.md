@@ -43,12 +43,15 @@ one of these tables, so tell them where it is once the profile stands up. Cover:
   bullseye" is the answer, not a number. **Name the hard stops as hard stops** in the prose, or they
   read as a strong dislike. **Name the titles and the employers they never want**, plainly enough
   to type into a search box — a title they never take, a staffing firm, a former employer — because
-  the search excludes them off this prose. **A fact `identity` already holds does not belong
-  here** — where they live, remote preference, relocation, employment type, the floor.
-  `job-score instructions` prints those above the prose, so restating them only gives the two a
-  chance to disagree.
+  the search excludes them off this prose. **A fact `identity` or their work history already holds does not
+  belong here** — where they live, remote preference, relocation, employment type, the floor, what
+  they have built. `job-score instructions` prints those above the prose, so restating them only
+  gives the two a chance to disagree.
 - **Their experience.** The longest part and the one that matters most: `employers` → `projects` is
-  **the only source a resume may draw from**, so a thin profile produces thin resumes. Offer to read
+  **the only source a resume may draw from and the background every score is judged against**, so a
+  thin profile produces thin resumes and scores that cannot tell a fitting posting from a stretch.
+  The technologies on a project are matched against the JD, so name them even where the prose about
+  the project already implies them. Offer to read
   a resume, CV, or LinkedIn export and draft it for them to correct.
 
 A `NULL` is not a failure — it is a hard stop later. Tell them which ones will block an application.

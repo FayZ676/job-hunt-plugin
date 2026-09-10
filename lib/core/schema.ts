@@ -368,6 +368,16 @@ export const VIEWS = {
     years: int.nullable(),
     relevant_years: int.nullable(),
   }),
+  career: z.object({
+    employer: text,
+    role: text.nullable(),
+    employer_start: text.nullable(),
+    employer_end: text.nullable(),
+    project_id: int,
+    project: text,
+    about: text.nullable(),
+    technologies: text.nullable(),
+  }),
 };
 
 export const DERIVED: Partial<Record<keyof typeof VIEWS, { where: string; order?: string }>> = {

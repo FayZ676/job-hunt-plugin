@@ -74,10 +74,14 @@ CREATE VIEW IF NOT EXISTS experience AS
                - julianday(opened)) / 365.25 AS INTEGER) AS relevant_years
     FROM span;
 
--- The whole career file, flattened for resume selection.
+-- The whole career file, flattened for resume selection and for scoring.
+DROP VIEW IF EXISTS career;
 CREATE VIEW IF NOT EXISTS career AS
   SELECT e.name AS employer, e.title AS role, e.start AS employer_start,
          e.finish AS employer_end, p.id AS project_id, p.name AS project,
-         p.about
+         p.about,
+         (SELECT group_concat(technology, ', ') FROM
+            (SELECT technology FROM project_technologies
+              WHERE project_id = p.id ORDER BY technology)) AS technologies
   FROM employers e JOIN projects p ON p.employer_id = e.id
   ORDER BY e.seq, p.seq;

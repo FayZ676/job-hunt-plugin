@@ -5,9 +5,17 @@ earned it out. Nothing here fetches, and nothing here sets a status — the thre
 
 ## What scoring reads
 
-Two inputs, and `job-score instructions` prints both: the standing facts assembled off `identity` —
-where they live, what they will not go below, whether they need sponsorship — and `instructions.text`,
-their own prose.
+Three inputs, and `job-score instructions` prints all three: their work history off `employers` →
+`projects` — every role, its tenure, and each project with what it was built with — the standing
+facts assembled off `identity` — where they live, what they will not go below, whether they need
+sponsorship — and `instructions.text`, their own prose.
+
+**The history is what fit is measured against; the prose is only what they want.** A posting can
+satisfy every preference and still be a role they would not be called for, or one they are years
+past. Read what the JD asks for — the stack, the domain, the seniority — against the projects rather
+than against the title they hold today: a project shipped in the JD's stack outweighs a job title
+that merely sounds like the posting. Where the JD names years, the prose says how far a stretch may
+go and the history says where they stand; neither number is yours to invent.
 
 **The prose carries no numbers.** It says in its own words what counts for how much, what is a hard
 stop, and what the search should ask for. Nothing is added up; the score is a judgement those inform.
@@ -50,8 +58,9 @@ stated assumption and say so in the reason.
 
 ## Re-scoring
 
-**Nothing re-scores itself.** Editing `instructions.text` leaves every existing score exactly where
-it was, and the shortlist stays built on criteria that no longer apply. After a change of criteria,
+**Nothing re-scores itself.** Editing `instructions.text`, or adding the employer or project that
+changes what they can be considered for, leaves every existing score exactly where it was, and the
+shortlist stays built on a background and criteria that no longer apply. After either change,
 clear the scores you want judged again — and clear the status with them, because the trigger only
 fires when a score is written, so a row left `shortlisted` with a NULL score stays shortlisted:
 
@@ -67,6 +76,7 @@ Rows already past triage — staged, applied, interviewing — are history, not 
 | Symptom | Cause | Fix |
 | ------- | ----- | --- |
 | Everything lands 7 or 8 | Scoring how good the posting is, not how well it fits them | The profile is the yardstick, not the market |
+| A posting they could not be called for scored well | Scored the preferences and skipped the history | What the JD asks for is judged against the projects |
 | The shortlist is too big or too small | The threshold, not the scores | The `shortlist_threshold` row in `settings` |
 | A hard stop scored well on content | Hard stops were applied last | They are a gate, not a term in a sum |
 | Yesterday's shortlist disagrees with today's prose | Old scores survived the edit | Clear score, reason **and** status, then re-score |
