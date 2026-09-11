@@ -212,6 +212,13 @@ export function harvest(payload: unknown, excludes: Excludes = { notTitles: [], 
   return { read: read.length, stored: kept.length, fresh, dropped: read.length - kept.length, ...rule() };
 }
 
+export const undescribed = () =>
+  query(
+    TABLES.postings.pick({ key: true, company: true, title: true, url: true }),
+    "SELECT key, company, title, url FROM postings " +
+      "WHERE disposition='kept' AND (description IS NULL OR trim(description)='')",
+  );
+
 export function describe(payload: unknown) {
   const held = described(payload);
   const attach = db().prepare("UPDATE postings SET description=? WHERE key=?");
@@ -219,10 +226,5 @@ export function describe(payload: unknown) {
   db().transaction(() => {
     for (const one of held) attached += attach.run(one.description, one.key).changes;
   })();
-  const missing = query(
-    TABLES.postings.pick({ key: true, company: true, title: true, url: true }),
-    "SELECT key, company, title, url FROM postings " +
-      "WHERE disposition='kept' AND (description IS NULL OR trim(description)='')",
-  );
-  return { read: held.length, attached, missing };
+  return { read: held.length, attached, missing: undescribed() };
 }

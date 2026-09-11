@@ -19,6 +19,8 @@ export type Built = { out: string; density: Density; recorded: string | null };
 
 const stem = (held: string) => held.slice(0, held.length - path.extname(held).length);
 
+export const companions = (pdf: string) => [pdf, `${stem(pdf)}.json`, `${stem(pdf)}.typ`].filter(fs.existsSync);
+
 export function build(
   specPath: string,
   outPath: string | undefined,

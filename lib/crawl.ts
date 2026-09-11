@@ -1,9 +1,8 @@
-import { db, rows as query } from "./core/db.ts";
+import { db } from "./core/db.ts";
 import { CARDS, VIEWJOB } from "./core/indeed.ts";
 import { type Page, page } from "./core/cdp.ts";
-import { TABLES } from "./core/schema.ts";
 import { MAX_DESCRIPTION_CHARS, htmlToText } from "./core/text.ts";
-import { type Excludes, type Harvested, harvest } from "./search.ts";
+import { type Excludes, type Harvested, harvest, undescribed } from "./search.ts";
 
 const GIVE_UP_AFTER = 5;
 
@@ -11,13 +10,6 @@ const pause = (ms: number) => new Promise((wake) => setTimeout(wake, ms));
 const human = () => pause(1800 + Math.random() * 2600);
 
 const say = (line: string) => console.log(`${new Date().toTimeString().slice(0, 8)}  ${line}`);
-
-const undescribed = () =>
-  query(
-    TABLES.postings.pick({ key: true, company: true, title: true, url: true }),
-    "SELECT key, company, title, url FROM postings " +
-      "WHERE disposition='kept' AND (description IS NULL OR trim(description)='')",
-  );
 
 const stalled = (what: string, url: string) =>
   new Error(

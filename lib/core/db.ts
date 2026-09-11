@@ -1,33 +1,14 @@
 import Database from "better-sqlite3";
 import type { z } from "zod";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 import { tables } from "./ddl.ts";
+import { DB, absolute } from "./paths.ts";
 import { ROOT } from "./root.ts";
 import { align } from "./schema.ts";
 
-export const absolute = (held: string) => path.resolve(held.replace(/^~(?=$|\/)/, os.homedir()));
-
-export const companions = (pdf: string) => {
-  const stem = pdf.slice(0, pdf.length - path.extname(pdf).length);
-  return [pdf, `${stem}.json`, `${stem}.typ`].filter((held) => fs.existsSync(held));
-};
-
-export const CAREER = absolute(process.env.JOB_CAREER_DIR || "~/data/job");
-export const DB = path.join(CAREER, "job.db");
-const RESUMES = path.join(CAREER, "resumes");
-export const DOWNLOADS = path.join(CAREER, "downloads");
-export const SUBMITTED = path.join(RESUMES, "submitted");
-
-export const PATHS = {
-  career: CAREER,
-  db: DB,
-  resumes: RESUMES,
-  downloads: DOWNLOADS,
-  submitted: SUBMITTED,
-};
+export { absolute, CAREER, DB, DOWNLOADS, SUBMITTED, PATHS } from "./paths.ts";
 
 const held = globalThis as { db?: Database.Database; ddl?: string };
 

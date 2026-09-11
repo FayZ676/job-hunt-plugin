@@ -3,8 +3,10 @@ import path from "node:path";
 import { z } from "zod";
 
 import { requires } from "./core/actions.ts";
-import { SUBMITTED, absolute, companions, db, one, rows } from "./core/db.ts";
+import { SUBMITTED, absolute, db, one, rows } from "./core/db.ts";
+import { removeFiles } from "./core/files.ts";
 import { TABLES, VIEWS } from "./core/schema.ts";
+import { companions } from "./resume.ts";
 
 const move = (from: string, to: string) => {
   try {
@@ -83,20 +85,5 @@ export function rejected(key: string) {
 
   db().prepare("UPDATE postings SET status='rejected', resume=NULL WHERE key=?").run(key);
 
-  const deleted: string[] = [];
-  const stubborn: string[] = [];
-  if (row.resume)
-    for (const held of companions(absolute(row.resume))) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          fs.unlinkSync(held);
-        } catch {
-          /* already gone, or coming back */
-        }
-        if (!fs.existsSync(held)) break;
-      }
-      if (fs.existsSync(held)) stubborn.push(held);
-      else deleted.push(held);
-    }
-  return { deleted, stubborn };
+  return removeFiles(row.resume ? companions(absolute(row.resume)) : [], 3);
 }

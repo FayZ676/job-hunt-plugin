@@ -38,10 +38,7 @@ export const TABLES = {
         takes: "a URL, starting http",
       }),
       location: z.string().nullable(),
-      remote: col(z.number().nullable(), {
-        sql: "CHECK (remote IN (0,1))",
-        takes: "0 or 1",
-      }),
+      remote: flag("remote"),
       compensation: z.string().nullable(),
       posted_at: col(z.string().nullable(), {
         sql: "CHECK (posted_at IS NULL OR datetime(posted_at) IS NOT NULL)",

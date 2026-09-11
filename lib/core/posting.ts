@@ -2,27 +2,6 @@ import { z } from "zod";
 
 import { TABLES, options } from "./schema.ts";
 
-export const POSTING_COLUMNS = [
-  "key",
-  "source",
-  "company",
-  "title",
-  "url",
-  "location",
-  "remote",
-  "compensation",
-  "posted_at",
-  "description",
-  "comp_min",
-  "comp_max",
-  "comp_period",
-  "expired",
-  "raw",
-] as const;
-
-const undeclared = POSTING_COLUMNS.filter((name) => !(name in TABLES.postings.shape));
-if (undeclared.length) throw new Error(`postings has no column ${undeclared.join(", ")} — lib/schema.ts is the list`);
-
 const text = z.preprocess((held) => (typeof held === "string" ? held.trim() : held), z.string());
 
 const maybeText = z.preprocess(
@@ -72,3 +51,8 @@ export const Posting = z.object({
 export type Posting = z.infer<typeof Posting>;
 
 export const posting = (input: unknown): Posting => Posting.parse(input);
+
+export const POSTING_COLUMNS = Object.keys(Posting.shape) as (keyof Posting)[];
+
+const undeclared = POSTING_COLUMNS.filter((name) => !(name in TABLES.postings.shape));
+if (undeclared.length) throw new Error(`postings has no column ${undeclared.join(", ")} — lib/schema.ts is the list`);

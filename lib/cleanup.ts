@@ -1,8 +1,9 @@
-import fs from "node:fs";
 import { z } from "zod";
 
-import { absolute, companions, db, one, rows } from "./core/db.ts";
+import { absolute, db, one, rows } from "./core/db.ts";
+import { removeFiles } from "./core/files.ts";
 import { TABLES } from "./core/schema.ts";
+import { companions } from "./resume.ts";
 
 export const Doomed = TABLES.postings.pick({
   key: true,
@@ -44,8 +45,7 @@ function selected(where: string): string[] {
   }
 }
 
-export function reckon(where: string): Reckoning {
-  const matched = selected(where);
+function reckonKeys(matched: string[]): Reckoning {
   if (!matched.length) return { postings: [], duplicates: 0, staged: 0, files: [] };
 
   const held = new Set(matched);
@@ -71,8 +71,8 @@ export function reckon(where: string): Reckoning {
   };
 }
 
-export function purge(where: string): Purged {
-  const reckoning = reckon(where);
+function purgeKeys(matched: string[]): Purged {
+  const reckoning = reckonKeys(matched);
   if (!reckoning.postings.length) return { ...reckoning, deleted: [], stubborn: [] };
 
   db().transaction(() => {
@@ -80,15 +80,11 @@ export function purge(where: string): Purged {
     for (const row of reckoning.postings) remove.run(row.key);
   })();
 
-  const deleted: string[] = [];
-  const stubborn: string[] = [];
-  for (const held of reckoning.files) {
-    try {
-      fs.unlinkSync(held);
-    } catch {
-      /* already gone, or coming back */
-    }
-    (fs.existsSync(held) ? stubborn : deleted).push(held);
-  }
-  return { ...reckoning, deleted, stubborn };
+  return { ...reckoning, ...removeFiles(reckoning.files) };
 }
+
+export const reckon = (where: string): Reckoning => reckonKeys(selected(where));
+
+export const purge = (where: string): Purged => purgeKeys(selected(where));
+
+export const purgeKey = (key: string): Purged => purgeKeys([key]);
