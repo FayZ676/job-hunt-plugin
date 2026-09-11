@@ -28,6 +28,12 @@ Nothing below overrides these.
    progress narration, no action transitions, no summaries; the database is the record. A run with
    nothing to ask about produces no chat output at all. `/job help` and `/job feedback` are the
    exceptions — feedback is answered with what changed.
+7. **A captcha, or anything else asking for a human, stops the run the moment it appears.** A
+   challenge checkbox or puzzle, a "verify you are human" or press-and-hold page, a Cloudflare
+   interstitial, a one-time code sent to the user's email or phone. Never attempt it and never route
+   around it: no reload, no new tab, no search for another copy of the form, no moving on to the next
+   posting. Ask in chat, naming the role and the tab, and do nothing more until the user says it is
+   cleared.
 
 ## Modes
 

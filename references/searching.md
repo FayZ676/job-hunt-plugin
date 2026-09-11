@@ -110,7 +110,7 @@ job-search rule --redo
 | ------- | ----- | --- |
 | `harvest holds no job cards` | Indeed changed the payload shape | Snapshot the page and find where the cards now live; the path is one line in `lib/core/indeed.ts` |
 | A search returns almost nothing | The terms do not match how titles are worded | Widen the terms, not the window |
-| A run stops after five empty pages | Indeed is asking for a person, and only a person answers it | The tab is left open on the failure — hand that window over, then run again; a harvest that stopped early reads as a quiet market, so check the card count against the queries you ran |
+| A run stops after five empty pages | Indeed is asking for a person | A harvest that stopped early reads as a quiet market, so check the card count against the queries you ran |
 | A 403 where a navigation worked | Something did `fetch()`/XHR instead of navigating; Indeed throttles those against the same URLs even in the same session | Navigate — which is all `job-search run` does |
 | Sponsored junk from staffing firms | Indeed sells placement | `--not-company`, and name them in `instructions` |
 | Driving the browser by hand after a captcha | — | Save the cards yourself and use `job-search harvest --file` / `descriptions --file`; both take what you read out of the page |

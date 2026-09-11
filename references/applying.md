@@ -136,9 +136,9 @@ at the end of the first page and record the page count.
 
 ## Lever specifics
 
-**hCaptcha gates the submit button**, and **the challenge is never attempted** — a captcha is an
-explicit request for a person. Fill the form, save the staged record, and hand the open tab over: on
-a Lever posting, `job-submit` means *they* click submit.
+**hCaptcha gates the submit button**, and fires only on that click, so the form still fills
+unattended. Fill it, save the staged record, and hand the open tab over: on a Lever posting,
+`job-submit` means *they* click submit. A challenge that renders while filling is invariant 7.
 
 **The resume input is hidden and overlaid by the captcha iframe**, so a normal click times out with
 "subtree intercepts pointer events". Click it through the page instead:
