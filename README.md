@@ -34,8 +34,9 @@ Node alone is enough to start. Add the rest before your first resume.
 
 ```
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
-npm install --prefix ~/.claude/skills/job
-npm link --prefix ~/.claude/skills/job
+cd ~/.claude/skills/job
+npm install
+npm link
 ```
 
 Then `/job setup`, which interviews you and builds your profile — hand it a resume or LinkedIn
