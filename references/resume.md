@@ -25,7 +25,9 @@ framing and facts together.
 ## Process
 
 1. Get the JD — a `prospects.description`, pasted text, a file path, or a URL — and extract its hard
-   requirements, day-to-day responsibilities, and implied signals.
+   requirements, day-to-day responsibilities, and implied signals. Then write down the five to
+   eight terms a screener will scan the page for. Every one the record supports appears in a
+   bullet, in the JD's spelling; one that appears only in Skills has not been shown.
 2. Read the profile tables and score each project on overlap. Write the mapping down before
    drafting; it decides ordering and cuts.
 
@@ -42,8 +44,9 @@ framing and facts together.
 
 ## Writing
 
-**`references/writing.md` governs the voice** — the banned generated vocabulary, sentence shape, and
-word choice. Read it before drafting. What follows is what a resume adds to it.
+**`references/writing.md` governs the voice** — who the actor is, the named thing, what the work
+was worth, the field's terms, and the generated tells. Read it before drafting. What follows is what
+a resume adds to it.
 
 Plain professional English, read once at speed, each line leaving a fact behind. The first pass is
 about seven seconds and decides whether there is a second one; eye tracking puts that gaze on titles,
@@ -54,21 +57,22 @@ verb + what you did + the result it produced*, and Google's version says the sam
 measurement made explicit: **accomplished X, as measured by Y, by doing Z.** "Responsible for
 scheduling" is a duty; "cut overtime 18% by rebuilding the four-week rotation" is an accomplishment.
 
-- **Start with a strong action verb; no personal pronouns.** No "I", "we", "my". Past tense for
-  finished work, present tense for the role currently held.
+- **Open on the verb or the named thing; no personal pronouns.** No "I", "we", "my". Past tense
+  for finished work, present tense for the role currently held.
 - **One idea per bullet, one sentence, ~15–25 words and never over 30.** `about` packs several ideas
   into a paragraph because it is a reference. Split them. Long bullets are this skill's standing
   habit — a measured median of 37 words.
-- **Outcome first**, in the first six words; method, tools and scale after it. Every noun phrase
-  must be concrete enough to picture.
+- **The outcome or the named thing in the first six words**; method, tools and scale after it. A
+  bullet that opens on three words of verb and article before anything recognisable is skimmed
+  past.
 - **Quantify what the profile measured** — percentages, dollars, volume, headcount, time saved — with
   the baseline that makes the figure mean something ("from 50 to 100"). Where no metric exists, scope
   the work instead: caseload, budget, shift size. A bullet with no number is fine; flag it in the gap
   report.
-- **Mirror the JD's vocabulary where it is honest.** Their word over the profile's synonym, spelled
-  out rather than abbreviated, since both a scanner and a parser match the literal term. Never blur
-  one credential, system or method into a neighboring one. Mirror term by term, though — a document
-  carrying every posting phrase in the posting's own order reads as generated, and recruiters say so.
+- **The JD's term, spelled out rather than abbreviated**, since both a scanner and a parser match
+  the literal term. Never blur one credential, system or method into a neighboring one, and never
+  carry every posting phrase in the posting's own order: that reads as generated, and recruiters
+  say so.
 - **Match the verb to the work's real status.** "Delivered" and "replaced" assert an outcome already
   happened; "built" covers work that exists and is not yet live. Check `about` first, and never print
   a projected number.
@@ -83,12 +87,10 @@ Rewrite any line matching a row below.
 | Reject | Because | Instead |
 | ------ | ------- | ------- |
 | "Responsible for managing the front desk and daily correspondence" | A duty, not an accomplishment | "Ran a 60-visitor-a-day front desk, cutting average check-in from 6 minutes to 2" |
-| "Detail-oriented professional passionate about operational excellence" | Identity claim with no fact in it | "Six years in hospital operations: scheduling a 60-bed unit and the supply contracts behind it" |
 | "Noticed the vendor had been double-billing us for months and escalated it" | Story with the candidate as protagonist; the reader wants the outcome | "Recovered $40K in duplicate vendor charges by auditing three years of invoices" |
 | "Improved processes across the department" | Abstract enough to mean anything | "Cut invoice approval from 9 days to 2 by routing approvals through the ERP" |
 | "Trained new hires, holding formal certification for the roles that required it, and rewrote the safety checklist in two parts: …" | Two unrelated ideas in one sentence; forces a second pass | Two bullets, one idea each |
-| "Spearheaded a comprehensive initiative to optimize stakeholder collaboration" | Generated vocabulary end to end, and nothing changed hands | "Ran the weekly review that moved three vendor disputes off the ops backlog" |
-| "Rebuilt the intake form, resulting in improved processing efficiency" | Participial tail with an abstract consequence; no quantity, no baseline | "Cut intake processing from 9 days to 2 by rebuilding the form" |
+| "Built a tool that reads each incoming form, checks it against the rules and files it in the right queue" | Describes the product; says nothing about who uses it or what it bought | "Built the intake filer the claims desk runs on every form, retiring a two-hour daily sort" |
 
 ## Check on every build
 
@@ -101,7 +103,9 @@ Each is a defect that reached a built resume, one of them a submitted one.
 3. **No personal pronouns, no bullet that states a duty rather than an accomplishment, no
    unexplained date gap, and no line carrying the vocabulary or the shapes `references/writing.md`
    bans.**
-4. **The rendered image was looked at**, not just the page count, and the page is full — more than
+4. **Every scan term from step 1 that the record supports is in a bullet**, and the strongest
+   evidence for the JD's first requirement is the first bullet under the current role.
+5. **The rendered image was looked at**, not just the page count, and the page is full — more than
    ~0.75in of blank foot means content was left out.
 
 ## Format and length
