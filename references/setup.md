@@ -54,10 +54,10 @@ conversation. Cover:
 A `NULL` is not a failure — it is a hard stop later. Tell them which ones will block an application.
 
 **3. Check the prose covers the search.** There is no filter table: `instructions.text` and
-`identity` are the only two places a preference can live, and every argument of the search is
-typed off them — the terms, `--not-title`, `--not-company`, `--location`, `--remote`. Read the prose
-back with that call in mind. If you cannot fill an argument from it, that is a missing sentence, not
-a missing feature: ask for it, and add it to the prose in their words.
+`identity` are the only two places a preference can live, and every argument of the search — the
+terms, `--not-title`, `--not-company` — is typed off them. Read the prose back with that call in
+mind. If you cannot fill an argument from it, that is a missing sentence, not a missing feature: ask
+for it, and add it to the prose in their words.
 
 **4. Check the tooling.** The npm dependencies and the linked `job-*` commands are what fetching
 and scoring run on; Typst and Poppler are only for the resume build.

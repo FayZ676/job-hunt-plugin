@@ -48,11 +48,6 @@ interview, in your words, and `/job feedback` changes it at any time. `/job help
 Everything lives in `~/data/job/`: one SQLite database, plus the resumes it builds. It sits outside
 this directory and is never committed — it has your phone number in it. `JOB_CAREER_DIR` moves it.
 
-## Upgrading
-
-3.0 replaced the file-based store with a database, and the markdown profile with a structured one.
-Ask Claude to migrate an existing `career/`.
-
 ## License
 
 MIT

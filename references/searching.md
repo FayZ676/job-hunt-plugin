@@ -16,11 +16,14 @@ add to their instructions, and ask.
 
 | Part of the query | Comes from |
 | ----------------- | ---------- |
-| `q` | the titles named in `instructions` — the same words the scorer reads |
-| `l` | `identity.location`, and what the instructions say about where they will work |
-| `sc=0kf:attr(DSQF7)` | `identity.remote_preference`, when remote-only |
+| `q=title:"…"` | the titles named in `instructions` — the same words the scorer reads |
+| `l` | `identity.location`, and what the instructions say about where they will work; `l=Remote` when `identity.remote_preference` is remote-only |
 | `fromage` | the user — ask how far back before the first run |
 | `--not-title`, `--not-company` | the titles and employers the instructions rule out |
+
+**Scope `q` with `title:"…"`, and take remote through `l=Remote`.** A bare `q=` term matches loosely
+and returns off-target results; the `sc=0kf:attr(DSQF7)` remote filter documented in earlier
+versions of this file made the navigation time out — do not reintroduce it.
 
 **The terms match the title, and nothing else.** Say them the way a title says them, short and
 literal, and run several narrow queries rather than one broad one.

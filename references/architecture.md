@@ -15,11 +15,10 @@ skill. Node 22.18 or newer runs the TypeScript directly, so there is nothing to 
 
 **One module per action, under `cli/`.**
 
-**One app, one language.** `lib/core/` is what everything shares — `schema.ts` (the typed mirror of
-the SQL, and what a column takes), `actions.ts` (the roster), `db.ts` (paths and connect), `text.ts`,
-`table.ts`, `posting.ts`, `typst.ts`, `ddl.ts`. Beside it sits one file per action that has logic of its own:
-**`lib/x.ts` decides and returns a value, `cli/x.ts` parses argv and prints it**. `sql/logic.sql` is
-applied on every connect.
+**One app, one language.** `lib/core/` is what everything shares — the schema, the action roster,
+paths and connect, and everything Indeed, the browser and the resume build need beneath one action.
+Beside it sits one file per action that has logic of its own: **`lib/x.ts` decides and returns a
+value, `cli/x.ts` parses argv and prints it**. `sql/logic.sql` is applied on every connect.
 
 **`exports` in `package.json` is the library's public surface.** Renaming or reshaping anything a
 listed module exports breaks whatever imports this package, so say so before doing it.

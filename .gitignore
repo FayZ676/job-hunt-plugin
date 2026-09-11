@@ -5,9 +5,6 @@
 node_modules/
 *.tsbuildinfo
 
-# A user's own career data, if they run the skill from this directory.
-/career/
-
 # The dashboard, its own repository, checked out here.
 /dashboard/
 

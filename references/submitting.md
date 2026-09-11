@@ -31,9 +31,9 @@ it is still open when they come back, so confirm from the page rather than filli
 
 Only what the user reports. Do nothing for a role that is merely quiet.
 
-`job-submit rejected` takes the shape in `--note` — days from submission, and whether any interview
-stage happened. **When they report an interview instead, move the row on** — nothing else writes
-this status, and a row left at `applied` reads as unanswered:
+`job-submit rejected` marks the posting and deletes its resume file. **When they report an interview
+instead, move the row on** — nothing else writes this status, and a row left at `applied` reads as
+unanswered:
 
 ```sql
 UPDATE postings SET status='interviewing' WHERE key='<key>';

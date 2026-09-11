@@ -23,10 +23,6 @@ BEGIN
   WHERE key = new.key;
 END;
 
-DROP TRIGGER IF EXISTS on_status_change;
-
-DROP TABLE IF EXISTS events;
-
 -- The day the row last moved: scored, shortlisted, tailored, staged, applied.
 -- A re-fetch is not progress, so `last_fetched` is not among the columns watched.
 DROP TRIGGER IF EXISTS on_change;
