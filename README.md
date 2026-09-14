@@ -23,7 +23,7 @@ and never writes an answer your profile doesn't support.
 - Node 22.18+
 - [Typst](https://typst.app) and Poppler, for resumes: `brew install typst poppler`
 - A Chrome-family browser, for searching and filling forms. `.mcp.json` points
-  [Playwright MCP](https://github.com/microsoft/playwright-mcp) at one that `job-browser` starts and
+  [Playwright MCP](https://github.com/microsoft/playwright-mcp) at one that `cli/browser.ts` starts and
   leaves running, on `127.0.0.1:9222`, with its own profile in `~/data/job/browser` — so a captcha or
   a half-filled form is still waiting when you answer, instead of dying with the conversation that
   opened it.
@@ -36,7 +36,6 @@ Node alone is enough to start. Add the rest before your first resume.
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
 cd ~/.claude/skills/job
 npm install
-npm link
 ```
 
 Then `/job setup`, which interviews you and builds your profile — hand it a resume or LinkedIn

@@ -8,19 +8,6 @@
   "engines": {
     "node": ">=22.18"
   },
-  "bin": {
-    "job-paths": "cli/paths.ts",
-    "job-q": "cli/q.ts",
-    "job-browser": "cli/browser.ts",
-    "job-profile": "cli/profile.ts",
-    "job-search": "cli/search.ts",
-    "job-score": "cli/score.ts",
-    "job-resume": "cli/resume.ts",
-    "job-stage": "cli/stage.ts",
-    "job-submit": "cli/submit.ts",
-    "job-cleanup": "cli/cleanup.ts",
-    "job-help": "cli/help.ts"
-  },
   "exports": {
     "./actions": "./lib/core/actions.ts",
     "./browser": "./lib/core/browser.ts",

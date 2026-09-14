@@ -9,15 +9,15 @@ import { fail, guard } from "./kit.ts";
 
 const READS = new Set(["SELECT", "WITH", "PRAGMA", "EXPLAIN", "VALUES"]);
 
-new Command("job-q")
+new Command("cli/q.ts")
   .description(
     `Run SQL against the job database.
 
-  job-q "SELECT * FROM triage WHERE status='new'"
-  job-q --json "SELECT * FROM triage LIMIT 5"
-  job-q -f some.sql          run a file
-  job-q --schema             print the schema
-  job-q --export > job.sql   dump everything as portable SQL`,
+  cli/q.ts "SELECT * FROM triage WHERE status='new'"
+  cli/q.ts --json "SELECT * FROM triage LIMIT 5"
+  cli/q.ts -f some.sql          run a file
+  cli/q.ts --schema             print the schema
+  cli/q.ts --export > job.sql   dump everything as portable SQL`,
   )
   .argument("[sql]")
   .option("-f, --file <path>", "run a .sql file instead")

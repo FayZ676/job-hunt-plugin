@@ -4,12 +4,12 @@ import { record, rejected, review } from "../lib/submit.ts";
 import { action } from "./kit.ts";
 
 const { program, runs } = action(
-  "job-submit",
+  "cli/submit.ts",
   `Present what is staged, submit only what the user names, record it.
 
-  job-submit review              one row per staged application, for approval
-  job-submit record KEY --confirmation "Application received — #A12"
-  job-submit rejected KEY
+  cli/submit.ts review              one row per staged application, for approval
+  cli/submit.ts record KEY --confirmation "Application received — #A12"
+  cli/submit.ts rejected KEY
 
 Recording an application moves its resume into submitted/ in the same step that
 sets \`applied\`; a rejection deletes that file, and checks it did not come back.`,

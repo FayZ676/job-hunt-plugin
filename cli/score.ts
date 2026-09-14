@@ -4,15 +4,15 @@ import { instructions, prospect, record, triage, unscored } from "../lib/score.t
 import { action } from "./kit.ts";
 
 const { program, runs } = action(
-  "job-score",
+  "cli/score.ts",
   `Score every prospect against the search profile.
 
-  job-score triage               the cheap list: no descriptions, on purpose
-  job-score triage --status new
-  job-score instructions         the profile facts and prose scoring reads
-  job-score show KEY [KEY ...]   full text, for survivors only
-  job-score set KEY --score 9 --reason "the JD language that drove it, quoted"
-  job-score pending              still unscored, and back again tomorrow
+  cli/score.ts triage               the cheap list: no descriptions, on purpose
+  cli/score.ts triage --status new
+  cli/score.ts instructions         the profile facts and prose scoring reads
+  cli/score.ts show KEY [KEY ...]   full text, for survivors only
+  cli/score.ts set KEY --score 9 --reason "the JD language that drove it, quoted"
+  cli/score.ts pending              still unscored, and back again tomorrow
 
 A score sets the status by the threshold in settings, so the two cannot disagree.`,
 );
@@ -72,7 +72,7 @@ program
             `${row.score !== null ? "  score " + row.score : ""}`,
         );
         console.log(`  ${row.url || ""}\n`);
-        console.log(row.description || "(no description — job-score set will refuse this one)");
+        console.log(row.description || "(no description — cli/score.ts set will refuse this one)");
         console.log("\n" + "-".repeat(78) + "\n");
       }
     }),

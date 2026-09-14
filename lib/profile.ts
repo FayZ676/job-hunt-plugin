@@ -5,7 +5,7 @@ export const fields = () => SECTIONS.flatMap((section) => columns(section).map((
 
 function split(field: string) {
   if (!fields().includes(field))
-    throw new Error(`no such field '${field}' — job-profile missing lists every one that blocks`);
+    throw new Error(`no such field '${field}' — cli/profile.ts missing lists every one that blocks`);
   const [section, column] = field.split(".");
   return { section: section as Table, column };
 }

@@ -4,14 +4,14 @@ import { add, drop, list, show } from "../lib/stage.ts";
 import { action } from "./kit.ts";
 
 const { program, runs } = action(
-  "job-stage",
+  "cli/stage.ts",
   `Fill the form, mark it staged, and stop with a finger over the button.
 
-  job-stage add KEY --url URL
-  job-stage add KEY --url URL --blocked-on "no answer for: desired salary"
-  job-stage show KEY              the application waiting at one key
-  job-stage list                  everything staged, and what blocks each
-  job-stage drop KEY              unstage, back to shortlisted
+  cli/stage.ts add KEY --url URL
+  cli/stage.ts add KEY --url URL --blocked-on "no answer for: desired salary"
+  cli/stage.ts show KEY              the application waiting at one key
+  cli/stage.ts list                  everything staged, and what blocks each
+  cli/stage.ts drop KEY              unstage, back to shortlisted
 
 The filled form itself stays in the browser tab; nothing about it is copied here.`,
 );

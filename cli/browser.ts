@@ -4,13 +4,13 @@ import { Command } from "commander";
 import { ENDPOINT, PORT, PROFILE, ensure, running } from "../lib/core/browser.ts";
 import { fail, guard } from "./kit.ts";
 
-new Command("job-browser")
+new Command("cli/browser.ts")
   .description(
     `Start the browser the skill drives, and leave it running.
 
-  job-browser          start it if it is not up, then print its endpoint
-  job-browser status   say whether it is up
-  job-browser endpoint print the endpoint and nothing else
+  cli/browser.ts          start it if it is not up, then print its endpoint
+  cli/browser.ts status   say whether it is up
+  cli/browser.ts endpoint print the endpoint and nothing else
 
 Playwright MCP attaches to this browser over CDP instead of launching its own,
 so the window outlives any one conversation: a form left half-filled, a captcha

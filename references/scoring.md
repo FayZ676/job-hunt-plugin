@@ -5,7 +5,7 @@ earned it out. Nothing here fetches, and nothing here sets a status — the thre
 
 ## What scoring reads
 
-Three inputs, and `job-score instructions` prints all three: their work history off `employers` →
+Three inputs, and `cli/score.ts instructions` prints all three: their work history off `employers` →
 `projects` — every role, its tenure, and each project with what it was built with — the standing
 facts assembled off `identity` — where they live, what they will not go below, whether they need
 sponsorship — and `instructions.text`, their own prose.

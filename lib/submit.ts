@@ -49,7 +49,7 @@ export function record(key: string, confirmation: string) {
   if (!row) throw new Error(`no prospect '${key}'`);
   requires("submit", key, row.status);
   if (row.staged_status === null || row.staged_status === undefined)
-    throw new Error(`${key} was never staged — run job-stage add first`);
+    throw new Error(`${key} was never staged — run cli/stage.ts add first`);
   if (row.staged_status !== "ready")
     throw new Error(`${key} is ${row.staged_status}: ${row.blocked_on || "no reason recorded"}`);
   if (!row.resume) throw new Error(`${key} has no resume recorded`);

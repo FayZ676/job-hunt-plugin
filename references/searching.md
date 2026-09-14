@@ -1,6 +1,6 @@
 # Searching
 
-Finding the openings. **`job-search run` does the searching**, in the browser `job-browser` leaves
+Finding the openings. **`cli/search.ts run` does the searching**, in the browser `cli/browser.ts` leaves
 running: it navigates each query like a person would, reads the result cards out of the page's own
 data, rules on them, and then fetches the full description of every survivor.
 
@@ -9,7 +9,7 @@ whatever you type into the search box.
 
 ## What to search for
 
-**Nothing about what to search for is baked into this skill.** The terms come off `job-score
+**Nothing about what to search for is baked into this skill.** The terms come off `cli/score.ts
 instructions` and the profile — read both, then build the URLs. If something belongs in the search
 and is in neither, that is the gap: decide whether it is a profile fact or a line the user should
 add to their instructions, and ask.
@@ -39,7 +39,7 @@ narrow query is worth less than page 1 of a different one. More queries, one pag
 Write the URLs one per line, then hand the file over:
 
 ```bash
-job-search run --queries queries.txt --not-title intern
+cli/search.ts run --queries queries.txt --not-title intern
 ```
 
 **Wait for it, and go on to scoring in the same breath** — that is the point of one command doing
@@ -50,12 +50,12 @@ postings is around eight minutes. Past what one call can hold, pass `--limit` an
 it says how many are left each time.
 
 Descriptions are written as each one lands, so a run cut short — a timeout, a captcha, a closed
-laptop — keeps everything it fetched. `job-search run` with no queries fetches only what is still
+laptop — keeps everything it fetched. `cli/search.ts run` with no queries fetches only what is still
 missing, which is how any interrupted run is finished.
 
 ## Every row keeps its verdict
 
-`DISPOSITIONS` in `lib/search.ts` names the verdicts, and `job-search dispositions` prints them in
+`DISPOSITIONS` in `lib/search.ts` names the verdicts, and `cli/search.ts dispositions` prints them in
 the order the chain rules them — read it there rather than from a copy.
 
 **What the chain rules on is deliberately small: expiry, the profile's compensation floor, age, and
@@ -97,7 +97,7 @@ The second query is the one that matters: **read what a rule actually dropped** 
 from a count. Re-ruling the same postings reads nothing new:
 
 ```bash
-job-search rule --redo
+cli/search.ts rule --redo
 ```
 
 | Symptom | Fix |
@@ -114,6 +114,6 @@ job-search rule --redo
 | `harvest holds no job cards` | Indeed changed the payload shape | Snapshot the page and find where the cards now live; the path is one line in `lib/core/indeed.ts` |
 | A search returns almost nothing | The terms do not match how titles are worded | Widen the terms, not the window |
 | A run stops after five empty pages | Indeed is asking for a person | A harvest that stopped early reads as a quiet market, so check the card count against the queries you ran |
-| A 403 where a navigation worked | Something did `fetch()`/XHR instead of navigating; Indeed throttles those against the same URLs even in the same session | Navigate — which is all `job-search run` does |
+| A 403 where a navigation worked | Something did `fetch()`/XHR instead of navigating; Indeed throttles those against the same URLs even in the same session | Navigate — which is all `cli/search.ts run` does |
 | Sponsored junk from staffing firms | Indeed sells placement | `--not-company`, and name them in `instructions` |
-| Driving the browser by hand after a captcha | — | Save the cards yourself and use `job-search harvest --file` / `descriptions --file`; both take what you read out of the page |
+| Driving the browser by hand after a captcha | — | Save the cards yourself and use `cli/search.ts harvest --file` / `descriptions --file`; both take what you read out of the page |

@@ -17,7 +17,7 @@ Nothing below overrides these.
    delete.** Submit only what the user names, in that run. Silence is not approval, and an
    unapproved application stays staged rather than going out on a later run.
 2. **Never write an answer the profile does not support.** `NULL` is a hard stop: leave the field
-   empty and report it — `job-profile missing` lists every one that will block an application.
+   empty and report it — `cli/profile.ts missing` lists every one that will block an application.
    Never infer a phone number, a salary, or a demographic answer.
 3. **Answer to the truth, including when it costs the application.** A commitment in the profile is
    a ceiling, not an opening position.
@@ -48,7 +48,7 @@ Nothing below overrides these.
 | `/job submit [key]` | Submit what is staged, or the one named | `references/submitting.md` |
 | `/job cleanup <what to remove>` | Remove postings, and their resumes, from the database | `references/cleanup.md` |
 | `/job feedback <what is wrong>` | Change what produced it — instructions, profile, or this skill | `references/feedback.md` |
-| `/job help` | `job-help` and nothing else — no run, no queries, no commentary | |
+| `/job help` | `cli/help.ts` and nothing else — no run, no queries, no commentary | |
 
 **If `$CAREER` does not exist, run setup first** — `/job` before setup is a no-op. Adding a mode
 means adding it to the table above and to `lib/core/actions.ts`.
@@ -61,25 +61,29 @@ Three files are not an action and are read when they apply:
 | `references/storage.md` | Any query, any write to the profile, anything the user asks about their search |
 | `references/architecture.md` | Changing the code, or installing it |
 
+**Commands are the scripts in this skill's `cli/`.** The shell does not start in this skill's
+directory, so run each by its absolute path — `cli/q.ts` here and in every reference means
+`<this skill's base directory>/cli/q.ts`.
+
 **The code is the manual for anything it already decides**, so no file above restates it. Every
-`job-*` command takes `--help`, and that is the contract — what an action accepts, what it
+script in `cli/` takes `--help`, and that is the contract — what an action accepts, what it
 defaults to, and what it gives back. Read it before invoking rather than reading the source, and
 never carry a flag from a file here that `--help` does not list.
 
-**Playwright MCP attaches to a Chrome that `job-browser` starts and leaves running**, so the browser
+**Playwright MCP attaches to a Chrome that `cli/browser.ts` starts and leaves running**, so the browser
 outlives this conversation: a tab left open is still open when the user comes back to it, and a
 captcha they solve stays solved. Hand a tab over rather than closing it — never `browser_close` — and
-if the tools reach no browser, run `job-browser`.
+if the tools reach no browser, run `cli/browser.ts`.
 
 **What a command needs and the profile does not hold, ask for.** Read the profile first; if the
 answer is not there and the user did not say it, ask them — never infer it, and never let a value
 they would have chosen come from a fallback.
 
 ```bash
-$Q --schema                      # every table, view, CHECK and trigger; $Q is job-q
-job-search dispositions          # every verdict the chain can rule, in order
-job-resume spec                  # the resume spec, and every section type
-job-profile missing              # every NULL, each one a hard stop
+$Q --schema                  # every table, view, CHECK and trigger; $Q is cli/q.ts
+cli/search.ts dispositions   # every verdict the chain can rule, in order
+cli/resume.ts spec           # the resume spec, and every section type
+cli/profile.ts missing       # every NULL, each one a hard stop
 ```
 
 Each action is self-contained and knows nothing of the others, so any step can be redone without

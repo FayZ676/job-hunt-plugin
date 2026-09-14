@@ -410,7 +410,7 @@ export function align(database: Database) {
   if (wrong.length)
     throw new Error(
       `the database has drifted from lib/core/schema.ts:\n${wrong.join("\n")}\n\n` +
-        "Nothing migrates on connect, and no job-* command can open a database this refused. " +
+        "Nothing migrates on connect, and no script in cli/ can open a database this refused. " +
         "Migrate it with sqlite3 directly: DROP COLUMN one the database has and nothing " +
         "declares, ADD COLUMN one that is declared and the database lacks.",
     );

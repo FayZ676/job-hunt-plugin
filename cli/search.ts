@@ -39,19 +39,19 @@ const read = (named: string) => {
 };
 
 const { program, runs } = action(
-  "job-search",
+  "cli/search.ts",
   `Search Indeed and rule on what comes back.
 
-  job-search run --queries queries.txt                search, rule, then fetch every description
-  job-search run --query '<url>' --not-title intern   the same, queries given inline
-  job-search run --limit 100                          no queries: only finish missing descriptions
-  job-search rule --redo                              rule stored postings again
-  job-search dispositions                             every verdict, in the order ruled
+  cli/search.ts run --queries queries.txt                search, rule, then fetch every description
+  cli/search.ts run --query '<url>' --not-title intern   the same, queries given inline
+  cli/search.ts run --limit 100                          no queries: only finish missing descriptions
+  cli/search.ts rule --redo                              rule stored postings again
+  cli/search.ts dispositions                             every verdict, in the order ruled
 
-  job-search harvest --file indeed-raw.json           read cards you saved out of the browser yourself
-  job-search descriptions --file indeed-descs.json    attach descriptions the same way
+  cli/search.ts harvest --file indeed-raw.json           read cards you saved out of the browser yourself
+  cli/search.ts descriptions --file indeed-descs.json    attach descriptions the same way
 
-\`run\` drives the browser \`job-browser\` leaves running and prints a line per page,
+\`run\` drives the browser \`cli/browser.ts\` leaves running and prints a line per page,
 writing each description to the database as it lands -- so a run that is cut short
 keeps everything it fetched, and running it again picks up the rest.
 
@@ -85,7 +85,7 @@ program
       const held = describe(read(options.file));
       console.log(`READ ${held.read} descriptions, attached ${held.attached}`);
       if (!held.missing.length) return;
-      console.log(`\n${held.missing.length} kept postings still have no description — job-score set refuses these:`);
+      console.log(`\n${held.missing.length} kept postings still have no description — cli/score.ts set refuses these:`);
       for (const row of held.missing)
         console.log(`  ${row.key}  ${row.company} — ${row.title}  ${row.url ?? VIEWJOB + row.key.split(":")[1]}`);
     }),

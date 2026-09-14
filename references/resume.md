@@ -156,7 +156,7 @@ letter is written only where the application asks for one** — never offered al
 
 ## The spec
 
-**`job-resume spec` prints the contract** — top-level keys, contact entries, inline markup, and every
+**`cli/resume.ts spec` prints the contract** — top-level keys, contact entries, inline markup, and every
 section type. Read it there; this file covers only what belongs in each. Emit sections in this order, omitting any the JD makes irrelevant except Experience and Education,
 but order headings by what this JD hires on: a license-gated role puts Certifications above
 Experience, a new graduate puts Education first.

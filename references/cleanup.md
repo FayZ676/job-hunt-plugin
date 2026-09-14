@@ -1,12 +1,12 @@
 # Cleanup
 
 The argument is what the user wants gone, in their words. Turn it into one condition over
-`postings` and hand it to `job-cleanup --where`; `$Q --schema` is what the columns are. **Run with
+`postings` and hand it to `cli/cleanup.ts --where`; `$Q --schema` is what the columns are. **Run with
 no argument, ask what to remove** — there is no sensible default for a delete, and a guessed
 condition is a guess about what the user is allowed to lose.
 
 **Deleting is not how a posting stops mattering.** The rule chain already labels the old, the
-expired and the underpaid, and `job-search dispositions` says which. A row carrying a
+expired and the underpaid, and `cli/search.ts dispositions` says which. A row carrying a
 `disposition` is doing its job where it sits, and the shortlist never sees it. Cleanup is for
 rows the user wants off the disk, not for rows that are merely finished.
 
@@ -20,7 +20,7 @@ again, and the row comes back with its score and its status gone.
 skill did its work, and a posting deleted out of them will be found, scored and applied to a
 second time. If that is what they asked for, say what it costs and make them ask twice.
 
-**A wide condition earns a copy first** — `job-q --export > somewhere.sql`, and tell them where
+**A wide condition earns a copy first** — `cli/q.ts --export > somewhere.sql`, and tell them where
 it went.
 
 ## After

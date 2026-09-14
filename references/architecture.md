@@ -3,13 +3,10 @@
 Read before changing the code. Nothing here is needed to run an action.
 
 ```bash
-npm install --prefix "$HOME/.claude/skills/job"   # dependencies
-npm link --prefix "$HOME/.claude/skills/job"      # the job-* commands, on PATH
+npm install --prefix "$HOME/.claude/skills/job"
 ```
 
-That puts every action on `PATH` as `job-search`, `job-score`, `job-resume`, `job-stage`,
-`job-submit`, `job-cleanup`, `job-q`, `job-profile`, `job-paths` and `job-help` — the names used throughout this
-skill. Node 22.18 or newer runs the TypeScript directly, so there is nothing to build.
+Node 22.18 or newer runs the TypeScript directly, so there is nothing to build.
 
 ## Modules
 
@@ -26,7 +23,7 @@ listed module exports breaks whatever imports this package, so say so before doi
 ## Adding or changing an action
 
 **`lib/core/actions.ts` is the only place an action is declared.** Its `does` and `argument` render
-`job-help`, and its `accepts` is the statuses a posting must be in for that action to be allowed,
+`cli/help.ts`, and its `accepts` is the statuses a posting must be in for that action to be allowed,
 which `requires()` enforces in `lib/stage.ts` and `lib/submit.ts`. A status outside the enum in
 `schema.ts` will not typecheck.
 
@@ -52,7 +49,7 @@ recognizable tomorrow.
 from it on every connect — the type, nullability, every `CHECK`, the indexes, and the views whose
 body is just a column list. There is no generated file to keep in step and nothing to run after an
 edit. Triggers and the views with real SQL in them live in `sql/logic.sql`, which is hand-written and
-concatenated onto the rendered DDL. `job-q --schema` prints both.
+concatenated onto the rendered DDL. `cli/q.ts --schema` prints both.
 
 A column is a Zod field plus `.meta()`: `sql` is the DDL after the type (`CHECK`, `DEFAULT`,
 `REFERENCES`), and `takes` is the English a wrong answer is refused with. An enum field generates
@@ -62,8 +59,8 @@ from there.
 **Applied is not migrated.** `CREATE TABLE IF NOT EXISTS` does nothing to a table that already
 exists, so a new column leaves every database that has already been opened exactly as it was, and
 `align` then refuses to open it. So a column change is: edit `lib/core/schema.ts`, then
-`ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(job-paths db)"`,
-never `job-q` — the check runs before the SQL does, so `job-q` refuses to open the database that
+`ALTER TABLE` against the live database. That last one goes through `sqlite3 "$(cli/paths.ts db)"`,
+never `cli/q.ts` — the check runs before the SQL does, so `cli/q.ts` refuses to open the database that
 needs fixing.
 
 Dropping a column or a table drops what it holds, and no later run can bring it back. **Save the rows

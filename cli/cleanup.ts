@@ -4,12 +4,12 @@ import { purge, reckon } from "../lib/cleanup.ts";
 import { action } from "./kit.ts";
 
 const { program, runs } = action(
-  "job-cleanup",
+  "cli/cleanup.ts",
   `Remove postings from the database, and the resumes built for them.
 
-  job-cleanup --where "disposition='stale' AND last_fetched < date('now','-90 days')"
-  job-cleanup --where "status='rejected'" --confirm
-  job-cleanup --where "company='Acme'" --json
+  cli/cleanup.ts --where "disposition='stale' AND last_fetched < date('now','-90 days')"
+  cli/cleanup.ts --where "status='rejected'" --confirm
+  cli/cleanup.ts --where "company='Acme'" --json
 
 Prints what matches and deletes nothing until --confirm. A row taken with
 --confirm is gone: its staged answers and its resume files go with it, and no

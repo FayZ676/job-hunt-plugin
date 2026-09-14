@@ -5,9 +5,9 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 **1. Create the database.**
 
 ```bash
-CAREER=$(job-paths career)
+CAREER=$(cli/paths.ts career)
 mkdir -p "$CAREER/resumes/submitted"
-job-q "SELECT 1"
+cli/q.ts "SELECT 1"
 ```
 
 The schema applies on connect, so any command creates `$CAREER/job.db`. It starts empty — there is
@@ -16,7 +16,7 @@ starter list they would have to discover and correct.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
 NULL until answered — not something an interview adds to. They talk; you answer with
-`job-profile set`, one answer per call. If a form genuinely asks something no column covers, add the
+`cli/profile.ts set`, one answer per call. If a form genuinely asks something no column covers, add the
 field to `lib/core/schema.ts` and `ALTER TABLE` it into the live database.
 
 **Translate the answer into the column's shape**, rather than filing the sentence they said: "two
@@ -42,7 +42,7 @@ conversation. Cover:
   to type into a search box — a title they never take, a staffing firm, a former employer — because
   the search excludes them off this prose. **A fact `identity` or their work history already holds does not
   belong here** — where they live, remote preference, relocation, employment type, the floor, what
-  they have built. `job-score instructions` prints those above the prose, so restating them only
+  they have built. `cli/score.ts instructions` prints those above the prose, so restating them only
   gives the two a chance to disagree.
 - **Their experience.** The longest part and the one that matters most: `employers` → `projects` is
   **the only source a resume may draw from and the background every score is judged against**, so a
@@ -59,11 +59,11 @@ terms, `--not-title`, `--not-company` — is typed off them. Read the prose back
 mind. If you cannot fill an argument from it, that is a missing sentence, not a missing feature: ask
 for it, and add it to the prose in their words.
 
-**4. Check the tooling.** The npm dependencies and the linked `job-*` commands are what fetching
-and scoring run on; Typst and Poppler are only for the resume build.
+**4. Check the tooling.** The npm dependencies are what fetching and scoring run on; Typst and
+Poppler are only for the resume build.
 
 ```bash
-command -v job-search || echo 'npm install --prefix "$HOME/.claude/skills/job" && npm link --prefix "$HOME/.claude/skills/job"'
+[ -d "$HOME/.claude/skills/job/node_modules" ] || echo 'npm install --prefix "$HOME/.claude/skills/job"'
 command -v typst    || echo "brew install typst"
 command -v pdftoppm || echo "brew install poppler"
 ```

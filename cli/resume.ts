@@ -5,7 +5,7 @@ import { build } from "../lib/resume.ts";
 import { guard, action } from "./kit.ts";
 
 const SPEC_HELP = (types: string) =>
-  `A resume spec is content only -- job-resume owns every formatting decision.
+  `A resume spec is content only -- cli/resume.ts owns every formatting decision.
 
 {
   "name": "Ada Lovelace",
@@ -27,13 +27,13 @@ Section types:
 ${types}`;
 
 const { program } = action(
-  "job-resume",
+  "cli/resume.ts",
   `Build the tailored one-page PDF, and record it on the prospect.
 
-  job-resume spec                        the spec contract, and every section
-  job-resume build spec.json             render to spec.pdf
-  job-resume build spec.json --key KEY   render, then record the path
-  job-resume build spec.json out.pdf --density tight --keep-typ
+  cli/resume.ts spec                        the spec contract, and every section
+  cli/resume.ts build spec.json             render to spec.pdf
+  cli/resume.ts build spec.json --key KEY   render, then record the path
+  cli/resume.ts build spec.json out.pdf --density tight --keep-typ
 
 Recording stores an absolute path, because a relative one breaks the next run
 started somewhere else.`,

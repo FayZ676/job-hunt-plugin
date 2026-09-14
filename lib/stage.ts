@@ -43,7 +43,7 @@ export function add(key: string, filling: Filling): Staged {
   const row = one(Ready, "SELECT key, company, title, status, resume FROM prospects WHERE key=?", [key]);
   if (!row) throw new Error(`no prospect '${key}'`);
   requires("apply", key, row.status);
-  if (!row.resume) throw new Error(`${key} has no resume — build it first: job-resume build <spec> --key ${key}`);
+  if (!row.resume) throw new Error(`${key} has no resume — build it first: cli/resume.ts build <spec> --key ${key}`);
   if (!fs.existsSync(absolute(row.resume)))
     throw new Error(`the resume recorded for ${key} is not on disk: ${row.resume}`);
 

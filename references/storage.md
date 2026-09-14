@@ -8,7 +8,7 @@ moved to `submitted/` when an application goes out.
 where it is rather than resolving against the working directory:
 
 ```bash
-CAREER=$(job-paths career)
+CAREER=$(cli/paths.ts career)
 ```
 
 Default `~/data/job`; `JOB_CAREER_DIR` overrides it. **Paths stored in the database are absolute** —
@@ -19,17 +19,17 @@ a relative one breaks the next run started somewhere else.
 `postings` holds every job ever fetched. The fetch owns the columns the source filled, the search
 owns `disposition`, and the later actions own `status` and what follows it — disjoint columns on one
 row, so the raw record and the role being pursued cannot drift. `disposition` names the rule that
-ruled on each row, so "what did that rule cost me" is a query, and `job-search rule --redo` re-rules
+ruled on each row, so "what did that rule cost me" is a query, and `cli/search.ts rule --redo` re-rules
 what is stored instead of going back to the network. `prospects` is the view over the rows the search kept
 (`disposition='kept'`); it is what the later actions read.
 
 ```bash
-job-q --schema   # the manual: tables, views, CHECKs, triggers
-job-q "SELECT * FROM triage WHERE status='new'"
-job-q --json "SELECT * FROM staged"
+cli/q.ts --schema   # the manual: tables, views, CHECKs, triggers
+cli/q.ts "SELECT * FROM triage WHERE status='new'"
+cli/q.ts --json "SELECT * FROM staged"
 ```
 
-`$Q` stands for `job-q` throughout this skill and its references.
+`$Q` stands for `cli/q.ts` throughout this skill and its references.
 
 **Read `--schema` before writing SQL** — it documents every table, and its `CHECK`s make an invalid
 row impossible to write. One thing it does not say: **`triage` omits `description` on purpose.**

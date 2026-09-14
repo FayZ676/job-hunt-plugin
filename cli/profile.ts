@@ -3,7 +3,7 @@ import { printRows } from "../lib/core/table.ts";
 import { answers, clear, missing, set } from "../lib/profile.ts";
 import { action } from "./kit.ts";
 
-const { program, runs } = action("job-profile", "Read and answer the search profile.");
+const { program, runs } = action("cli/profile.ts", "Read and answer the search profile.");
 
 program
   .command("set")
