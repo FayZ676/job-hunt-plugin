@@ -5,8 +5,5 @@
 node_modules/
 *.tsbuildinfo
 
-# The dashboard, its own repository, checked out here.
-/dashboard/
-
 .env*
 npm-debug.log*

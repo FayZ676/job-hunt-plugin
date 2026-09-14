@@ -17,9 +17,6 @@ paths and connect, and everything Indeed, the browser and the resume build need 
 Beside it sits one file per action that has logic of its own: **`lib/x.ts` decides and returns a
 value, `cli/x.ts` parses argv and prints it**. `sql/logic.sql` is applied on every connect.
 
-**`exports` in `package.json` is the library's public surface.** Renaming or reshaping anything a
-listed module exports breaks whatever imports this package, so say so before doing it.
-
 ## Adding or changing an action
 
 **`lib/core/actions.ts` is the only place an action is declared.** Its `does` and `argument` render

@@ -15,5 +15,5 @@
     "allowImportingTsExtensions": true
   },
   "include": ["**/*.ts", "**/*.mts"],
-  "exclude": ["node_modules", "dashboard"]
+  "exclude": ["node_modules"]
 }

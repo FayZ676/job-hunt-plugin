@@ -8,23 +8,6 @@
   "engines": {
     "node": ">=22.18"
   },
-  "exports": {
-    "./actions": "./lib/core/actions.ts",
-    "./browser": "./lib/core/browser.ts",
-    "./cleanup": "./lib/cleanup.ts",
-    "./db": "./lib/core/db.ts",
-    "./root": "./lib/core/root.ts",
-    "./schema": "./lib/core/schema.ts"
-  },
-  "files": [
-    "SKILL.md",
-    "references",
-    "cli",
-    "lib",
-    "sql",
-    "assets",
-    ".mcp.json"
-  ],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",

@@ -86,5 +86,3 @@ function purgeKeys(matched: string[]): Purged {
 export const reckon = (where: string): Reckoning => reckonKeys(selected(where));
 
 export const purge = (where: string): Purged => purgeKeys(selected(where));
-
-export const purgeKey = (key: string): Purged => purgeKeys([key]);
