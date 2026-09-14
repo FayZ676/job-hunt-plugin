@@ -77,7 +77,11 @@ export async function descriptions(limit: number | null = null) {
     let empty = 0;
     for (const [n, row] of wanted.entries()) {
       const url = row.url ?? VIEWJOB + row.key.split(":")[1];
-      const raw = await visit<string>(held, url, "document.querySelector('#jobDescriptionText')?.innerHTML ?? null");
+      const raw = await visit<string>(
+        held,
+        url,
+        "document.querySelector('#jobDescriptionText, .simple-job-description-html')?.innerHTML ?? null",
+      );
       const text = htmlToText(raw).slice(0, MAX_DESCRIPTION_CHARS);
       if (text) {
         attach.run(text, row.key);

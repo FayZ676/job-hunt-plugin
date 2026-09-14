@@ -16,6 +16,7 @@ export const normCompany = (name: string | null | undefined) => norm((name ?? ""
 export function htmlToText(raw: string | null | undefined) {
   if (!raw) return "";
   let text = decodeHTML(String(raw));
+  text = text.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "");
   text = text.replace(/<br\s*\/?>/gi, "\n");
   text = text.replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n");
   text = text.replace(/<li[^>]*>/gi, "- ");
