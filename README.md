@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-<p align="center"><strong>The human way to automate a job search.</strong><br>It applies the way you would, and only where you say yes.</p>
+<p align="center"><strong>The human way to automate a job search.</strong><br>It applies the way you would, just much faster, and automatically.</p>
 
 Job hunting is the same four hours every day: scroll the listings, skip the ones that don't fit,
 rewrite your resume, retype your address into another form. `job` is a Claude Code skill that does
@@ -21,13 +21,13 @@ One command. It searches, scores, tailors, fills, and then asks you which ones t
 
 ## What It Does
 
-| Step | What happens |
-| ---- | ------------ |
+| Step          | What happens                                                                  |
+| ------------- | ----------------------------------------------------------------------------- |
 | **1. Search** | Searches Indeed in your own browser, the way you would. No API key, no quota. |
-| **2. Score** | Reads every new posting against what you said you want, and drops the rest. |
-| **3. Tailor** | Builds a resume for each posting worth your time, from your real experience. |
-| **4. Fill** | Opens the application on the employer's own site and fills it in. |
-| **5. Submit** | Sends only the ones you name. Everything else waits. |
+| **2. Score**  | Reads every new posting against what you said you want, and drops the rest.   |
+| **3. Tailor** | Builds a resume for each posting worth your time, from your real experience.  |
+| **4. Fill**   | Opens the application on the employer's own site and fills it in.             |
+| **5. Submit** | Sends only the ones you name. Everything else waits.                          |
 
 Each step also runs on its own: `/job search`, `/job score`, `/job resume`, `/job apply`, `/job submit`.
 
@@ -46,15 +46,15 @@ tell. `job` does what you would do, only faster.
 
 ## Why This One
 
-|                                           | job | career-ops | ApplyPilot |
-| ----------------------------------------- | :-: | :--------: | :--------: |
-| Finds, scores, and tailors                | ✅  |     ✅     |     ✅     |
-| Fills and submits the application         | ✅  |     ❌     |     ✅     |
-| Searches in your browser, like a person   | ✅  |     ❌     |     ❌     |
-| Asks before every submit                  | ✅  |     ➖     |     ❌     |
-| Screening answers only from your profile  | ✅  |     ➖     |     ❌     |
-| Leaves captchas to a human                | ✅  |     ➖     |     ❌     |
-| No API key                                | ✅  |     ✅     |     ❌     |
+|                                          |  job  | career-ops | ApplyPilot |
+| ---------------------------------------- | :---: | :--------: | :--------: |
+| Finds, scores, and tailors               |   ✅   |     ✅      |     ✅      |
+| Fills and submits the application        |   ✅   |     ❌      |     ✅      |
+| Searches in your browser, like a person  |   ✅   |     ❌      |     ❌      |
+| Asks before every submit                 |   ✅   |     ➖      |     ❌      |
+| Screening answers only from your profile |   ✅   |     ➖      |     ❌      |
+| Leaves captchas to a human               |   ✅   |     ➖      |     ❌      |
+| No API key                               |   ✅   |     ✅      |     ❌      |
 
 ## Quick Start
 
@@ -75,12 +75,12 @@ Needs Node 22.18+ and a Chrome-family browser. For resumes, add `brew install ty
 
 ## Where It Applies
 
-| Site | |
-| ---- | - |
-| Greenhouse, Ashby | Filled and submitted |
-| Workday | Filled and submitted, once you have an account with that employer |
-| Lever | Filled; you click submit past its captcha |
-| Anything else | Opened for you, one at a time |
+| Site              |                                                                   |
+| ----------------- | ----------------------------------------------------------------- |
+| Greenhouse, Ashby | Filled and submitted                                              |
+| Workday           | Filled and submitted, once you have an account with that employer |
+| Lever             | Filled; you click submit past its captcha                         |
+| Anything else     | Opened for you, one at a time                                     |
 
 ## FAQ
 
