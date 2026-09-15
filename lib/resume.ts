@@ -27,7 +27,7 @@ export function build(
   options: { density: string; keepTyp?: boolean; key?: string },
 ): Built {
   if (spawnSync("which", ["typst"], { stdio: "ignore" }).status !== 0)
-    throw new Error("typst not found: brew install typst");
+    throw new Error("typst not found: install it from https://github.com/typst/typst#installation");
 
   const density = options.density as Density;
   if (!(density in DENSITY))

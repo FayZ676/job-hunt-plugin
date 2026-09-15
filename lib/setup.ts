@@ -63,13 +63,21 @@ Rules:
 - Plain text, no preamble. I will paste your answer somewhere else.`;
 
 const TOOLS = [
-  { command: "typst", install: "brew install typst" },
-  { command: "pdftoppm", install: "brew install poppler" },
+  {
+    command: "typst",
+    macos: "brew install typst",
+    elsewhere: "typst, from https://github.com/typst/typst#installation",
+  },
+  {
+    command: "pdftoppm",
+    macos: "brew install poppler",
+    elsewhere: "poppler-utils, from the system package manager",
+  },
 ];
 
 export const uninstalled = () =>
   TOOLS.filter(({ command }) => spawnSync("sh", ["-c", `command -v ${command}`]).status !== 0).map(
-    ({ install }) => install,
+    ({ macos, elsewhere }) => (process.platform === "darwin" ? macos : elsewhere),
   );
 
 export function progress() {
