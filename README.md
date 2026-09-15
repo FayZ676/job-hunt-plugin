@@ -7,45 +7,49 @@
 
 <p align="center"><strong>The human way to automate job searching</strong></p>
 
-A Claude Code skill that automates the entire job application process, from building your first resume to filling out your last job application. Free and open source. Runs in Claude Code on macOS and Linux.
+A Claude Code skill that finds jobs for you, writes a resume for each one, and fills out the application so all you have to do is submit it. Free and open source. Works on macOS and Linux.
 
 ## How it works
 
-1. **`/job setup`** interviews you and builds your profile. Give it your resume, LinkedIn, GitHub, Blog, Personal Website, or any other source, and it turns all of it into a structured profile.
-2. **`/job search`** searches Indeed for new openings, in your own browser, then reads each one against what you want and shortlists the good fits.
-3. **`/job resume`** writes a resume for each shortlisted posting from your actual experience.
-4. **`/job apply`** fills in the employer's application form, in your own browser and leaves it for you to review and submit.
+1. **`/job setup`** asks about your work history and what you're looking for. Give it your resume, LinkedIn, GitHub, website, or anything else that describes your work.
+2. **`/job search`** searches Indeed for new jobs in your own browser, compares each one to what you want, and picks the best matches.
+3. **`/job resume`** writes a resume for each of those jobs, using only your real experience.
+4. **`/job apply`** opens each employer's application, fills it in, and leaves it open for you to check and submit.
 
-If all of that is still too much to keep track of, the `/job` command runs everything automatically.
+Or run `/job` to do all four in order.
 
 ## How it compares
 
-|                                               |  job   | [career-ops](https://github.com/career-ops-hq/career-ops) | [ai-job-search](https://github.com/MadsLorentzen/ai-job-search) | [ApplyPilot](https://github.com/Pickle-Pixel/ApplyPilot) |
-| --------------------------------------------- | :----: | :------------------------------------------------------: | :-------------------------------------------------------------: | :------------------------------------------------------: |
-| Finds openings, scores them, tailors a resume |   ✅   |                            ✅                            |                               ✅                                |                            ✅                            |
-| Fills the employer's application form         |   ✅   |                            ✅                            |                               ❌                                |                            ✅                            |
-| Search to filled form in one command          |   ✅   |                            ❌                            |                               ❌                                |                            ✅                            |
-| Searches the job board in your own browser    |   ✅   |                            ❌                            |                               ❌                                |                            ❌                            |
-| You submit every application                  |   ✅   |                            ✅                            |                               ✅                                |                            ❌                            |
-| Leaves captchas to you                        |   ✅   |                            ✅                            |                               ✅                                |                            ❌                            |
-| No API key                                    |   ✅   |                            ✅                            |                               ✅                                |                            ❌                            |
-| Lines of instructions the agent follows       | ~1,000 |                          ~9,000                          |                             ~6,000                              |                            —                             |
+|                                                  | job | [career-ops](https://github.com/career-ops-hq/career-ops) | [ai-job-search](https://github.com/MadsLorentzen/ai-job-search) | [ApplyPilot](https://github.com/Pickle-Pixel/ApplyPilot) |
+| ------------------------------------------------ | :-: | :------------------------------------------------------: | :-------------------------------------------------------------: | :------------------------------------------------------: |
+| Fills out the application for you                | ✅  |                            ✅                            |                               ❌                                |                            ✅                            |
+| Nothing is sent until you review and submit it   | ✅  |                            ✅                            |                               ✅                                |                            ❌                            |
+| One command takes you from search to application | ✅  |                            ❌                            |                               ❌                                |                            ✅                            |
+| No API key to set up                             | ✅  |                            ✅                            |                               ✅                                |                            ❌                            |
+| Works on Windows                                 | ❌  |                            ✅                            |                               ✅                                |                        Not stated                        |
+| Works with coding agents besides Claude Code     | ❌  |                            ✅                            |                           Search only                           |                            ❌                            |
+| Lines of prompt | ~1,000 lines |                       ~9,000 lines                       |                          ~6,000 lines                           |                            —                             |
 
-Checked against each project's own documentation, September 2026.
+Based on each project's own documentation, as of September 2026.
 
 ## Getting started
 
-```
-git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
-cd ~/.claude/skills/job && npm install
-```
+You'll need [Claude Code](https://claude.com/claude-code), Node 22.18 or newer, and Chrome (or a browser built on it, like Edge or Brave).
 
-Then run `/job setup` in Claude Code. Setup is a conversation: point it at your resume, LinkedIn
-profile, or GitHub, it drafts your profile, and you correct what it got wrong.
+1. **Install the skill:**
 
-You'll need Node 22.18+, a Chrome-family browser, and for resumes,
-[Typst](https://github.com/typst/typst#installation) and Poppler. Setup checks for them and installs
-what's missing.
+   ```
+   git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
+   cd ~/.claude/skills/job && npm install
+   ```
+
+2. **Run `/job setup` in Claude Code.** Give it your resume, LinkedIn, or GitHub. It writes up your
+   profile, and you fix anything it got wrong. It also checks for
+   [Typst](https://github.com/typst/typst#installation) and Poppler, which it needs to make resume
+   PDFs, and tells you how to install whichever is missing.
+
+3. **Run `/job`.** It finds jobs, ranks them, writes resumes, and leaves filled-in applications open
+   in your browser for you to submit.
 
 ## The dashboard
 
@@ -54,36 +58,37 @@ what's missing.
   <img alt="The job list beside a run asking for input" src="assets/dashboard-jobs-light.png">
 </picture>
 
-Prefer a UI to a Terminal? The job dashboard is a local web app built on top of the skill.
+Rather not use the terminal? The dashboard is an app that runs in your browser, on your own computer,
+and lets you do the same things with buttons.
 
-- **No commands to type.** Every action is a button next to the job it applies to.
-- **Sorted by what it needs from you.** Each opening shows why it scored the way it did, next to the
+- **No commands.** Each job has a button for its next step.
+- **Jobs that need you come first.** Each job shows why it was ranked where it was, next to the
   resume written for it.
-- **A profile you edit in place.** Anything an application will ask for that you haven't answered
-  is flagged before it blocks one.
-- **Runs on your machine.** No account, no server. It reads the same database the skill writes.
+- **Edit your profile directly.** It shows which application questions you haven't answered yet,
+  before they hold up an application.
+- **Runs on your computer.** No account needed. It uses the same data as the skill.
 
-The dashboard is in private access. [Request access](https://github.com/FayZ676/job-hunt-dashboard).
+The dashboard is invite-only for now. [Request access](https://github.com/FayZ676/job-hunt-dashboard).
 
 ## Questions
 
 **Where does my data go?**
-It stays on your machine, in one SQLite file under `~/data/job/`.
+It stays on your computer, in a single database file in `~/data/job/`.
 
 **What if it keeps showing me the wrong jobs?**
-Tell it what's off with `/job feedback`, in plain words. `/job help` lists every command.
+Run `/job feedback` and describe what's wrong. `/job help` lists every command.
 
 **What does it cost?**
-The code is MIT licensed. It runs on the Claude Code plan you already pay for.
+Nothing extra. It's free and uses the Claude Code plan you already have.
 
 **Does it work on Windows?**
-It hasn't been tested there. If Chrome isn't found, set `JOB_BROWSER_PATH` to its `.exe`, and please
-open an issue with whatever else breaks.
+It hasn't been tested on Windows. If it can't find Chrome, set `JOB_BROWSER_PATH` to the location of
+`chrome.exe`. Please open an issue for anything else that breaks.
 
 ## Disclaimer
 
-`job` runs locally and isn't a hosted service. What you approve is yours, and so is following the
-terms of the sites it visits.
+`job` runs on your computer. It isn't an online service. You're responsible for the applications you
+submit and for following the rules of the sites it uses.
 
 ## License
 
