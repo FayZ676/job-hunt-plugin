@@ -7,6 +7,13 @@
 
 <p align="center"><strong>The human way to automate job searching</strong></p>
 
+<p align="center">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-blue"></a>
+  <a href="https://claude.com/claude-code"><img alt="Built for Claude Code" src="https://img.shields.io/badge/built%20for-Claude%20Code-d97757"></a>
+  <a href="https://nodejs.org"><img alt="Node 22.18+" src="https://img.shields.io/badge/node-22.18%2B-339933"></a>
+  <img alt="macOS and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey">
+</p>
+
 A Claude Code skill that automates the entire job application process, from writing your first resume to submitting your last job application. Free and open source. Works on macOS and Linux.
 
 ## How it works
