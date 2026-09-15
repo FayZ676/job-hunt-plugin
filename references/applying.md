@@ -15,6 +15,11 @@ when a row in `projects` plainly answers it — then answer and cite that projec
 there to check. A question needing a project that is not in `projects` is a question for the user,
 not an inference.
 
+**What they answer is written to the profile before the field is filled** — the project, number or
+detail onto the row it belongs to, per `references/storage.md`. The form holds this application's
+wording; the fact itself left only in the conversation is unsupported on the next resume and the
+next form, and is asked again or silently dropped.
+
 ## Reaching the form
 
 **Every row arrives from Indeed**, so its `url` is a listing, not an application form. Resolving it

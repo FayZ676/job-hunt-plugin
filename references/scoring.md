@@ -29,9 +29,15 @@ and the score is wrong** — do not quietly compensate for prose you would have 
 2. **Read the description of everything you will score.** Scoring off a title is the failure this
    action exists to prevent — a "Software Engineer" JD that is 80% LLM work beats a "Senior AI
    Engineer" req that is really data plumbing.
-3. **Apply the hard stops first.** One of theirs is a zero regardless of how well the rest reads, and
+3. **Weigh the JD's requirements before reading the history against them.** Decide what the posting
+   actually requires, and how much, from its own wording and structure — must-have language, the
+   Requirements section versus Preferred — then check each against the projects. Weighing after
+   matching drifts toward rating what they have as important and what they lack as minor. A weight
+   the JD does not state is a guess, and a guess never makes a missing requirement decisive: that
+   error costs an application they should have made.
+4. **Apply the hard stops first.** One of theirs is a zero regardless of how well the rest reads, and
    no amount of good elsewhere trades against it.
-4. **Score every prospect, the rejects included.** An unscored row stays `new` and comes back
+5. **Score every prospect, the rejects included.** An unscored row stays `new` and comes back
    tomorrow, so skipping the obvious no is a decision you pay for again every morning.
 
 ## The scale

@@ -107,6 +107,9 @@ Each is a defect that reached a built resume, one of them a submitted one.
    evidence for the JD's first requirement is the first bullet under the current role.
 5. **The rendered image was looked at**, not just the page count, and the page is full — more than
    ~0.75in of blank foot means content was left out.
+6. **The text layer reads as the page does.** A parser reads the extracted text, not the image, and
+   a PDF that renders cleanly can still extract with the email or phone missing, lines interleaved,
+   or glyphs garbled. Every scan term from step 1 placed in a bullet is found in the extraction.
 
 ## Format and length
 
@@ -139,6 +142,7 @@ technical terms and is the easiest thing to miss.
 
 ```bash
 pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
+pdftotext "$CAREER/resumes/<slug>.pdf" -                       # what a parser reads
 ```
 
 `lib/core/typst.ts` owns every formatting decision; a layout change belongs there, so every future
@@ -151,7 +155,9 @@ wording so bullets stop before wrapping one word onto a new line; margins in the
 0.4in.
 
 Build with `--key` or the PDF is written and nothing is recorded. Then give the gap report, and
-offer, without doing, to write anything newly surfaced back into the profile tables. **A cover
+offer, without doing, to write anything newly surfaced back into the profile tables. What the user
+confirms is written that turn: a fact left in the conversation is unsupported on the next build, and
+drops off every resume after it without anyone noticing. **A cover
 letter is written only where the application asks for one** — never offered alongside a resume.
 
 ## The spec

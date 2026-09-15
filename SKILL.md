@@ -73,7 +73,8 @@ if the tools reach no browser, run `cli/browser.ts`.
 
 **What a command needs and the profile does not hold, ask for.** Read the profile first; if the
 answer is not there and the user did not say it, ask them — never infer it, and never let a value
-they would have chosen come from a fallback.
+they would have chosen come from a fallback. An answer that is a fact about them goes into the
+profile that turn, or the next run asks again.
 
 ```bash
 $Q --schema                  # every table, view, CHECK and trigger; $Q is cli/q.ts
