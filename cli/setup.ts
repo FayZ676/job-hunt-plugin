@@ -1,6 +1,6 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { answers } from "../lib/profile.ts";
-import { HANDOFF, PARTS, progress, uninstalled } from "../lib/setup.ts";
+import { connectBrowserTools, HANDOFF, PARTS, progress } from "../lib/setup.ts";
 import { action } from "./kit.ts";
 
 const { program, runs } = action(
@@ -15,7 +15,8 @@ program
   .description("create the database, and the line that opens setup — run once, before the first part")
   .action(
     runs(() => {
-      for (const install of uninstalled()) console.log(`install: ${install}`);
+      if (connectBrowserTools())
+        console.log("say: I added the browser tools. Restart Claude Code after setup so it can fill applications.");
       const { next } = progress();
       if (next === -1) return console.log("say: Setup is already done.");
       const opener = answers().length

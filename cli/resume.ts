@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import { open } from "../lib/core/db.ts";
 import { DEFAULT_MARGINS, DENSITY, FONTS, SECTION_TYPES } from "../lib/core/typst.ts";
-import { build } from "../lib/resume.ts";
+import { build, text } from "../lib/resume.ts";
 import { guard, action } from "./kit.ts";
 
 const SPEC_HELP = (types: string) =>
@@ -34,6 +34,7 @@ const { program } = action(
   cli/resume.ts build spec.json             render to spec.pdf
   cli/resume.ts build spec.json --key KEY   render, then record the path
   cli/resume.ts build spec.json out.pdf --density tight --keep-typ
+  cli/resume.ts text out.pdf                the text a parser reads
 
 Recording stores an absolute path, because a relative one breaks the next run
 started somewhere else.`,
@@ -61,9 +62,9 @@ program
   .option("--density <density>", `one of ${Object.keys(DENSITY).join(", ")}`, "normal")
   .option("--keep-typ", "write the .typ alongside the PDF")
   .action(
-    guard((specPath: string, outPath: string | undefined, options) => {
+    guard(async (specPath: string, outPath: string | undefined, options) => {
       if (options.key) open(program.opts().db);
-      const built = build(specPath, outPath, {
+      const built = await build(specPath, outPath, {
         density: options.density,
         keepTyp: options.keepTyp,
         key: options.key,
@@ -72,5 +73,11 @@ program
       if (built.recorded !== null) console.log(`recorded on ${options.key} (${built.recorded})`);
     }),
   );
+
+program
+  .command("text")
+  .description("print the PDF's text as an application tracker's parser reads it")
+  .argument("<pdf>")
+  .action(guard(async (pdfPath: string) => console.log(await text(pdfPath))));
 
 program.parseAsync();

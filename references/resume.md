@@ -107,9 +107,9 @@ Each is a defect that reached a built resume, one of them a submitted one.
    evidence for the JD's first requirement is the first bullet under the current role.
 5. **The rendered image was looked at**, not just the page count, and the page is full — more than
    ~0.75in of blank foot means content was left out.
-6. **The text layer reads as the page does.** A parser reads the extracted text, not the image, and
-   a PDF that renders cleanly can still extract with the email or phone missing, lines interleaved,
-   or glyphs garbled. Every scan term from step 1 placed in a bullet is found in the extraction.
+6. **The text a parser reads says what the page says.** A parser reads the extracted text, not the
+   image: lines out of order or garbled glyphs pass a look at the page. Every scan term from step 1
+   placed in a bullet is found in `cli/resume.ts text`.
 
 ## Format and length
 
@@ -140,10 +140,7 @@ technical terms and is the easiest thing to miss.
 
 ## Build
 
-```bash
-pdftoppm -jpeg -r 95 "$CAREER/resumes/<slug>.pdf" /tmp/page   # then read /tmp/page-1.jpg
-pdftotext "$CAREER/resumes/<slug>.pdf" -                       # what a parser reads
-```
+Read the built PDF to see the page.
 
 `lib/core/typst.ts` owns every formatting decision; a layout change belongs there, so every future
 resume inherits it.

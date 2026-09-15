@@ -6,10 +6,8 @@ Run when `$CAREER` is missing, or when the user asks for setup.
 `npm install --prefix "$HOME/.claude/skills/job"` first — no script runs without it. Then run
 `cli/setup.ts start`, and `cli/setup.ts next` at every part boundary. **Show each `say:` line
 verbatim, and never announce a part, a time, or progress in your own words** — the script owns the
-pacing, so the user sees one map rather than two that disagree. Run what `install:` prints without
-bringing it up; where it names a package rather than a command, install that with this machine's
-package manager. The database starts empty, with no seed: what the search looks for comes out of the
-interview, in their words.
+pacing, so the user sees one map rather than two that disagree. The database starts empty, with no
+seed: what the search looks for comes out of the interview, in their words.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
 NULL until answered — not something an interview adds to. They talk; you answer with

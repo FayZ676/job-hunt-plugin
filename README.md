@@ -7,7 +7,7 @@
 
 <p align="center"><strong>The human way to automate job searching</strong></p>
 
-A Claude Code skill that finds jobs for you, writes a resume for each one, and fills out the application so all you have to do is submit it. Free and open source. Works on macOS and Linux.
+A Claude Code skill that automates the entire job application process, from writing your first resume to submitting your last job application. Free and open source. Works on macOS and Linux.
 
 ## How it works
 
@@ -34,19 +34,16 @@ Based on each project's own documentation, as of September 2026.
 
 ## Getting started
 
-You'll need [Claude Code](https://claude.com/claude-code), Node 22.18 or newer, and Chrome (or a browser built on it, like Edge or Brave).
+You'll need [Claude Code](https://claude.com/claude-code), Node 22.18 or newer, and Chrome, Chromium, or Edge.
 
 1. **Install the skill:**
 
    ```
    git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
-   cd ~/.claude/skills/job && npm install
    ```
 
 2. **Run `/job setup` in Claude Code.** Give it your resume, LinkedIn, or GitHub. It writes up your
-   profile, and you fix anything it got wrong. It also checks for
-   [Typst](https://github.com/typst/typst#installation) and Poppler, which it needs to make resume
-   PDFs, and tells you how to install whichever is missing.
+   profile, and you fix anything it got wrong.
 
 3. **Run `/job`.** It finds jobs, ranks them, writes resumes, and leaves filled-in applications open
    in your browser for you to submit.

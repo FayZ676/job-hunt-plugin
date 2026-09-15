@@ -1,7 +1,31 @@
 import { spawnSync } from "node:child_process";
+import os from "node:os";
+
 import { z } from "zod";
 
+import { ENDPOINT } from "./core/browser.ts";
 import { rows } from "./core/db.ts";
+
+const BROWSER_TOOLS = ["npx", "@playwright/mcp@latest", "--cdp-endpoint", ENDPOINT];
+
+const claude = (args: string[]) => spawnSync("claude", args, { cwd: os.homedir(), encoding: "utf8" });
+
+export function connectBrowserTools() {
+  const adding = `claude mcp add --scope user playwright -- ${BROWSER_TOOLS.join(" ")}`;
+  const configured = claude(["mcp", "get", "playwright"]);
+  if (configured.error) throw new Error(`claude is not on PATH, so the browser tools were not added. Run: ${adding}`);
+  if (configured.status === 0) {
+    if (configured.stdout.includes(ENDPOINT)) return false;
+    const removing = configured.stdout.match(/run: (claude mcp remove .+)/)?.[1] ?? "claude mcp remove playwright";
+    throw new Error(
+      `an MCP server named playwright is already configured without --cdp-endpoint ${ENDPOINT}, so it would ` +
+        `open a browser of its own rather than the one cli/browser.ts runs. Run ${removing}, then: ${adding}`,
+    );
+  }
+  const added = claude(["mcp", "add", "--scope", "user", "playwright", "--", ...BROWSER_TOOLS]);
+  if (added.status) throw new Error(`adding the browser tools failed:\n${added.stderr}`);
+  return true;
+}
 
 const listed = (sql: string) => rows(z.object({ item: z.string() }), sql).map((row) => row.item);
 
@@ -61,24 +85,6 @@ Rules:
 - Mark each number as measured or estimated.
 - Leave out anything confidential: customer names, internal codenames, unreleased products, credentials, and figures my employer would not want shared. Describe the work in general terms instead.
 - Plain text, no preamble. I will paste your answer somewhere else.`;
-
-const TOOLS = [
-  {
-    command: "typst",
-    macos: "brew install typst",
-    elsewhere: "typst, from https://github.com/typst/typst#installation",
-  },
-  {
-    command: "pdftoppm",
-    macos: "brew install poppler",
-    elsewhere: "poppler-utils, from the system package manager",
-  },
-];
-
-export const uninstalled = () =>
-  TOOLS.filter(({ command }) => spawnSync("sh", ["-c", `command -v ${command}`]).status !== 0).map(
-    ({ macos, elsewhere }) => (process.platform === "darwin" ? macos : elsewhere),
-  );
 
 export function progress() {
   const parts = PARTS.map((part) => ({ ...part, remaining: part.left() }));
