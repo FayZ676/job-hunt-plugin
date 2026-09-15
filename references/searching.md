@@ -42,8 +42,7 @@ Write the URLs one per line, then hand the file over:
 cli/search.ts run --queries queries.txt --not-title intern
 ```
 
-**Wait for it, and go on to scoring in the same breath** — that is the point of one command doing
-the whole pass. It prints a line per page, so watch it rather than guessing at it.
+**Wait for it.** It prints a line per page, so watch it rather than guessing at it.
 
 **A run is roughly five seconds a posting, so give the call a timeout that fits** — a hundred
 postings is around eight minutes. Past what one call can hold, pass `--limit` and run it again;

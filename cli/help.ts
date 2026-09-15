@@ -5,7 +5,7 @@ const ELSEWHERE = [{ id: "help", argument: "", does: "this message" }];
 
 const NOTES = [
   "run `/job setup` first — every other command is a no-op until $CAREER exists",
-  "nothing is submitted without your approval, named by you, in that run",
+  "nothing is submitted — you review the filled form and submit it in the browser",
   "a field your profile does not answer is left empty and reported, never guessed",
   "everything lives in $CAREER/job.db (default ~/data/job, JOB_CAREER_DIR overrides)",
   "searching is an Indeed harvest you drive in the browser — see references/searching.md",
@@ -36,7 +36,7 @@ const folded = (text: string, room: number) => {
 };
 
 console.log(`job — harvest Indeed for openings, score them, tailor a resume,
-      stage the application, and submit what you approve.
+      and fill the application for you to submit.
 
 usage: /job [command] [argument]
 

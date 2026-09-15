@@ -1,7 +1,7 @@
 # Application forms per ATS
 
 Reaching, reading and filling a form with the Playwright MCP tools. This action ends with the form
-filled and staged; `cli/submit.ts` is what clicks.
+filled and staged; the user submits.
 
 ## Who answers a field
 
@@ -137,8 +137,7 @@ at the end of the first page and record the page count.
 ## Lever specifics
 
 **hCaptcha gates the submit button**, and fires only on that click, so the form still fills
-unattended. Fill it, save the staged record, and hand the open tab over: on a Lever posting,
-`cli/submit.ts` means *they* click submit. A challenge that renders while filling is invariant 7.
+unattended. A challenge that renders while filling is invariant 6.
 
 **The resume input is hidden and overlaid by the captcha iframe**, so a normal click times out with
 "subtree intercepts pointer events". Click it through the page instead:

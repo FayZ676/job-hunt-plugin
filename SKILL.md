@@ -1,35 +1,32 @@
 ---
 name: job
-description: Searches Indeed in the browser for new openings, scores them against the search profile, builds a tailored resume for each shortlist, fills the application form, and submits what the user approves. Use when the user says "run the job routine", "search and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
-argument-hint: [setup|search|score [key]|resume [JD|url|key]|apply [key|url]|submit [key]|cleanup <what to remove>|feedback <what is wrong>|help]
+description: Searches Indeed in the browser for new openings, scores them against the search profile, builds a tailored resume for each shortlist, and fills the application form for the user to submit in the browser. Use when the user says "run the job routine", "search and apply", "any new openings", "apply to these", asks for the morning job search, or wants a resume tailored to one posting. `/job setup` on first use, `/job help` for the command list.
+argument-hint: [setup|search|resume [JD|url|key]|apply [key|url]|cleanup <what to remove>|feedback <what is wrong>|help]
 ---
 
 # Job routine
 
-**search → score → resume → stage → submit.** The deliverable is submitted applications, recorded. A
-run that stages four and submits none has not finished; it is waiting on the user.
+**search → resume → stage.** The deliverable is filled applications, left open in the
+browser for the user to review and submit.
 
 ## Invariants
 
 Nothing below overrides these.
 
-1. **Everything up to the submit click is unattended. The submit click never is, and neither is a
-   delete.** Submit only what the user names, in that run. Silence is not approval, and an
-   unapproved application stays staged rather than going out on a later run.
+1. **Never click submit, and never delete unattended.** The user submits every application
+   themselves, in the browser.
 2. **Never write an answer the profile does not support.** `NULL` is a hard stop: leave the field
    empty and report it — `cli/profile.ts missing` lists every one that will block an application.
    Never infer a phone number, a salary, or a demographic answer.
 3. **Answer to the truth, including when it costs the application.** A commitment in the profile is
    a ceiling, not an opening position.
-4. **`applied` requires a confirmation page you have seen.** Clicking the button is not evidence.
-5. **Essays and screening answers are drafted, never auto-accepted.**
-6. **Chat output is minimal.** Only two things belong in chat: the submit approval prompt, and
-   whatever blocks progress and needs the user — named specifically, which role and which field. No
+4. **Essays and screening answers are drafted, never auto-accepted.**
+5. **Chat output is minimal.** Only what blocks progress and needs the user belongs in chat — named specifically, which role and which field. No
    progress narration, no action transitions, no summaries; the database is the record. A run with
    nothing to ask about produces no chat output at all. `/job help`, `/job feedback` and
    `/job setup` are the exceptions — feedback is answered with what changed, and setup is an
    interview paced by `cli/setup.ts`.
-7. **A captcha, or anything else asking for a human, stops the run the moment it appears.** A
+6. **A captcha, or anything else asking for a human, stops the run the moment it appears.** A
    challenge checkbox or puzzle, a "verify you are human" or press-and-hold page, a Cloudflare
    interstitial, a one-time code sent to the user's email or phone. Never attempt it and never route
    around it: no reload, no new tab, no search for another copy of the form, no moving on to the next
@@ -42,11 +39,9 @@ Nothing below overrides these.
 | ---------- | ---- | ---------- |
 | `/job setup` | First-run setup | `references/setup.md` |
 | `/job` | Every action, in order | each action's file, as it starts |
-| `/job search` | Harvest Indeed in the browser, and rule on what came back | `references/searching.md` |
-| `/job score [key]` | Score every prospect, or the one named | `references/scoring.md` |
+| `/job search` | Harvest Indeed in the browser, rule on what came back, then score every prospect | `references/searching.md`, then `references/scoring.md` |
 | `/job resume [JD, URL, or key]` | Build a resume for every `shortlisted` posting, or the one named | `references/resume.md` |
-| `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named, stopping before submit | `references/applying.md` |
-| `/job submit [key]` | Submit what is staged, or the one named | `references/submitting.md` |
+| `/job apply [key or URL]` | Resume, then stage, every `shortlisted` posting, or the one named | `references/applying.md` |
 | `/job cleanup <what to remove>` | Remove postings, and their resumes, from the database | `references/cleanup.md` |
 | `/job feedback <what is wrong>` | Change what produced it — instructions, profile, or this skill | `references/feedback.md` |
 | `/job help` | `cli/help.ts` and nothing else — no run, no queries, no commentary | |

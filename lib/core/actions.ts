@@ -10,7 +10,7 @@ export type Action = {
 export const ACTIONS: Action[] = [
   {
     id: "all",
-    does: "Run all actions: search, score, resume, stage, submit",
+    does: "Run all actions: search, resume, stage",
     argument: "",
     accepts: [],
   },
@@ -22,15 +22,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: "search",
-    does: "Search Indeed for new job openings",
+    does: "Search Indeed for new job openings, then score them",
     argument: "[terms]",
     accepts: [],
-  },
-  {
-    id: "score",
-    does: "Score one or more job openings",
-    argument: "[key]",
-    accepts: ["new", "shortlisted", "skipped"],
   },
   {
     id: "resume",
@@ -43,12 +37,6 @@ export const ACTIONS: Action[] = [
     does: "Fill out a job application",
     argument: "[key or URL]",
     accepts: ["new", "shortlisted", "skipped", "staged"],
-  },
-  {
-    id: "submit",
-    does: "Submit a filled out job application",
-    argument: "[key]",
-    accepts: ["staged"],
   },
   {
     id: "cleanup",

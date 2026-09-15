@@ -21,7 +21,7 @@ value, `cli/x.ts` parses argv and prints it**. `sql/logic.sql` is applied on eve
 
 **`lib/core/actions.ts` is the only place an action is declared.** Its `does` and `argument` render
 `cli/help.ts`, and its `accepts` is the statuses a posting must be in for that action to be allowed,
-which `requires()` enforces in `lib/stage.ts` and `lib/submit.ts`. A status outside the enum in
+which `requires()` enforces in `lib/stage.ts`. A status outside the enum in
 `schema.ts` will not typecheck.
 
 ## The search half

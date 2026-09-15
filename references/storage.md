@@ -1,8 +1,7 @@
 # Storage
 
 One convention: `$CAREER/job.db` — postings, prospects, staged applications, and the user's whole
-profile are rows in it. The filesystem holds only built PDFs: `$CAREER/resumes/`,
-moved to `submitted/` when an application goes out.
+profile are rows in it. The filesystem holds only built PDFs: `$CAREER/resumes/`.
 
 **`$CAREER` is a fixed absolute directory, so `/job` runs identically from anywhere.** Ask the skill
 where it is rather than resolving against the working directory:

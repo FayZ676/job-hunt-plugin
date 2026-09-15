@@ -1,7 +1,4 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import fs from "node:fs";
-
-import { SUBMITTED } from "../lib/core/db.ts";
 import { answers } from "../lib/profile.ts";
 import { HANDOFF, PARTS, progress, uninstalled } from "../lib/setup.ts";
 import { action } from "./kit.ts";
@@ -18,7 +15,6 @@ program
   .description("create the database, and the line that opens setup — run once, before the first part")
   .action(
     runs(() => {
-      fs.mkdirSync(SUBMITTED, { recursive: true });
       for (const install of uninstalled()) console.log(`install: ${install}`);
       const { next } = progress();
       if (next === -1) return console.log("say: Setup is already done.");
