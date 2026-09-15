@@ -39,7 +39,7 @@ You'll need [Claude Code](https://claude.com/claude-code), Node 22.18 or newer, 
 1. **Install the skill:**
 
    ```
-   git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
+   git clone https://github.com/FayZ676/job-skill.git ~/.claude/skills/job
    ```
 
 2. **Run `/job setup` in Claude Code.** Give it your resume, LinkedIn, or GitHub. It writes up your
