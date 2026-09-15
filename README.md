@@ -1,51 +1,42 @@
 # job
 
-A Claude Code skill that runs your job search end to end: it searches Indeed in your browser, scores
-every new opening against your profile, tailors a resume for the ones worth applying to, fills the
-application form on the employer's own ATS, and submits only what you approve.
+**Wake up to applications ready to send.**
 
-Indeed is navigated the way a person would, so there is no API key to get, no search quota, and no
-bill — and no list of employers to maintain, since the queries you search are the whole reach.
-Applications are resolved back to the employer's own form: Greenhouse and Ashby are driven all the
-way to submitted, Workday too once you have made an account with that employer, Lever is filled for
-you but its hCaptcha leaves the submit click to you, and the rest are opened one at a time.
+Job hunting is the same four hours every day: scroll the listings, skip the ones that don't fit,
+rewrite your resume, retype your address into another form. `job` is a Claude Code skill that does
+all of it, and stops at the one step that should stay yours — clicking submit.
 
 ```
 /job
 ```
 
-Five actions — search, score, resume, stage, submit — over one SQLite database. `/job` runs them in
-order; any one also runs on its own. It never submits without your approval for that application,
-and never writes an answer your profile doesn't support.
+1. **Searches** Indeed in your own browser. No API key, no quota, no bill.
+2. **Scores** every new opening against what you told it you want, and drops the rest.
+3. **Tailors** a resume to each posting worth your time.
+4. **Fills** the application on the employer's own site — Greenhouse, Ashby, Workday, Lever.
+5. **Submits** only the ones you approve, by name.
 
-## Requirements
+## It won't embarrass you
 
-- Node 22.18+
-- [Typst](https://typst.app) and Poppler, for resumes: `brew install typst poppler`
-- A Chrome-family browser, for searching and filling forms. `.mcp.json` points
-  [Playwright MCP](https://github.com/microsoft/playwright-mcp) at one that `cli/browser.ts` starts and
-  leaves running, on `127.0.0.1:9222`, with its own profile in `~/data/job/browser` — so a captcha or
-  a half-filled form is still waiting when you answer, instead of dying with the conversation that
-  opened it.
-
-Node alone is enough to start. Add the rest before your first resume.
+- **Nothing goes out without your yes.** Silence is not approval.
+- **Nothing is made up.** No answer on file means an empty field and a question for you, never a
+  guess at your salary, phone number, or visa status.
+- **Captchas are yours.** It stops and hands you the tab, which stays open until you come back.
+- **Your data stays on your machine**, in one SQLite file under `~/data/job/`.
 
 ## Install
 
 ```
 git clone https://github.com/FayZ676/job-hunt-plugin.git ~/.claude/skills/job
-cd ~/.claude/skills/job
-npm install
+cd ~/.claude/skills/job && npm install
 ```
 
-Then `/job setup`, which interviews you and builds your profile — hand it a resume or LinkedIn
-export and it drafts the whole thing for you to correct. What the search looks for comes out of that
-interview, in your words, and `/job feedback` changes it at any time. `/job help` lists every command.
+Then run `/job setup`. Hand it your resume or LinkedIn export and it drafts your profile for you to
+correct.
 
-## Your files
+Needs Node 22.18+ and a Chrome-family browser. For resumes, add `brew install typst poppler`.
 
-Everything lives in `~/data/job/`: one SQLite database, plus the resumes it builds. It sits outside
-this directory and is never committed — it has your phone number in it. `JOB_CAREER_DIR` moves it.
+`/job help` lists every command; `/job feedback` changes what it looks for, in plain words.
 
 ## License
 
