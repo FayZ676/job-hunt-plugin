@@ -2,17 +2,13 @@
 
 Run when `$CAREER` is missing, or when the user asks for setup.
 
-**1. Create the database.**
-
-```bash
-CAREER=$(cli/paths.ts career)
-mkdir -p "$CAREER/resumes/submitted"
-cli/q.ts "SELECT 1"
-```
-
-The schema applies on connect, so any command creates `$CAREER/job.db`. It starts empty — there is
-no seed. What the search looks for comes out of the interview below, in their words, not from a
-starter list they would have to discover and correct.
+**1. Start.** If `$HOME/.claude/skills/job/node_modules` is missing, run
+`npm install --prefix "$HOME/.claude/skills/job"` first — no script runs without it. Then run
+`cli/setup.ts start`, and `cli/setup.ts next` at every part boundary. **Show each `say:` line
+verbatim, and never announce a part, a time, or progress in your own words** — the script owns the
+pacing, so the user sees one map rather than two that disagree. Run what `install:` prints without
+bringing it up. The database starts empty, with no seed: what the search looks for comes out of the
+interview, in their words.
 
 **2. Fill the profile by interviewing them.** Every field a form can ask for is already a column,
 NULL until answered — not something an interview adds to. They talk; you answer with
@@ -48,8 +44,14 @@ conversation. Cover:
   **the only source a resume may draw from and the background every score is judged against**, so a
   thin profile produces thin resumes and scores that cannot tell a fitting posting from a stretch.
   The technologies on a project are matched against the JD, so name them even where the prose about
-  the project already implies them. Offer to read
-  a resume, CV, or LinkedIn export and draft it for them to correct.
+  the project already implies them. **Open by asking what already describes their work, before
+  asking them to describe it** — a resume or CV, LinkedIn, a personal site, a blog, GitHub, or
+  documents dropped into the chat. Draft from whatever they give you, then have them correct it. A
+  URL you can read, read. A page behind a login, open in the browser and let them sign in and bring
+  up the details. Work that lives on another machine, such as an employer laptop, reaches you
+  through `cli/setup.ts prompt`: hand them its output to paste into an LLM there, and draft from
+  what they paste back. What a source claims is still theirs to confirm: ask about anything it
+  leaves ambiguous before it becomes a row.
 
 A `NULL` is not a failure — it is a hard stop later. Tell them which ones will block an application.
 
@@ -59,16 +61,7 @@ terms, `--not-title`, `--not-company` — is typed off them. Read the prose back
 mind. If you cannot fill an argument from it, that is a missing sentence, not a missing feature: ask
 for it, and add it to the prose in their words.
 
-**4. Check the tooling.** The npm dependencies are what fetching and scoring run on; Typst and
-Poppler are only for the resume build.
-
-```bash
-[ -d "$HOME/.claude/skills/job/node_modules" ] || echo 'npm install --prefix "$HOME/.claude/skills/job"'
-command -v typst    || echo "brew install typst"
-command -v pdftoppm || echo "brew install poppler"
-```
-
-**5. Do a dry run.** Harvest one Indeed query for a role they named — `references/searching.md` has
+**4. Do a dry run.** Harvest one Indeed query for a role they named — `references/searching.md` has
 the browser half — then query `triage`. It costs nothing, so the point is only to see whether the
 prose aims straight. Sensible companies means it is tuned; nothing, or all noise, means another pass
 at what the instructions say and at the queries you built from them.

@@ -26,8 +26,9 @@ Nothing below overrides these.
 6. **Chat output is minimal.** Only two things belong in chat: the submit approval prompt, and
    whatever blocks progress and needs the user — named specifically, which role and which field. No
    progress narration, no action transitions, no summaries; the database is the record. A run with
-   nothing to ask about produces no chat output at all. `/job help` and `/job feedback` are the
-   exceptions — feedback is answered with what changed.
+   nothing to ask about produces no chat output at all. `/job help`, `/job feedback` and
+   `/job setup` are the exceptions — feedback is answered with what changed, and setup is an
+   interview paced by `cli/setup.ts`.
 7. **A captcha, or anything else asking for a human, stops the run the moment it appears.** A
    challenge checkbox or puzzle, a "verify you are human" or press-and-hold page, a Cloudflare
    interstitial, a one-time code sent to the user's email or phone. Never attempt it and never route
